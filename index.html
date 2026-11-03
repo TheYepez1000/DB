@@ -758,96 +758,116 @@
     </div>
   </section>
 
-  <!-- ANONYMOUS CRIME TIP SECTION (DENUNCIAS ANÓNIMAS) -->
-  <section id="denuncias" class="py-20 relative bg-slate-950 border-t border-slate-800">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- SPECIALIZED UNITS / ESTRUCTURA -->
+  <section id="unidades" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <div class="text-center mb-12">
-        <span class="text-xs font-conthrax font-bold text-red-500 uppercase tracking-widest block mb-2">CANAL DE INTELIGENCIA CIUDADANA</span>
-        <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Presentar Pista o Denuncia Anónima</h2>
-        <p class="text-slate-400 text-xs sm:text-sm mt-3 font-mono">
-          Su cooperación es vital para la resolución de casos complejos. Las denuncias remitidas a través de este portal están cifradas. No se registran direcciones IP ni identidades.
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs font-conthrax font-bold text-amber-400 tracking-widest uppercase block mb-2">ORGANIZACIÓN INTERNA</span>
+        <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Unidades Especializadas de Investigación</h2>
+        <p class="text-slate-400 text-sm mt-3 font-light">
+          Cada departamento operativo cuenta con detectives de carrera, peritos forenses y equipamiento balístico de última generación para casos complejos.
         </p>
       </div>
 
-      <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl">
-        <form id="anonymous-tip-form" class="space-y-6">
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- Crime Type -->
-            <div>
-              <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Tipo de Delito o Incidente:</label>
-              <select id="tip-category" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
-                <option value="homicidio">Homicidio / Atentado con arma</option>
-                <option value="narcotrafico">Narcotráfico / Venta de Estupefacientes</option>
-                <option value="armas">Tráfico / Posesión de Armamento Pesado</option>
-                <option value="fugitivo">Avistamiento de Fugitivo Buscado</option>
-                <option value="robo">Robo a Banco / Joyería / Negocio</option>
-                <option value="secuestro">Secuestro / Persona Desaparecida</option>
-                <option value="corrupcion">Corrupción Policial / Asuntos Internos</option>
-                <option value="otro">Otro Delito Grave</option>
-              </select>
-            </div>
-
-            <!-- Priority -->
-            <div>
-              <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Urgencia del Suceso:</label>
-              <select id="tip-priority" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
-                <option value="urgente">Urgente // En curso o sospechoso armado en el lugar</option>
-                <option value="alta" selected>Prioridad Alta // Avistamiento reciente (Últimas horas)</option>
-                <option value="informativa">Informativa // Datos históricos o investigación</option>
-              </select>
-            </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Unit 1: RHD -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 border border-red-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="skull" class="w-6 h-6"></i>
           </div>
-
-          <!-- Location -->
-          <div>
-            <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Ubicación / Barrio / Coordenadas RP:</label>
-            <input 
-              type="text" 
-              id="tip-location" 
-              required
-              placeholder="Ej: Callejón detrás del taller de Strawberry, frente a gasolinera..." 
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
-            >
+          <span class="text-xs font-conthrax text-red-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN RHD</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Robos y Homicidios</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Respuesta prioritaria ante homicidios calificados, ejecuciones por encargo, atracos bancarios a gran escala y secuestros extorsivos.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Detectives Asignados: 8</span>
+            <span class="text-amber-400">Prioridad Código 3</span>
           </div>
+        </div>
 
-          <!-- Description -->
-          <div>
-            <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Detalles, Rasgos de los Sujetos y Vehículos:</label>
-            <textarea 
-              id="tip-description" 
-              rows="4" 
-              required
-              placeholder="Describa vestimenta, matrículas de vehículos, armas observadas o cualquier información relevante..." 
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
-            ></textarea>
+        <!-- Unit 2: GND -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-400 border border-amber-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="package-search" class="w-6 h-6"></i>
           </div>
-
-          <!-- Contact (Optional) -->
-          <div>
-            <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Medio de Contacto Anónimo / Discord RP (Opcional):</label>
-            <input 
-              type="text" 
-              id="tip-contact" 
-              placeholder="Deje en blanco si desea anonimato absoluto, o ingrese su Tag/Teléfono IC para cobrar recompensa..." 
-              class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
-            >
+          <span class="text-xs font-conthrax text-amber-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN GND</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Narcóticos & Pandillas</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Operaciones encubiertas, interceptaciones telefónicas y seguimiento de redes de contrabando de sustancias controladas y tráfico de armas de guerra.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Detectives Asignados: 6</span>
+            <span class="text-amber-400">Infiltración Activa</span>
           </div>
+        </div>
 
-          <!-- Notice -->
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-400 flex items-start gap-3">
-            <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
-            <p>
-              El perjurio y las falsas alarmas malintencionadas están tipificadas en el Código Penal. Al enviar este reporte, un analista de la división procesará los indicios remitidos.
-            </p>
+        <!-- Unit 3: CSI Forensics -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 border border-blue-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="microscope" class="w-6 h-6"></i>
           </div>
+          <span class="text-xs font-conthrax text-blue-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CSI</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Forense & Balística</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Inspección ocular técnico-policial, levantamiento de huellas dactilares, trayectoria de proyectiles balísticos y reconstrucción digital 3D.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Peritos Forenses: 4</span>
+            <span class="text-blue-400">Laboratorio Central</span>
+          </div>
+        </div>
 
-          <button type="submit" class="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-xs uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-950/60">
-            <i data-lucide="send" class="w-4 h-4"></i> Enviar Pista Cifrada al Bureau
-          </button>
+        <!-- Unit 4: Cyber & Financial -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 border border-emerald-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="binary" class="w-6 h-6"></i>
+          </div>
+          <span class="text-xs font-conthrax text-emerald-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CID</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Ciberdelincuencia & Fraude</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Rastreo de billeteras de criptoactivos ilícitos, intrusión en servidores corporativos, falsificación documental y estafas bancarias de alto perfil.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Analistas Forenses: 3</span>
+            <span class="text-emerald-400">Rastreo IP / Satelital</span>
+          </div>
+        </div>
 
-        </form>
+        <!-- Unit 5: IAD Internal Affairs -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-400 border border-purple-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="eye" class="w-6 h-6"></i>
+          </div>
+          <span class="text-xs font-conthrax text-purple-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN IAD</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Asuntos Internos</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Auditoría de integridad policial, investigación confidencial de sobornos, abuso de poder, fuga de información confidencial y perjurio en juicio.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Oficiales Auditores: 2</span>
+            <span class="text-purple-400">Alto Secreto</span>
+          </div>
+        </div>
+
+        <!-- Unit 6: Cold Cases & Missing -->
+        <div class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+          <div class="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center text-cyan-400 border border-cyan-500/20 mb-5 group-hover:scale-110 transition-transform">
+            <i data-lucide="archive" class="w-6 h-6"></i>
+          </div>
+          <span class="text-xs font-conthrax text-cyan-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CCD</span>
+          <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Casos Fríos & Desapariciones</h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-4">
+            Revisión de expedientes no resueltos con nuevas tecnologías de ADN, localización de personas secuestradas y búsqueda forense en zonas rurales.
+          </p>
+          <div class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
+            <span>Investigadores: 3</span>
+            <span class="text-cyan-400">Expedientes Históricos</span>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -1028,6 +1048,309 @@
       <div id="receipt-modal-content">
         <!-- Injected via app.js -->
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DISCORD ROLEPLAY VERIFICATION / LOGIN -->
+  <div id="discord-auth-modal" class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="relative w-full max-w-md bg-slate-900 border border-[#5865F2]/50 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header with Discord brand accent -->
+      <div class="p-5 sm:p-6 bg-gradient-to-r from-[#5865F2]/25 via-slate-900 to-slate-900 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#5865F2] flex items-center justify-center text-white shadow-lg shadow-[#5865F2]/30 shrink-0">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black font-gobold text-white tracking-wide">Verificación Discord RP</h3>
+            <p class="text-[11px] font-conthrax text-[#5865F2] uppercase">Detective Division Intranet</p>
+          </div>
+        </div>
+        <button onclick="closeModal('discord-auth-modal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <form onsubmit="submitDiscordAuth(event)" class="p-5 sm:p-6 space-y-4">
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[11px] uppercase mb-1 font-bold">Usuario / Tag Discord</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">@</span>
+            <input 
+              type="text" 
+              id="discord-input-tag" 
+              placeholder="Det. Marcus Cole#404 o marcus_cole" 
+              required
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-[#5865F2] transition-colors"
+            >
+          </div>
+          <span class="text-[10px] text-slate-500 font-conthrax mt-1 block">Tu nombre con identificador de Detective autorizado en el servidor de Discord.</span>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[11px] uppercase mb-1 font-bold">ID Discord (Opcional)</label>
+          <input 
+            type="text" 
+            id="discord-input-id" 
+            placeholder="Ej: 9482910482940294" 
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-[#5865F2] transition-colors"
+          >
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[11px] uppercase mb-1 font-bold">Clave de Enlace Policial (PIN / 10-4)</label>
+          <input 
+            type="password" 
+            id="discord-input-key" 
+            placeholder="Clave interna de división (Demo: 10-4)" 
+            required
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-[#5865F2] transition-colors"
+          >
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2">
+          <button 
+            type="submit" 
+            class="w-full py-2.5 bg-[#5865F2] hover:bg-[#4752c4] text-white font-conthrax font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#5865F2]/25"
+          >
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Verificar y Autenticar</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="quickDemoDiscordAuth()" 
+            class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-conthrax text-[11px] rounded-lg transition-colors border border-amber-500/30 flex items-center justify-center gap-1.5"
+          >
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+            <span>Auto-Rellenar Demo Oficial (Marcus Cole #404)</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL: REPORT & CASE FILE EDITOR / CREATOR (DISCORD AUTH REQUIRED) -->
+  <div id="report-editor-modal" class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="relative w-full max-w-3xl bg-slate-900 border border-amber-500/50 rounded-2xl shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Editor Header -->
+      <div class="p-5 sm:p-6 bg-gradient-to-r from-amber-500/20 via-slate-900 to-slate-900 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <i data-lucide="edit-3" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="editor-modal-title" class="text-base sm:text-xl font-black font-gobold text-white tracking-wide">MODIFICAR EXPEDIENTE POLICIAL</h3>
+            <p class="text-[10px] sm:text-[11px] font-conthrax text-amber-400">Panel de Redacción & Archivo de la División de Detectives</p>
+          </div>
+        </div>
+        <button onclick="closeReportEditor()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Editor Body Form -->
+      <form onsubmit="event.preventDefault(); saveReportChanges();" class="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scroll">
+        
+        <!-- Row 1: ID & Title -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Código de Expediente</label>
+            <input 
+              type="text" 
+              id="edit-case-id" 
+              readonly 
+              class="w-full bg-slate-950/80 border border-slate-700/60 rounded-lg px-3 py-2 text-amber-400 font-conthrax text-xs focus:outline-none cursor-not-allowed"
+            >
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Título / Denominación del Caso *</label>
+            <input 
+              type="text" 
+              id="edit-case-title" 
+              required
+              placeholder="Ej: Asalto al Banco Fleeca: Operación Red Velvet" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+        </div>
+
+        <!-- Row 2: Division, Category, Status Type -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">División a Cargo</label>
+            <input 
+              type="text" 
+              id="edit-case-division" 
+              placeholder="RHD - Robos & Homicidios" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Categoría de Filtro</label>
+            <select 
+              id="edit-case-category" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+              <option value="homicide">Homicidios (RHD)</option>
+              <option value="narcotics">Narcóticos & Armas (GND)</option>
+              <option value="robbery">Robos Agravados</option>
+              <option value="missing">Desapariciones / Secuestros</option>
+              <option value="internal">Asuntos Internos (IAD)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Tipo de Estado (Badge)</label>
+            <select 
+              id="edit-case-statustype" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+              <option value="active">Activo (Ámbar)</option>
+              <option value="warrant">Orden de Captura (Rojo)</option>
+              <option value="trial">En Juicio / Audiencia (Púrpura)</option>
+              <option value="solved">Resuelto / Sentenciado (Verde)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 3: Status Text, Priority, Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Texto de Estado</label>
+            <input 
+              type="text" 
+              id="edit-case-status" 
+              placeholder="BAJO INVESTIGACIÓN / PRÓFUGO" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Nivel de Prioridad</label>
+            <input 
+              type="text" 
+              id="edit-case-priority" 
+              placeholder="CÓDIGO 3 (ALTA) / MÁXIMA PRIORIDAD" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Fecha del Informe</label>
+            <input 
+              type="text" 
+              id="edit-case-date" 
+              placeholder="03/NOV/2026" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+        </div>
+
+        <!-- Row 4: Detective & Location -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Detective Encargado</label>
+            <input 
+              type="text" 
+              id="edit-case-detective" 
+              placeholder="Det. Marcus Cole (#404)" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+          <div>
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Ubicación / Escena RP</label>
+            <input 
+              type="text" 
+              id="edit-case-location" 
+              placeholder="Los Santos International / Rockford Hills" 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+            >
+          </div>
+        </div>
+
+        <!-- Row 5: Photo URL -->
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">URL Fotografía Escena / Sospechoso</label>
+          <input 
+            type="url" 
+            id="edit-case-image" 
+            placeholder="https://images.unsplash.com/photo-..." 
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+          >
+        </div>
+
+        <!-- Row 6: Summary Synopsis -->
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Sumario / Resumen de Hechos *</label>
+          <textarea 
+            id="edit-case-summary" 
+            rows="3" 
+            required
+            placeholder="Detalle cronológico de los sucesos, pesquisas realizadas y hallazgos preliminares..." 
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+          ></textarea>
+        </div>
+
+        <!-- Row 7: Evidence list (one per line) -->
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">
+            Indicios / Pruebas Forenses <span class="text-slate-500 normal-case font-normal">(Una por línea)</span>
+          </label>
+          <textarea 
+            id="edit-case-evidence" 
+            rows="3" 
+            placeholder="Casquillos 9mm percutados encontrados junto a la entrada&#10;Grabación de cámara de seguridad con matrícula del vehículo&#10;Huellas dactilares levantadas por perito CSI" 
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+          ></textarea>
+        </div>
+
+        <!-- Row 8: Suspects list (one per line: Name | Role | Status) -->
+        <div>
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">
+            Sospechosos & Personas de Interés <span class="text-slate-500 normal-case font-normal">(Formato: Nombre | Rol | Estado)</span>
+          </label>
+          <textarea 
+            id="edit-case-suspects" 
+            rows="3" 
+            placeholder="Viktor 'El Capitán' Kozlov | Coordinador de envío | Prófugo&#10;Sujeto Desconocido con pasamontañas | Conductor del vehículo de fuga | En Búsqueda" 
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"
+          ></textarea>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <button 
+            type="button" 
+            id="editor-delete-btn" 
+            onclick="deleteReportCase()" 
+            class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-red-950/40 hover:bg-red-600 border border-red-500/40 text-red-300 hover:text-white font-conthrax text-xs uppercase font-bold transition-colors flex items-center justify-center gap-1.5"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Eliminar Expediente</span>
+          </button>
+
+          <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <button 
+              type="button" 
+              onclick="closeReportEditor()" 
+              class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-conthrax text-xs uppercase transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-conthrax text-xs uppercase font-bold transition-all shadow-lg shadow-amber-500/25 flex items-center gap-2"
+            >
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Guardar Expediente</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+
     </div>
   </div>
 

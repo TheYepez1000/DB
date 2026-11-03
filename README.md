@@ -14,7 +14,7 @@ Plataforma web temática e interactiva diseñada específicamente para divisione
 - **Sidebar Footer Integrado:** Reloj de tiempo local del servidor RP y reloj militar **ZULU**, además del interruptor de audio de radio.
 - **Topbar en Área de Contenido:** Barra superior con botón de menú para móviles, marquesina con alertas de radio y accesos rápidos a MDC y Denuncias.
 
-### 2. 🛡️ Tablón de Casos & Expedientes de Investigación
+### 2. 🛡️ Tablón de Casos & Expedientes de Investigación (Con Editor y Creación de Informes)
 - **Filtros por especialidad:** Homicidios (RHD), Narcóticos y Pandillas (GND), Robos Bancarios, Desapariciones y Asuntos Internos (IAD).
 - **Buscador en tiempo real** por palabra clave, detective a cargo o código de sumario.
 - **Dossier Policial Completo (Modal Interactivo):**
@@ -24,8 +24,23 @@ Plataforma web temática e interactiva diseñada específicamente para divisione
   - Cadena de custodia y evidencias balísticas / dactilares.
   - Personas de interés con estado judicial (Prófugo, Interrogatorio, etc.).
   - Botón para imprimir el informe oficial.
+  - **Botón de Edición ("Modificar Informe"):** Disponible para detectives autenticados por Discord.
+- **Sistema de Modificación y Creación de Informes en Vivo:**
+  - Crea nuevos expedientes con el botón `+ Nuevo Expediente`.
+  - Edita cualquier expediente existente (título, división, categoría, evidencias, sospechosos, fotos, sinopsis).
+  - Elimina expedientes cerrados o archivados.
+  - Los cambios persisten en `localStorage` (`dd_custom_cases`).
 
-### 2. 🎯 Los Más Buscados (Most Wanted)
+### 3. 🟣 Verificación / Inicio de Sesión por Discord RP
+- **Botón Discord en Topbar:** Permite a los detectives identificarse con su usuario de Discord.
+- **Credenciales Oficiales de Demostración:**
+  - **Usuario:** `Det. Marcus Cole#404` (o cualquier usuario con prefijo `Det.`, `Tte.`, `Cap.`, `Oficial`, `Detective`).
+  - **Clave PIN de Enlace Policial:** `10-4`
+  - Incluye botón **"Auto-Rellenar Demo Oficial"** para iniciar sesión en 1 clic.
+- **Panel de Perfil Policial:** Al autenticarse, la barra superior muestra el avatar, tag de Discord, rango y placa del oficial, junto a un botón de desconexión.
+- **Permisos Exclusivos:** Habilita los botones de edición de expedientes y la creación de nuevos sumarios policiales.
+
+### 4. 🎯 Los Más Buscados (Most Wanted)
 - Fichas criminales con foto de prontuario, alias, delitos imputados, recompensas monetarias y nivel de riesgo ("Disparar a la vista").
 - Botón **"Aportar Información Anónima"** que redirige y autocompleta el formulario con los datos del fugitivo.
 
