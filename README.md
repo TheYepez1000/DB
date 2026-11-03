@@ -38,11 +38,15 @@ Plataforma web temática e interactiva diseñada específicamente para divisione
 - Formulario para que ciudadanos y confidentes reporten delitos sin exponer su identidad IC.
 - Generador de recibo con código cifrado único (`#TIP-XXXXXX`) y estado de la investigación.
 
-### 5. 🔊 Motor de Efectos de Sonido Inmersivo (Web Audio API)
+### 5. 🔤 Tipografías de Alto Impacto
+- **GoBold (`font-gobold`):** Fuente bold/condensada de máxima presencia, aplicada en títulos principales, cabeceras de secciones, nombres de oficiales, fichas de sospechosos e insignias.
+- **Conthrax (`font-conthrax`):** Tipografía táctica, futurista y tecnológica, aplicada en la terminal MDC policial, códigos de casos (`#CASE-2026-089`), sellos judiciales, números de placa, transmisiones de radio y reloj ZULU.
+
+### 6. 🔊 Motor de Efectos de Sonido Inmersivo (Web Audio API)
 - Beeps de radio policial, tonos de terminal MDC y chimes de alerta generados por sintetizador nativo (no requiere archivos de audio externos ni descargas).
 - Botón en la barra superior para activar o silenciar el sonido.
 
-### 6. 📜 Estructura de la División & Convocatorias
+### 7. 📜 Estructura de la División & Convocatorias
 - Organigrama con las 6 ramas especializadas:
   - **RHD** (Robos y Homicidios)
   - **GND** (Narcóticos y Armas)

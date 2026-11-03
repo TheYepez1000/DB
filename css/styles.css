@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.cdnfonts.com/css/gobold');
+@import url('https://fonts.cdnfonts.com/css/conthrax');
 
 :root {
   --bg-primary: #07090e;
@@ -31,8 +33,16 @@ body {
     url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-.font-cinzel {
-  font-family: 'Cinzel', serif;
+/* Custom Tactical & Headline Fonts */
+.font-gobold {
+  font-family: 'Gobold', 'Impact', 'Arial Black', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.font-conthrax {
+  font-family: 'Conthrax', 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
 }
 
 .font-mono-code {
@@ -79,8 +89,8 @@ body {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   text-transform: uppercase;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
+  font-family: 'Conthrax', 'JetBrains Mono', monospace;
+  font-weight: 700;
   letter-spacing: 0.15em;
   color: #ef4444;
   border: 2px dashed #ef4444;
@@ -94,8 +104,8 @@ body {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   text-transform: uppercase;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
+  font-family: 'Conthrax', 'JetBrains Mono', monospace;
+  font-weight: 700;
   letter-spacing: 0.1em;
   color: #eab308;
   border: 2px solid #eab308;
@@ -107,8 +117,8 @@ body {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   text-transform: uppercase;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
+  font-family: 'Conthrax', 'JetBrains Mono', monospace;
+  font-weight: 700;
   letter-spacing: 0.1em;
   color: #10b981;
   border: 2px solid #10b981;
@@ -121,7 +131,7 @@ body {
   display: inline-block;
   padding: 0.35rem 0.85rem;
   text-transform: uppercase;
-  font-family: 'Cinzel', serif;
+  font-family: 'Gobold', sans-serif;
   font-weight: 800;
   letter-spacing: 0.15em;
   color: #dc2626;

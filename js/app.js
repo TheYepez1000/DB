@@ -70,7 +70,7 @@ class DetectiveAudio {
 
       osc.start(now);
       osc.stop(now + 0.03);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   playAlertSound() {
@@ -93,7 +93,7 @@ class DetectiveAudio {
 
       osc.start(now);
       osc.stop(now + 0.35);
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
@@ -402,7 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function initClock() {
   const timeElem = document.getElementById("live-time");
   const zuluElem = document.getElementById("zulu-time");
-  
+
   function update() {
     const now = new Date();
     if (timeElem) {
@@ -453,8 +453,8 @@ function renderCases(casesToRender) {
       <div>
         <div class="flex items-start justify-between gap-3 mb-4">
           <div>
-            <span class="text-xs font-mono text-amber-400/90 tracking-wider font-semibold block mb-1">${c.id} // ${c.division}</span>
-            <h3 class="text-xl font-bold text-white group-hover:text-amber-400 transition-colors">${c.title}</h3>
+            <span class="text-xs font-conthrax text-amber-400/90 tracking-wider font-semibold block mb-1">${c.id} // ${c.division}</span>
+            <h3 class="text-xl font-bold text-white font-gobold tracking-wide group-hover:text-amber-400 transition-colors">${c.title}</h3>
           </div>
           <div>${statusBadge}</div>
         </div>
@@ -500,9 +500,9 @@ function setupCaseFilters() {
     const filtered = RP_CASES.filter(c => {
       const matchCategory = currentCategory === "all" || c.category === currentCategory;
       const matchSearch = c.title.toLowerCase().includes(currentQuery.toLowerCase()) ||
-                          c.id.toLowerCase().includes(currentQuery.toLowerCase()) ||
-                          c.summary.toLowerCase().includes(currentQuery.toLowerCase()) ||
-                          c.leadDetective.toLowerCase().includes(currentQuery.toLowerCase());
+        c.id.toLowerCase().includes(currentQuery.toLowerCase()) ||
+        c.summary.toLowerCase().includes(currentQuery.toLowerCase()) ||
+        c.leadDetective.toLowerCase().includes(currentQuery.toLowerCase());
       return matchCategory && matchSearch;
     });
     renderCases(filtered);
@@ -565,15 +565,15 @@ function openCaseModal(caseId) {
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <span class="font-mono text-xs bg-amber-500/10 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded font-bold">${c.id}</span>
-            <span class="font-mono text-xs text-slate-400">FECHA APERTURA: ${c.date}</span>
+            <span class="font-conthrax text-xs bg-amber-500/10 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded font-bold">${c.id}</span>
+            <span class="font-conthrax text-xs text-slate-400">FECHA APERTURA: ${c.date}</span>
           </div>
-          <h2 class="text-2xl lg:text-3xl font-extrabold text-white">${c.title}</h2>
-          <p class="text-sm font-mono text-amber-300/80 mt-1">${c.division}</p>
+          <h2 class="text-2xl lg:text-3xl font-extrabold text-white font-gobold tracking-wide">${c.title}</h2>
+          <p class="text-sm font-conthrax text-amber-300/80 mt-1">${c.division}</p>
         </div>
         <div class="text-right">
           <span class="stamp-classified text-sm">DOCUMENTO CLASIFICADO</span>
-          <p class="text-xs font-mono text-red-400 mt-2 font-semibold">PRIORIDAD: ${c.priority}</p>
+          <p class="text-xs font-conthrax text-red-400 mt-2 font-semibold">PRIORIDAD: ${c.priority}</p>
         </div>
       </div>
     </div>
@@ -685,15 +685,15 @@ function renderMostWanted(list) {
           </div>
 
           <div class="absolute bottom-3 left-4 right-4">
-            <p class="text-xs font-mono text-amber-400 tracking-wider">ALIAS: "${w.alias}"</p>
-            <h3 class="text-2xl font-black text-white font-cinzel tracking-wide">${w.name}</h3>
+            <p class="text-xs font-conthrax text-amber-400 tracking-wider">ALIAS: "${w.alias}"</p>
+            <h3 class="text-2xl font-black text-white font-gobold tracking-wide">${w.name}</h3>
           </div>
         </div>
 
         <div class="p-5 space-y-3">
           <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-center justify-between">
-            <span class="text-xs font-mono text-slate-300">RECOMPENSA OFRECIDA:</span>
-            <span class="text-lg font-mono font-black text-amber-400">${w.bounty}</span>
+            <span class="text-xs font-conthrax text-slate-300">RECOMPENSA OFRECIDA:</span>
+            <span class="text-lg font-conthrax font-black text-amber-400">${w.bounty}</span>
           </div>
 
           <div>
@@ -798,11 +798,11 @@ function showTipReceiptModal(tip) {
         <i data-lucide="shield-check" class="w-8 h-8"></i>
       </div>
       <span class="stamp-solved text-xs mb-2">REMISIÓN CONFIDENCIAL SEGURA</span>
-      <h3 class="text-2xl font-black text-white font-cinzel mt-2">Pista Recibida por la División</h3>
-      <p class="text-slate-400 text-xs font-mono mt-1">Cifrado de extremo a extremo activo. Su identidad civil está blindada.</p>
+      <h3 class="text-2xl font-black text-white font-gobold tracking-wide mt-2">Pista Recibida por la División</h3>
+      <p class="text-slate-400 text-xs font-conthrax mt-1">Cifrado de extremo a extremo activo. Su identidad civil está blindada.</p>
     </div>
 
-    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 font-mono text-xs space-y-3">
+    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 font-conthrax text-xs space-y-3">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <span class="text-slate-500">CÓDIGO DE SEGUIMIENTO:</span>
         <span class="text-amber-400 font-bold text-sm tracking-widest">${tip.code}</span>
@@ -932,7 +932,7 @@ function performMDCSearch() {
     return;
   }
 
-  const results = MDC_DATABASE.suspects.filter(s => 
+  const results = MDC_DATABASE.suspects.filter(s =>
     s.fullName.toLowerCase().includes(query) ||
     s.alias.toLowerCase().includes(query) ||
     s.dni.toLowerCase().includes(query) ||
@@ -1066,7 +1066,7 @@ function renderDetectiveNotes() {
   `).join("");
 }
 
-window.deleteDetectiveNote = function(index) {
+window.deleteDetectiveNote = function (index) {
   const notes = JSON.parse(localStorage.getItem("lspd_rp_notes") || "[]");
   notes.splice(index, 1);
   localStorage.setItem("lspd_rp_notes", JSON.stringify(notes));
@@ -1127,7 +1127,7 @@ function setupAudioControls() {
 
 // --- MODAL UTILITIES ---
 function setupInteractiveModals() {
-  window.closeModal = function(modalId) {
+  window.closeModal = function (modalId) {
     const modal = document.getElementById(modalId);
     if (modal) modal.classList.add("hidden");
   };
