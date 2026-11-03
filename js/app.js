@@ -298,6 +298,9 @@ let isDetectiveAuth = false;
 let isManualNavigation = false;
 
 function getActiveCasesList() {
+  const cached = getCachedCases();
+  if (cached.length > 0) return cached.map(rowToCase);
+  // fallback: check localStorage
   const custom = localStorage.getItem("dd_custom_cases");
   if (custom) {
     try {
@@ -311,11 +314,13 @@ function getActiveCasesList() {
 }
 
 function saveCasesList(list) {
-  localStorage.setItem("dd_custom_cases", JSON.stringify(list));
+  // Legacy wrapper — batch upsert all cases to Supabase
+  list.forEach(c => dbUpsertCase(c));
 }
 
 // --- APP CONTROLLER ---
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await initSupabase();
   initDiscordAuth();
   initClock();
   renderCases(getActiveCasesList());
@@ -520,8 +525,7 @@ async function fetchDiscordUserProfile(token) {
         avatar: avatarUrl,
         joinDate: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
       };
-      roster.push(newAgent);
-      saveJefaturaRoster(roster);
+      dbUpsertAgent(newAgent);
       addAuditLog("REGISTRO AUTOMÁTICO", displayName, fullTag, "Aspirante Sin Acceso", "Sistema OAuth2 — primer inicio de sesión detectado");
 
       currentDiscordUser = {
@@ -857,9 +861,10 @@ window.deleteReportCase = function() {
   if (!currentEditingCaseId) return;
   if (!confirm(`¿Está seguro de eliminar permanentemente el expediente ${currentEditingCaseId}?`)) return;
 
-  const cases = getActiveCasesList();
-  const filtered = cases.filter(item => item.id !== currentEditingCaseId);
-  saveCasesList(filtered);
+  dbDeleteCase(currentEditingCaseId);
+  const cases = getActiveCasesList().filter(item => item.id !== currentEditingCaseId);
+  // Sync updated list
+  cases.forEach(c => dbUpsertCase(c));
 
   audioEngine.playRadioBeep();
   closeReportEditor();
@@ -1344,10 +1349,8 @@ function setupTipForm() {
       status: "RECIBIDA // EN REVISIÓN POR ANALISTA FORENSE"
     };
 
-    // Store in localStorage
-    const savedTips = JSON.parse(localStorage.getItem("lspd_rp_tips") || "[]");
-    savedTips.unshift(tipData);
-    localStorage.setItem("lspd_rp_tips", JSON.stringify(savedTips));
+    // Store in Supabase (fire-and-forget)
+    dbInsertTip(tipData);
 
     // Show confirmation modal
     showTipReceiptModal(tipData);
@@ -1494,6 +1497,9 @@ const DEFAULT_CONFIDENTIAL_REPORTS = [
 ];
 
 function getActiveConfidentialReports() {
+  const cached = getCachedReports();
+  if (cached.length > 0) return cached.map(rowToReport);
+  // fallback: localStorage, then hardcoded defaults
   const custom = localStorage.getItem("dd_confidential_reports");
   if (custom) {
     try {
@@ -1507,7 +1513,8 @@ function getActiveConfidentialReports() {
 }
 
 function saveConfidentialReports(list) {
-  localStorage.setItem("dd_confidential_reports", JSON.stringify(list));
+  // Legacy wrapper — batch upsert all reports to Supabase
+  list.forEach(r => dbUpsertReport(r));
 }
 
 function setupInformesHub() {
@@ -1706,6 +1713,7 @@ window.saveNewConfidentialReport = function(event) {
   };
 
   reports.unshift(newReport);
+  dbUpsertReport(newReport);
   saveConfidentialReports(reports);
 
   audioEngine.playAlertSound();
@@ -1718,7 +1726,7 @@ function renderAuthorizedTipsInbox() {
   const container = document.getElementById("authorized-tips-inbox");
   if (!container) return;
 
-  const tips = JSON.parse(localStorage.getItem("lspd_rp_tips") || "[]");
+  const tips = getCachedTips().map(rowToTip);
 
   if (tips.length === 0) {
     container.innerHTML = `
@@ -1911,6 +1919,9 @@ const DEFAULT_ROSTER = [
 ];
 
 function getJefaturaRoster() {
+  const cached = getCachedRoster();
+  if (cached.length > 0) return cached.map(rowToAgent);
+  // Fallback: localStorage, then defaults
   try {
     const saved = localStorage.getItem("dd_jefatura_roster");
     if (saved) {
@@ -1922,11 +1933,15 @@ function getJefaturaRoster() {
 }
 
 function saveJefaturaRoster(list) {
-  localStorage.setItem("dd_jefatura_roster", JSON.stringify(list));
+  // Sync each agent to Supabase
+  list.forEach(agent => dbUpsertAgent(agent));
 }
 
 // --- AUDIT LOG STORAGE ---
 function getAuditLogs() {
+  const cached = getCachedAuditLogs();
+  if (cached.length > 0) return cached.map(rowToAuditLog);
+  // Fallback: localStorage
   try {
     const saved = localStorage.getItem("dd_audit_logs");
     if (saved) return JSON.parse(saved);
@@ -1935,23 +1950,19 @@ function getAuditLogs() {
 }
 
 function saveAuditLogs(logs) {
+  // Not used directly anymore — use dbInsertAuditLog / dbClearAuditLogs
   localStorage.setItem("dd_audit_logs", JSON.stringify(logs));
 }
 
 function addAuditLog(action, agentName, discordTag, detail, commander) {
-  const logs = getAuditLogs();
-  logs.unshift({
-    id: "LOG-" + Date.now(),
+  // Async fire-and-forget — updates CACHE and DB
+  dbInsertAuditLog({
     action,
     agentName,
     discordTag,
     detail,
-    commander: commander || (currentDiscordUser ? currentDiscordUser.username : "Sistema"),
-    timestamp: new Date().toLocaleString('es-ES')
+    commander: commander || (currentDiscordUser ? currentDiscordUser.username : "Sistema")
   });
-  // Keep max 200 entries
-  if (logs.length > 200) logs.splice(200);
-  saveAuditLogs(logs);
 }
 
 // --- KPI & UI UPDATER ---
@@ -2243,6 +2254,8 @@ window.saveAgentEditor = function(event) {
   };
 
   saveJefaturaRoster(roster);
+  // Persist updated agent to Supabase
+  dbUpsertAgent(roster[idx]);
 
   // Audit log entry
   const rankLabel = (RANK_META[newRank] || {}).label || newRank;
@@ -2308,6 +2321,7 @@ window.quickKickAgent = function(discordId, icName) {
   roster[idx].rank   = "aspirante"; // Revoke all access
 
   saveJefaturaRoster(roster);
+  dbUpsertAgent(roster[idx]);
   addAuditLog("EXPULSIÓN DEL CUERPO", icName, roster[idx].discordTag, "Baja definitiva. Acceso revocado.", currentDiscordUser.username);
 
   showToast(`🚨 ${icName} ha sido expulsado/a de la Detective Division.`);
@@ -2372,6 +2386,7 @@ window.saveNewAgent = function(event) {
 
   roster.push(newAgent);
   saveJefaturaRoster(roster);
+  dbUpsertAgent(newAgent);
   addAuditLog("INCORPORACIÓN AL CENSO", icName, discordTag, `Rango: ${rankData.label} // División: ${division}`, currentDiscordUser.username);
 
   closeModal("add-agent-modal");
@@ -2398,9 +2413,10 @@ window.claimHighCommandForCurrentAccount = function() {
     existing.rank   = "capitan";
     existing.status = "Activo";
     existing.division = "Mando Supremo // Bureau Executive";
+    dbUpsertAgent(existing);
   } else {
     // Add as Capitán
-    roster.unshift({
+    const newCap = {
       discordId:   currentDiscordUser.id,
       discordTag:  currentDiscordUser.tag,
       icName:      currentDiscordUser.username,
@@ -2412,7 +2428,9 @@ window.claimHighCommandForCurrentAccount = function() {
       notes:       "Fundador/a de la División. Acceso reclamado como Capitán de Mando.",
       avatar:      currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png",
       joinDate:    new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
-    });
+    };
+    roster.unshift(newCap);
+    dbUpsertAgent(newCap);
   }
 
   saveJefaturaRoster(roster);
@@ -2489,7 +2507,7 @@ window.clearAuditLogs = function() {
     showToast("⛔ Solo el Mando puede limpiar el historial de auditoría.");
     return;
   }
-  saveAuditLogs([]);
+  dbClearAuditLogs();
   renderAuditLogs();
   showToast("🗑️ Historial de auditoría limpiado.");
 };
@@ -2532,7 +2550,10 @@ window.resetRosterToDefault = function() {
     showToast("⛔ Solo el Mando puede restablecer el censo.");
     return;
   }
-  saveJefaturaRoster(JSON.parse(JSON.stringify(DEFAULT_ROSTER)));
+  const defaultRoster = JSON.parse(JSON.stringify(DEFAULT_ROSTER));
+  saveJefaturaRoster(defaultRoster);
+  // Sync each default agent to Supabase
+  defaultRoster.forEach(agent => dbUpsertAgent(agent));
   addAuditLog("RESTABLECIMIENTO DEL CENSO", "Sistema", "Sistema", "Censo restablecido a valores predeterminados de ejemplo", currentDiscordUser.username);
   audioEngine.playAlertSound();
   showToast("🔄 Censo restablecido a los datos de ejemplo.");
