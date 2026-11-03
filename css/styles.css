@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #07090e;
+  --bg-secondary: #0d121c;
+  --bg-card: #121926;
+  --bg-card-hover: #182234;
+  --border-color: rgba(212, 175, 55, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --gold: #d4af37;
+  --gold-light: #f3e5ab;
+  --gold-dark: #aa820a;
+  --police-blue: #0051ba;
+  --police-blue-light: #2563eb;
+  --police-red: #dc2626;
+  --police-red-glow: rgba(220, 38, 38, 0.4);
+  --terminal-green: #10b981;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(0, 81, 186, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    linear-gradient(to bottom, rgba(7, 9, 14, 0.8), rgba(7, 9, 14, 0.98)),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-mono-code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Police Badge & Glow Effects */
+.gold-glow {
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.25);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff2cc 0%, #d4af37 50%, #997510 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.police-gradient-text {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 50%, #1e40af 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.siren-glow-red {
+  animation: sirenRed 2s infinite ease-in-out;
+}
+
+.siren-glow-blue {
+  animation: sirenBlue 2s infinite ease-in-out;
+}
+
+@keyframes sirenRed {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.8)); }
+}
+
+@keyframes sirenBlue {
+  0%, 100% { opacity: 0.85; transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8)); }
+  50% { opacity: 0.2; transform: scale(1); }
+}
+
+/* Evidence Stamp */
+.stamp-classified {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #ef4444;
+  border: 2px dashed #ef4444;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  background: rgba(239, 68, 68, 0.08);
+  user-select: none;
+}
+
+.stamp-active {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #eab308;
+  border: 2px solid #eab308;
+  border-radius: 4px;
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.stamp-solved {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #10b981;
+  border: 2px solid #10b981;
+  border-radius: 4px;
+  transform: rotate(2deg);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.stamp-warrant {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  text-transform: uppercase;
+  font-family: 'Cinzel', serif;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #dc2626;
+  border: 3px double #dc2626;
+  background: rgba(220, 38, 38, 0.12);
+  transform: rotate(-2deg);
+}
+
+/* Scanlines Effect for MDC */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07090e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Police Tape Banner */
+.police-tape {
+  background: repeating-linear-gradient(
+    -45deg,
+    #facc15,
+    #facc15 25px,
+    #0f172a 25px,
+    #0f172a 50px
+  );
+  color: #000;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: rgba(18, 25, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-gold {
+  background: rgba(18, 25, 38, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.badge-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+/* Evidence Paper texture overlay */
+.case-folder {
+  background: linear-gradient(135deg, #161c28 0%, #101520 100%);
+  border-left: 4px solid var(--gold);
+  transition: all 0.3s ease;
+}
+
+.case-folder:hover {
+  transform: translateY(-3px);
+  border-left-color: #facc15;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Audio wave animation */
+@keyframes radioWave {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.sound-bar {
+  animation: radioWave 1.2s infinite ease-in-out;
+}
+.sound-bar:nth-child(2) { animation-delay: 0.2s; }
+.sound-bar:nth-child(3) { animation-delay: 0.4s; }
+.sound-bar:nth-child(4) { animation-delay: 0.1s; }
+
