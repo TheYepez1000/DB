@@ -330,7 +330,27 @@ document.addEventListener("DOMContentLoaded", () => {
   setupReportEditor();
 });
 
-// --- DISCORD BOT AUTHENTICATION & ROLE VERIFICATION ENGINE ---
+// --- DISCORD OAUTH2 AUTHENTICATION & ROLE VERIFICATION ENGINE ---
+const DISCORD_CLIENT_ID = "1271954022139691038";
+
+function getDiscordRedirectUri() {
+  if (window.location.hostname.includes("vercel.app")) {
+    return "https://detectivedivision.vercel.app/";
+  }
+  return window.location.origin + window.location.pathname;
+}
+
+function getDiscordOAuthUrl() {
+  const redirectUri = getDiscordRedirectUri();
+  return `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=identify%20guilds`;
+}
+
+window.loginWithDiscordOAuth2 = function() {
+  audioEngine.playAlertSound();
+  showToast("🔄 Redirigiendo a Discord OAuth2 oficial...");
+  window.location.href = getDiscordOAuthUrl();
+};
+
 const BOT_PROFILES = {
   capitan: {
     username: "Cap. David Vance",
@@ -389,7 +409,11 @@ const BOT_PROFILES = {
   }
 };
 
-function initDiscordAuth() {
+async function initDiscordAuth() {
+  // Check if returning from Discord OAuth2 redirect
+  const hasToken = await checkDiscordOAuthCallback();
+  if (hasToken) return;
+
   const saved = localStorage.getItem("dd_discord_user");
   if (saved) {
     try {
@@ -401,6 +425,86 @@ function initDiscordAuth() {
     }
   }
   updateDiscordAuthUI();
+}
+
+async function checkDiscordOAuthCallback() {
+  let token = null;
+
+  if (window.location.hash && window.location.hash.includes("access_token")) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    token = hashParams.get("access_token");
+  } else if (window.location.search && window.location.search.includes("access_token")) {
+    const searchParams = new URLSearchParams(window.location.search);
+    token = searchParams.get("access_token");
+  }
+
+  if (token) {
+    localStorage.setItem("dd_discord_token", token);
+    try {
+      window.history.replaceState({}, document.title, window.location.pathname + "#informes");
+    } catch (e) {}
+
+    await fetchDiscordUserProfile(token);
+    return true;
+  }
+  return false;
+}
+
+async function fetchDiscordUserProfile(token) {
+  try {
+    showToast("🔍 Sincronizando perfil con Discord API...");
+    const res = await fetch("https://discord.com/api/v10/users/@me", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error("Token no válido o expirado");
+    }
+
+    const data = await res.json();
+    let avatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (data.avatar) {
+      avatarUrl = `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png?size=256`;
+    } else {
+      const idx = (BigInt(data.id) >> 22n) % 6n;
+      avatarUrl = `https://cdn.discordapp.com/embed/avatars/${idx}.png`;
+    }
+
+    const displayName = data.global_name || data.username;
+    const fullTag = data.discriminator && data.discriminator !== "0"
+      ? `${data.username}#${data.discriminator}`
+      : `@${data.username}`;
+
+    const badgeNum = "#" + (data.id.slice(-3) || "404") + "-DIV";
+
+    currentDiscordUser = {
+      id: data.id,
+      username: displayName,
+      tag: fullTag,
+      userId: data.id,
+      badge: badgeNum,
+      role: "Detective II // Investigador Oficial",
+      rankLevel: 3,
+      isAuthorizedDetective: true,
+      clearance: "NIVEL 3 // ALTO SECRETO",
+      avatar: avatarUrl,
+      oauthVerified: true,
+      authAt: new Date().toLocaleString('es-ES')
+    };
+
+    isDetectiveAuth = true;
+    localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+    updateDiscordAuthUI();
+    renderCases(getActiveCasesList());
+    audioEngine.playAlertSound();
+    showToast(`✅ Verificado con Discord OAuth2: ¡Bienvenido ${displayName}!`);
+  } catch (err) {
+    console.warn("OAuth verification error:", err);
+    localStorage.removeItem("dd_discord_token");
+    showToast("⚠️ No se pudo obtener el perfil de Discord API.");
+  }
 }
 
 function updateDiscordAuthUI() {
@@ -448,7 +552,7 @@ function updateDiscordAuthUI() {
     if (currentDiscordUser && !currentDiscordUser.isAuthorizedDetective) {
       if (civilDeniedAlert) civilDeniedAlert.classList.remove("hidden");
       if (civilDeniedText) {
-        civilDeniedText.textContent = `El Bot de Discord detectó que la cuenta @${currentDiscordUser.tag} pertenece al servidor pero NO ostenta un rol de la Detective Division (Capitán a Detective). Los informes clasificados permanecen bloqueados.`;
+        civilDeniedText.textContent = `El sistema detectó que la cuenta @${currentDiscordUser.tag} no ostenta un rol de la Detective Division (Capitán a Detective). Los informes clasificados permanecen bloqueados.`;
       }
     } else {
       if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
@@ -470,7 +574,7 @@ window.closeDiscordAuthModal = function() {
   if (modal) modal.classList.add("hidden");
 };
 
-// Autenticación con Bot seleccionando Rol de Demostración
+// Autenticación rápida con Rol de Demostración (Sin contraseñas)
 window.authenticateWithBotRole = function(roleKey) {
   const profile = BOT_PROFILES[roleKey];
   if (!profile) return;
@@ -486,71 +590,10 @@ window.authenticateWithBotRole = function(roleKey) {
 
   if (profile.isAuthorizedDetective) {
     audioEngine.playAlertSound();
-    showToast(`🤖 DetectiveBot: Conexión con Discord confirmada. Rol validado: [${profile.role}]. Acceso concedido a Informes.`);
+    showToast(`✅ Sesión iniciada como [${profile.role}]. Acceso concedido a Informes.`);
   } else {
     audioEngine.playRadioBeep();
-    showToast(`⛔ DetectiveBot: Acceso DENEGADO. Tu cuenta @${profile.tag} no posee rol de detective en el Discord.`);
-  }
-};
-
-// Autenticación Manual con Bot
-window.submitManualBotAuth = function(event) {
-  if (event) event.preventDefault();
-  const tag = document.getElementById("bot-input-tag")?.value.trim() || "";
-  const pin = document.getElementById("bot-input-pin")?.value.trim() || "";
-
-  if (!tag) {
-    showToast("⚠️ Ingrese su Tag o Usuario de Discord");
-    return;
-  }
-
-  const lowerTag = tag.toLowerCase();
-  const isOfficer = lowerTag.includes("det") || lowerTag.includes("cap") || lowerTag.includes("tte") || 
-                    lowerTag.includes("oficial") || lowerTag.includes("policia") || lowerTag.includes("lspd") ||
-                    lowerTag.includes("detective") || lowerTag.includes("investigador");
-
-  if (isOfficer) {
-    const customUser = {
-      username: tag.split("#")[0] || tag,
-      tag: tag.includes("#") ? tag : `${tag}#0404`,
-      userId: "7" + Math.floor(100000000000000 + Math.random() * 900000000000000),
-      badge: "#" + Math.floor(100 + Math.random() * 899) + "-DIV",
-      role: "Detective II // Investigador Oficial",
-      rankLevel: 2,
-      isAuthorizedDetective: true,
-      clearance: "NIVEL 2 // CONFIDENCIAL",
-      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
-      authAt: new Date().toLocaleString('es-ES')
-    };
-    currentDiscordUser = customUser;
-    isDetectiveAuth = true;
-    localStorage.setItem("dd_discord_user", JSON.stringify(customUser));
-    updateDiscordAuthUI();
-    closeDiscordAuthModal();
-    renderCases(getActiveCasesList());
-    audioEngine.playAlertSound();
-    showToast(`🤖 DetectiveBot: Usuario @${tag} validado en Discord con rol de Detective. Acceso concedido.`);
-  } else {
-    const civilUser = {
-      username: tag.split("#")[0] || tag,
-      tag: tag.includes("#") ? tag : `${tag}#9999`,
-      userId: "9" + Math.floor(100000000000000 + Math.random() * 900000000000000),
-      badge: "SIN PLACA",
-      role: "Ciudadano / Sin Rol Policial",
-      rankLevel: 0,
-      isAuthorizedDetective: false,
-      clearance: "NIVEL 0 // DENEGADO",
-      avatar: "https://cdn.discordapp.com/embed/avatars/2.png",
-      authAt: new Date().toLocaleString('es-ES')
-    };
-    currentDiscordUser = civilUser;
-    isDetectiveAuth = false;
-    localStorage.setItem("dd_discord_user", JSON.stringify(civilUser));
-    updateDiscordAuthUI();
-    closeDiscordAuthModal();
-    renderCases(getActiveCasesList());
-    audioEngine.playRadioBeep();
-    showToast(`⛔ DetectiveBot: Usuario @${tag} no posee rol de detective en el Discord.`);
+    showToast(`⛔ Acceso DENEGADO. La cuenta @${profile.tag} no posee rol de detective.`);
   }
 };
 
@@ -559,6 +602,7 @@ window.logoutDiscordAuth = function() {
   currentDiscordUser = null;
   isDetectiveAuth = false;
   localStorage.removeItem("dd_discord_user");
+  localStorage.removeItem("dd_discord_token");
   updateDiscordAuthUI();
   renderCases(getActiveCasesList());
   showToast("Sesión de Discord cerrada. Permisos revocados.");
