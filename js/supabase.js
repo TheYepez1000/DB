@@ -17,6 +17,7 @@ try {
 
 // ─── IN-MEMORY CACHE ────────────────────────────────────────────────────────
 let CACHE = {
+  ranks:     null,  // array of DB rows (snake_case)
   agents:    null,  // array of DB rows (snake_case)
   auditLogs: null,  // array of DB rows
   reports:   null,  // array of DB rows
@@ -44,7 +45,7 @@ function showDBStatus(state) {
   }
 }
 
-// ─── INIT — parallel load of all 5 tables ────────────────────────────────────
+// ─── INIT — parallel load of all tables ──────────────────────────────────────
 async function initSupabase() {
   if (!db) {
     console.warn('[DB] No Supabase client — falling back to localStorage');
@@ -56,7 +57,8 @@ async function initSupabase() {
   showDBStatus('connecting');
 
   try {
-    const [agentsRes, logsRes, reportsRes, tipsRes, casesRes] = await Promise.all([
+    const [ranksRes, agentsRes, logsRes, reportsRes, tipsRes, casesRes] = await Promise.all([
+      db.from('ranks').select('*').order('level', { ascending: false }),
       db.from('agents').select('*').order('created_at', { ascending: true }),
       db.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200),
       db.from('reports').select('*').order('report_date', { ascending: false }),
@@ -64,8 +66,17 @@ async function initSupabase() {
       db.from('cases').select('*').order('case_date', { ascending: false })
     ]);
 
-    // If any critical query errored, fall back
+    // Critical check on agents
     if (agentsRes.error) throw agentsRes.error;
+
+    // Ranks: if table empty or not created yet, seed from default
+    if (ranksRes.data && ranksRes.data.length > 0) {
+      CACHE.ranks = ranksRes.data;
+    } else {
+      CACHE.ranks = _getDefaultRanksRows();
+      // Try seed if empty
+      _seedDefaultRanksToSupabase();
+    }
 
     CACHE.agents    = agentsRes.data   || [];
     CACHE.auditLogs = logsRes.data     || [];
@@ -75,14 +86,15 @@ async function initSupabase() {
     CACHE.loaded    = true;
 
     showDBStatus('online');
-    console.log('[DB] Supabase cargado — agentes:', CACHE.agents.length,
+    console.log('[DB] Supabase cargado — rangos:', CACHE.ranks.length,
+      '| agentes:', CACHE.agents.length,
       '| logs:', CACHE.auditLogs.length,
       '| reports:', CACHE.reports.length,
       '| tips:', CACHE.tips.length,
       '| cases:', CACHE.cases.length);
 
-    // Subscribe to realtime agent changes
-    _subscribeAgentChanges();
+    // Subscribe to realtime changes
+    _subscribeRealtime();
 
   } catch (err) {
     console.warn('[DB] Supabase load error — usando localStorage como fallback:', err);
@@ -94,10 +106,13 @@ async function initSupabase() {
 // ─── LOCALSTORAGE FALLBACK ───────────────────────────────────────────────────
 function _loadFromLocalStorage() {
   try {
+    const ranksRaw = localStorage.getItem('dd_custom_ranks');
+    CACHE.ranks = ranksRaw ? JSON.parse(ranksRaw).map(rankToRow) : _getDefaultRanksRows();
+  } catch (e) { CACHE.ranks = _getDefaultRanksRows(); }
+
+  try {
     const rosterRaw = localStorage.getItem('dd_jefatura_roster');
-    CACHE.agents = rosterRaw
-      ? JSON.parse(rosterRaw).map(agentToRow)
-      : [];
+    CACHE.agents = rosterRaw ? JSON.parse(rosterRaw).map(agentToRow) : [];
   } catch (e) { CACHE.agents = []; }
 
   try {
@@ -124,9 +139,10 @@ function _loadFromLocalStorage() {
 }
 
 // ─── REALTIME ────────────────────────────────────────────────────────────────
-function _subscribeAgentChanges() {
+function _subscribeRealtime() {
   if (!db) return;
   try {
+    // Agents realtime
     db.channel('dd-agents-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, (payload) => {
         if (payload.eventType === 'INSERT') {
@@ -138,18 +154,250 @@ function _subscribeAgentChanges() {
         } else if (payload.eventType === 'DELETE') {
           CACHE.agents = CACHE.agents.filter(r => r.discord_id !== payload.old.discord_id);
         }
-        // Re-render roster if Jefatura tab is visible
-        const jefSection = document.getElementById('jefatura');
-        if (jefSection && !jefSection.classList.contains('hidden')) {
-          if (typeof renderJefaturaRoster === 'function') {
-            renderJefaturaRoster(getCachedRoster().map(rowToAgent));
-          }
-          if (typeof renderJefaturaKPIs === 'function') renderJefaturaKPIs();
+        _refreshJefaturaViews();
+      })
+      .subscribe();
+
+    // Ranks realtime
+    db.channel('dd-ranks-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ranks' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          CACHE.ranks.push(payload.new);
+        } else if (payload.eventType === 'UPDATE') {
+          const idx = CACHE.ranks.findIndex(r => r.id === payload.new.id);
+          if (idx >= 0) CACHE.ranks[idx] = payload.new;
+          else CACHE.ranks.push(payload.new);
+        } else if (payload.eventType === 'DELETE') {
+          CACHE.ranks = CACHE.ranks.filter(r => r.id !== payload.old.id);
         }
+        _refreshJefaturaViews();
       })
       .subscribe();
   } catch (e) {
     console.warn('[DB] Realtime subscribe failed:', e);
+  }
+}
+
+function _refreshJefaturaViews() {
+  const jefSection = document.getElementById('jefatura');
+  if (jefSection && !jefSection.classList.contains('hidden')) {
+    if (typeof renderJefaturaRoster === 'function') {
+      renderJefaturaRoster(getCachedRoster().map(rowToAgent));
+    }
+    if (typeof renderJefaturaKPIs === 'function') renderJefaturaKPIs();
+    if (typeof renderDynamicRanks === 'function') renderDynamicRanks();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  RANKS & PERMISSIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DEFAULT_RANKS_SEED = [
+  {
+    id: 'capitan',
+    label: 'Capitán de División',
+    level: 5,
+    clearance: 'NIVEL 5 // COMANDO SUPREMO',
+    icon: '👑',
+    color: 'amber',
+    badgeClass: 'rank-badge-capitan',
+    isSystem: true,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: true,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: true,
+      view_tips: true, delete_tips: true,
+      manage_roster: true, change_ranks: true, kick_agents: true, manage_ranks: true, manage_audit: true
+    }
+  },
+  {
+    id: 'teniente',
+    label: 'Teniente de División',
+    level: 4,
+    clearance: 'NIVEL 4 // SUPERVISIÓN OPERATIVA',
+    icon: '⭐',
+    color: 'blue',
+    badgeClass: 'rank-badge-teniente',
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: true,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: true,
+      manage_roster: true, change_ranks: true, kick_agents: true, manage_ranks: false, manage_audit: true
+    }
+  },
+  {
+    id: 'sgt',
+    label: 'Sargento de Detectives',
+    level: 3.5,
+    clearance: 'NIVEL 3.5 // MANDO DE TURNO',
+    icon: '🔷',
+    color: 'cyan',
+    badgeClass: 'rank-badge-sgt',
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: true, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  {
+    id: 'det3',
+    label: 'Detective III',
+    level: 3,
+    clearance: 'NIVEL 3 // ALTO SECRETO',
+    icon: '🔵',
+    color: 'purple',
+    badgeClass: 'rank-badge-det3',
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  {
+    id: 'det2',
+    label: 'Detective II',
+    level: 2,
+    clearance: 'NIVEL 2 // CONFIDENCIAL',
+    icon: '🟢',
+    color: 'emerald',
+    badgeClass: 'rank-badge-det2',
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: false, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  {
+    id: 'det1',
+    label: 'Detective I',
+    level: 1,
+    clearance: 'NIVEL 1 // RESTRINGIDO',
+    icon: '⬜',
+    color: 'slate',
+    badgeClass: 'rank-badge-det1',
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: false, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: false, delete_reports: false,
+      view_tips: false, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  {
+    id: 'aspirante',
+    label: 'Aspirante / Sin Asignar',
+    level: 0,
+    clearance: 'NIVEL 0 // SIN ACCESO',
+    icon: '🔴',
+    color: 'red',
+    badgeClass: 'rank-badge-aspirante',
+    isSystem: true,
+    permissions: {
+      view_cases: true, create_cases: false, edit_cases: false, delete_cases: false,
+      view_reports: false, create_reports: false, edit_reports: false, delete_reports: false,
+      view_tips: false, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  }
+];
+
+function _getDefaultRanksRows() {
+  return DEFAULT_RANKS_SEED.map(rankToRow);
+}
+
+async function _seedDefaultRanksToSupabase() {
+  if (!db) return;
+  try {
+    const rows = _getDefaultRanksRows();
+    await db.from('ranks').upsert(rows, { onConflict: 'id' });
+  } catch (e) {
+    console.warn('[DB] seed default ranks error:', e);
+  }
+}
+
+function rankToRow(rank) {
+  return {
+    id:          rank.id,
+    label:       rank.label || '',
+    level:       Number(rank.level) || 0,
+    clearance:   rank.clearance || '',
+    icon:        rank.icon || '🛡️',
+    color:       rank.color || 'slate',
+    badge_class: rank.badgeClass || rank.badge_class || 'rank-badge-det1',
+    is_system:   Boolean(rank.isSystem || rank.is_system),
+    permissions: typeof rank.permissions === 'string'
+      ? rank.permissions
+      : JSON.stringify(rank.permissions || {})
+  };
+}
+
+function rowToRank(row) {
+  let perms = {};
+  try {
+    perms = typeof row.permissions === 'object' && row.permissions !== null
+      ? row.permissions
+      : JSON.parse(row.permissions || '{}');
+  } catch (e) { perms = {}; }
+
+  return {
+    id:         row.id,
+    label:      row.label || '',
+    level:      Number(row.level) || 0,
+    clearance:  row.clearance || '',
+    icon:       row.icon || '🛡️',
+    color:      row.color || 'slate',
+    badgeClass: row.badge_class || 'rank-badge-det1',
+    isSystem:   Boolean(row.is_system),
+    permissions: perms
+  };
+}
+
+function getCachedRanks() {
+  return CACHE.ranks || [];
+}
+
+async function dbUpsertRank(rank) {
+  const row = rankToRow(rank);
+  const idx = CACHE.ranks.findIndex(r => r.id === rank.id);
+  if (idx >= 0) CACHE.ranks[idx] = { ...CACHE.ranks[idx], ...row };
+  else CACHE.ranks.push(row);
+
+  // Sort by level descending
+  CACHE.ranks.sort((a, b) => Number(b.level) - Number(a.level));
+
+  // Fallback to localStorage
+  try {
+    localStorage.setItem('dd_custom_ranks', JSON.stringify(CACHE.ranks.map(rowToRank)));
+  } catch (e) {}
+
+  if (!db) return;
+  try {
+    const { error } = await db.from('ranks').upsert(row, { onConflict: 'id' });
+    if (error) console.warn('[DB] upsert rank error:', error);
+  } catch (e) {
+    console.warn('[DB] upsert rank exception:', e);
+  }
+}
+
+async function dbDeleteRank(rankId) {
+  CACHE.ranks = CACHE.ranks.filter(r => r.id !== rankId);
+  try {
+    localStorage.setItem('dd_custom_ranks', JSON.stringify(CACHE.ranks.map(rowToRank)));
+  } catch (e) {}
+
+  if (!db) return;
+  try {
+    const { error } = await db.from('ranks').delete().eq('id', rankId);
+    if (error) console.warn('[DB] delete rank error:', error);
+  } catch (e) {
+    console.warn('[DB] delete rank exception:', e);
   }
 }
 
@@ -205,7 +453,6 @@ async function dbUpsertAgent(agent) {
   else CACHE.agents.push(row);
 
   if (!db) {
-    // Fallback: persist all to localStorage
     localStorage.setItem('dd_jefatura_roster', JSON.stringify(getCachedRoster().map(rowToAgent)));
     return;
   }
@@ -240,9 +487,6 @@ function getCachedAuditLogs() {
   return CACHE.auditLogs || [];
 }
 
-/**
- * Maps DB audit row to app log object
- */
 function rowToAuditLog(row) {
   return {
     id:         row.id,
@@ -268,7 +512,6 @@ async function dbInsertAuditLog({ action, agentName, discordTag, detail, command
     timestamp:  new Date().toLocaleString('es-ES')
   };
 
-  // Always add to cache first (top)
   CACHE.auditLogs.unshift(entry);
   if (CACHE.auditLogs.length > 200) CACHE.auditLogs.splice(200);
 
@@ -417,7 +660,6 @@ function getCachedTips() {
 
 async function dbInsertTip(tip) {
   const row = tipToRow(tip);
-  // Add synthetic date for immediate display
   CACHE.tips.unshift({
     ...row,
     created_at: new Date().toISOString()
@@ -433,6 +675,20 @@ async function dbInsertTip(tip) {
   } catch (e) {
     console.warn('[DB] insert tip exception:', e);
     localStorage.setItem('lspd_rp_tips', JSON.stringify(getCachedTips().map(rowToTip)));
+  }
+}
+
+async function dbDeleteTip(tipCode) {
+  CACHE.tips = CACHE.tips.filter(r => r.code !== tipCode);
+  if (!db) {
+    localStorage.setItem('lspd_rp_tips', JSON.stringify(getCachedTips().map(rowToTip)));
+    return;
+  }
+  try {
+    const { error } = await db.from('tips').delete().eq('code', tipCode);
+    if (error) console.warn('[DB] delete tip error:', error);
+  } catch (e) {
+    console.warn('[DB] delete tip exception:', e);
   }
 }
 
@@ -517,4 +773,3 @@ async function dbDeleteCase(caseId) {
     console.warn('[DB] delete case exception:', e);
   }
 }
-

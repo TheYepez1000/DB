@@ -1363,66 +1363,29 @@
           </div>
         </div>
 
-        <!-- TAB CONTENT 3: ESCALAFÓN POLICIAL -->
+        <!-- TAB CONTENT 3: ESCALAFÓN POLICIAL & MATRIZ DE PERMISOS -->
         <div id="tab-content-jefatura-escalafon" class="hidden space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
-            <div class="glass-panel p-5 rounded-xl border border-amber-500/40">
-              <span class="px-2 py-0.5 rounded rank-badge-capitan font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 5 // MANDO SUPREMO</span>
-              <h4 class="text-lg font-black font-gobold text-white">Capitán de División</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Máxima autoridad operativa. Control total del censo policial, expedición de órdenes de allanamiento y designación de jefes de unidad.
-              </p>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-5 rounded-xl border border-slate-800">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-conthrax text-[10px] font-bold">CONTROL DE PRIVILEGIOS</span>
+                <span class="text-xs text-slate-400 font-mono">MATRIZ DINÁMICA DE ACCESOS</span>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-black font-gobold text-white">Escalafón & Matriz de Permisos</h3>
+              <p class="text-xs text-slate-400 font-mono mt-1">Crea nuevos rangos, modifica su jerarquía y asigna permisos granulares (ver, redactar, editar, eliminar) para cada nivel policial.</p>
             </div>
+            <button 
+              id="jefatura-create-rank-btn"
+              onclick="openRankEditor()" 
+              class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-conthrax font-bold text-xs uppercase transition-all shadow-lg flex items-center gap-1.5 shrink-0"
+            >
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Crear Nuevo Rango</span>
+            </button>
+          </div>
 
-            <div class="glass-panel p-5 rounded-xl border border-blue-500/40">
-              <span class="px-2 py-0.5 rounded rank-badge-teniente font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 4 // SUBMANDO</span>
-              <h4 class="text-lg font-black font-gobold text-white">Teniente de División</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Supervisión directa de las unidades especializadas (RHD, GND, CSI). Gestión de personal, ascensos a detectives y auditorías disciplinarias.
-              </p>
-            </div>
-
-            <div class="glass-panel p-5 rounded-xl border border-cyan-500/40">
-              <span class="px-2 py-0.5 rounded rank-badge-sgt font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 3.5 // SUPERVISIÓN</span>
-              <h4 class="text-lg font-black font-gobold text-white">Sargento de Detectives</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Coordinador de turno. Asignación inmediata de casos a detectives de campo, control de custodia de pruebas e inspección ocular.
-              </p>
-            </div>
-
-            <div class="glass-panel p-5 rounded-xl border border-purple-500/40">
-              <span class="px-2 py-0.5 rounded rank-badge-det3 font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 3 // ESPECIALISTA</span>
-              <h4 class="text-lg font-black font-gobold text-white">Detective III</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Líder de casos complejos y operaciones encubiertas de infiltración. Autorizado para redactar solicitudes judiciales prioritarias.
-              </p>
-            </div>
-
-            <div class="glass-panel p-5 rounded-xl border border-emerald-500/40">
-              <span class="px-2 py-0.5 rounded rank-badge-det2 font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 2 // OPERATIVO</span>
-              <h4 class="text-lg font-black font-gobold text-white">Detective II</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Investigador de campo consolidado. Interrogatorio de sospechosos, balística, escuchas telefónicas autorizadas y actas de decomiso.
-              </p>
-            </div>
-
-            <div class="glass-panel p-5 rounded-xl border border-slate-700">
-              <span class="px-2 py-0.5 rounded rank-badge-det1 font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 1 // INVESTIGADOR JUNIOR</span>
-              <h4 class="text-lg font-black font-gobold text-white">Detective I</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Detective de primera asignación. Apertura de expedientes estándar, archivo de indicios y acompañamiento a detectives veteranos.
-              </p>
-            </div>
-
-            <div class="glass-panel p-5 rounded-xl border border-red-500/30 col-span-full">
-              <span class="px-2 py-0.5 rounded rank-badge-aspirante font-conthrax text-[10px] font-bold block mb-2 w-max">NIVEL 0 // POR DEFECTO</span>
-              <h4 class="text-lg font-black font-gobold text-white">Aspirante / Cuenta Sin Asignar</h4>
-              <p class="text-xs text-slate-400 font-mono mt-1 leading-relaxed">
-                Estado asignado por defecto a todo usuario nuevo al iniciar sesión con Discord. No cuenta con acceso a informes ni normativas hasta que un Mando apruebe su ficha desde el Censo de Personal.
-              </p>
-            </div>
-
+          <div id="jefatura-ranks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Injected dynamically via renderDynamicRanks() -->
           </div>
         </div>
 
@@ -1680,11 +1643,19 @@
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+        <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <span class="text-[10px] text-slate-500 font-mono">SELLO DIGITAL CJIS // VALIDEZ JUDICIAL FIVE-M RP</span>
-          <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-conthrax font-bold transition-colors flex items-center gap-1.5">
-            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Informe
-          </button>
+          <div class="flex items-center gap-2">
+            <button id="view-conf-edit-btn" onclick="openEditConfidentialReportModal()" class="hidden px-3.5 py-2 rounded-lg bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/50 text-xs font-conthrax font-bold transition-all items-center gap-1.5 shadow">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Modificar
+            </button>
+            <button id="view-conf-delete-btn" onclick="deleteConfidentialReport()" class="hidden px-3.5 py-2 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-700/50 text-xs font-conthrax font-bold transition-all items-center gap-1.5 shadow">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-conthrax font-bold transition-colors flex items-center gap-1.5">
+              <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Informe
+            </button>
+          </div>
         </div>
 
       </div>
@@ -1712,6 +1683,7 @@
       </div>
 
       <form onsubmit="saveNewConfidentialReport(event)" class="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scroll font-conthrax text-xs">
+        <input type="hidden" id="edit-conf-id" value="">
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -2307,6 +2279,325 @@
             <span>Incorporar al Censo</span>
           </button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTIÓN DE RANGO & MATRIZ DE PERMISOS -->
+  <div id="rank-editor-modal" class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="relative w-full max-w-3xl bg-slate-900 border border-amber-500/50 rounded-2xl shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-5 sm:p-6 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 text-xl" id="rank-editor-header-icon">
+            👑
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base sm:text-xl font-black font-gobold text-white tracking-wide" id="rank-editor-modal-title">
+                CONFIGURAR RANGO & PERMISOS
+              </h3>
+              <span id="rank-editor-system-badge" class="hidden px-2 py-0.5 rounded text-[9px] font-conthrax font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                SISTEMA PROTEGIDO
+              </span>
+            </div>
+            <p class="text-[10px] font-conthrax text-slate-400">Control de privilegios operativos para la Detective Division</p>
+          </div>
+        </div>
+        <button onclick="closeModal('rank-editor-modal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body / Form -->
+      <form onsubmit="saveRankEditor(event)" class="p-5 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scroll font-conthrax text-xs">
+        <input type="hidden" id="rank-edit-is-new" value="false">
+        <input type="hidden" id="rank-edit-is-system" value="false">
+
+        <!-- Basic Rank Attributes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-slate-950/70 p-4 rounded-xl border border-slate-800">
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Identificador Único (Slug) *</label>
+            <input 
+              type="text" 
+              id="rank-edit-id" 
+              required
+              placeholder="Ej: inspector_jefe" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500 font-mono"
+            >
+            <span class="text-[9px] text-slate-500 font-mono">Sin espacios ni acentos</span>
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nombre del Rango *</label>
+            <input 
+              type="text" 
+              id="rank-edit-label" 
+              required
+              placeholder="Ej: Inspector Jefe" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+            >
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel Jerárquico (0 a 5) *</label>
+            <input 
+              type="number" 
+              id="rank-edit-level" 
+              step="0.1" 
+              min="0" 
+              max="5"
+              required
+              placeholder="3.5" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-400 font-bold text-xs focus:outline-none focus:border-amber-500 font-mono"
+            >
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Icono / Emoji</label>
+            <input 
+              type="text" 
+              id="rank-edit-icon" 
+              maxlength="4"
+              placeholder="👑 o ⭐ o 🛡️" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500 text-center text-base"
+            >
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Estilo de Placa Visual</label>
+            <select 
+              id="rank-edit-badgeclass" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500"
+            >
+              <option value="rank-badge-capitan">Oro Ámbar (Mando Supremo)</option>
+              <option value="rank-badge-teniente">Azul (Submando)</option>
+              <option value="rank-badge-sgt">Cian (Supervisión)</option>
+              <option value="rank-badge-det3">Púrpura (Especialista)</option>
+              <option value="rank-badge-det2">Esmeralda (Operativo)</option>
+              <option value="rank-badge-det1">Pizarra (Junior)</option>
+              <option value="rank-badge-aspirante">Rojo (Restringido / Aspirante)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Texto de Acreditación</label>
+            <input 
+              type="text" 
+              id="rank-edit-clearance" 
+              placeholder="NIVEL 3 // ALTO SECRETO" 
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-xs focus:outline-none focus:border-amber-500"
+            >
+          </div>
+        </div>
+
+        <!-- Permissions Matrix Header & Fast Buttons -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-800">
+          <div>
+            <h4 class="text-sm font-bold font-gobold text-white tracking-wide">MATRIZ GRANULAR DE PERMISOS</h4>
+            <p class="text-[10px] text-slate-400 font-mono">Activa o restringe individualmente cada capacidad operativa</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <button type="button" onclick="setRankPermissionsAll(true)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition-colors">
+              Marcar Todos
+            </button>
+            <button type="button" onclick="setRankPermissionsAll(false)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-colors">
+              Desmarcar
+            </button>
+            <button type="button" onclick="setRankPermissionsDetectivePreset()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 transition-colors">
+              Plantilla Detective
+            </button>
+          </div>
+        </div>
+
+        <!-- Permissions Sections Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Category 1: Expedientes -->
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center gap-2 text-amber-400 font-bold text-xs pb-1 border-b border-slate-800">
+              <i data-lucide="folder" class="w-4 h-4"></i>
+              <span>Expedientes Policiales</span>
+            </div>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-view_cases" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Ver Expedientes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Consultar casos abiertos y sumarios</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-create_cases" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Abrir Expediente (Crear)</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Registrar nuevas investigaciones</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-edit_cases" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Modificar Expedientes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Editar evidencias, sospechosos y estado</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-delete_cases" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-red-500 focus:ring-0">
+              <div>
+                <span class="text-red-300 font-semibold block">Eliminar Expedientes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Borrar casos permanentemente</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Category 2: Informes Confidenciales -->
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center gap-2 text-red-400 font-bold text-xs pb-1 border-b border-slate-800">
+              <i data-lucide="file-lock-2" class="w-4 h-4"></i>
+              <span>Informes Confidenciales</span>
+            </div>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-view_reports" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Acceso a Informes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Ver minutas, allanamientos y escuchas</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-create_reports" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Redactar Informe (Crear)</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Archivar nuevas diligencias secretas</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-edit_reports" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Modificar Informes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Corregir sumarios e indicios clasificados</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-delete_reports" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-red-500 focus:ring-0">
+              <div>
+                <span class="text-red-300 font-semibold block">Eliminar Informes</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Destruir informes clasificados</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Category 3: Denuncias Anónimas -->
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs pb-1 border-b border-slate-800">
+              <i data-lucide="radio" class="w-4 h-4"></i>
+              <span>Denuncias & Pistas Ciudadanas</span>
+            </div>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-view_tips" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Ver Buzón de Pistas</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Leer pistas recibidas de ciudadanos</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-delete_tips" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-red-500 focus:ring-0">
+              <div>
+                <span class="text-red-300 font-semibold block">Eliminar / Descartar Pistas</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Borrar denuncias falsas o resueltas</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Category 4: Jefatura de División -->
+          <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs pb-1 border-b border-slate-800">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+              <span>Mando & Jefatura de División</span>
+            </div>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-manage_roster" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Gestionar Censo Policial</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Modificar nombres IC, placas y divisiones</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-change_ranks" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Ascender / Degradar</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Cambiar rango a cualquier miembro</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-kick_agents" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-red-500 focus:ring-0">
+              <div>
+                <span class="text-red-300 font-semibold block">Expulsar Oficiales</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Dar de baja definitiva y revocar acceso</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-manage_ranks" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
+              <div>
+                <span class="text-amber-300 font-semibold block">Administrar Rangos & Permisos</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Crear, editar, configurar permisos y borrar</span>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
+              <input type="checkbox" id="perm-manage_audit" class="mt-0.5 rounded border-slate-700 bg-slate-950 text-slate-300 focus:ring-0">
+              <div>
+                <span class="text-slate-200 font-semibold block">Historial de Auditoría</span>
+                <span class="text-[10px] text-slate-500 font-mono block">Consultar y limpiar logs de decisiones</span>
+              </div>
+            </label>
+          </div>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+          <button 
+            type="button" 
+            id="rank-editor-delete-btn"
+            onclick="deleteRankFromModal()" 
+            class="px-4 py-2.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-700/50 text-xs uppercase font-bold transition-colors flex items-center gap-1.5"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Eliminar Rango</span>
+          </button>
+
+          <div class="flex items-center gap-2.5 ml-auto">
+            <button 
+              type="button" 
+              onclick="closeModal('rank-editor-modal')" 
+              class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs uppercase transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black text-xs uppercase font-bold transition-all shadow-lg flex items-center gap-1.5"
+            >
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Guardar Rango y Permisos</span>
+            </button>
+          </div>
+        </div>
+
       </form>
     </div>
   </div>

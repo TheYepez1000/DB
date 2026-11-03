@@ -334,6 +334,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupScrollSpy();
   setupReportEditor();
   setupJefaturaSearch();
+  renderDynamicRanks();
 });
 
 // --- DISCORD OAUTH2 AUTHENTICATION & ROLE VERIFICATION ENGINE ---
@@ -424,7 +425,7 @@ async function initDiscordAuth() {
   if (saved) {
     try {
       currentDiscordUser = JSON.parse(saved);
-      isDetectiveAuth = Boolean(currentDiscordUser && currentDiscordUser.isAuthorizedDetective);
+      isDetectiveAuth = Boolean(currentDiscordUser && hasPermission('view_reports'));
     } catch (e) {
       currentDiscordUser = null;
       isDetectiveAuth = false;
@@ -501,15 +502,15 @@ async function fetchDiscordUserProfile(token) {
         role: existingAgent.icName || rankMeta.label,
         rankKey: existingAgent.rank,
         rankLevel: rankMeta.level,
-        isAuthorizedDetective: rankMeta.level >= 1,
-        isHighCommand: rankMeta.level >= 4,
+        isAuthorizedDetective: hasPermission('view_reports') || rankMeta.level >= 1,
+        isHighCommand: hasPermission('manage_roster') || hasPermission('manage_ranks') || rankMeta.level >= 4,
         clearance: rankMeta.clearance,
         avatar: avatarUrl,
         oauthVerified: true,
         rosterAgent: existingAgent,
         authAt: new Date().toLocaleString('es-ES')
       };
-      isDetectiveAuth = rankMeta.level >= 1;
+      isDetectiveAuth = hasPermission('view_reports');
     } else {
       // New user — assign default Aspirante rank with no access, and auto-register them
       const newAgent = {
@@ -647,8 +648,25 @@ function updateDiscordAuthUI() {
     }
   }
 
+  // Show/Hide granular action buttons throughout the entire interface
+  const newCaseBtn = document.querySelector('button[onclick="openReportEditor()"]');
+  if (newCaseBtn) newCaseBtn.style.display = hasPermission('create_cases') ? 'inline-flex' : 'none';
+
+  const newConfBtn = document.querySelector('button[onclick="openNewConfidentialReportModal()"]');
+  if (newConfBtn) newConfBtn.style.display = hasPermission('create_reports') ? 'inline-flex' : 'none';
+
+  const createRankBtn = document.getElementById('jefatura-create-rank-btn');
+  if (createRankBtn) createRankBtn.style.display = hasPermission('manage_ranks') ? 'inline-flex' : 'none';
+
+  const addAgentBtn = document.querySelector('button[onclick="openAddAgentModal()"]');
+  if (addAgentBtn) addAgentBtn.style.display = hasPermission('manage_roster') ? 'inline-flex' : 'none';
+
+  const clearAuditBtn = document.querySelector('button[onclick="clearAuditLogs()"]');
+  if (clearAuditBtn) clearAuditBtn.style.display = hasPermission('manage_audit') ? 'inline-flex' : 'none';
+
   // Update Jefatura section UI
   updateJefaturaUI();
+  renderDynamicRanks();
 }
 
 window.openDiscordAuthModal = function() {
@@ -675,10 +693,10 @@ window.authenticateWithBotRole = function(roleKey) {
     ...profile,
     rankKey: roleKey,
     rankLevel: profile.rankLevel,
-    isHighCommand: profile.rankLevel >= 4,
+    isHighCommand: hasPermission('manage_roster') || hasPermission('manage_ranks') || profile.rankLevel >= 4,
     authAt: new Date().toLocaleString('es-ES')
   };
-  isDetectiveAuth = profile.isAuthorizedDetective;
+  isDetectiveAuth = hasPermission('view_reports') || profile.isAuthorizedDetective;
   localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
 
   updateDiscordAuthUI();
@@ -719,10 +737,18 @@ function setupReportEditor() {
 }
 
 window.openReportEditor = function(caseId = null) {
-  if (!isDetectiveAuth) {
-    showToast("🔒 Debes autenticarte con tu Discord de oficial para modificar informes.");
-    openDiscordAuthModal();
-    return;
+  if (caseId) {
+    if (!hasPermission('edit_cases')) {
+      showToast("🔒 No ostentas permiso para modificar expedientes policiales.");
+      audioEngine.playRadioBeep();
+      return;
+    }
+  } else {
+    if (!hasPermission('create_cases')) {
+      showToast("🔒 No ostentas permiso para abrir nuevos expedientes policiales.");
+      audioEngine.playRadioBeep();
+      return;
+    }
   }
 
   audioEngine.playKeyClick();
@@ -738,7 +764,13 @@ window.openReportEditor = function(caseId = null) {
 
   if (c) {
     if (headerTitle) headerTitle.textContent = `MODIFICAR INFORME: ${c.id}`;
-    if (deleteBtn) deleteBtn.classList.remove("hidden");
+    if (deleteBtn) {
+      if (hasPermission('delete_cases')) {
+        deleteBtn.classList.remove("hidden");
+      } else {
+        deleteBtn.classList.add("hidden");
+      }
+    }
 
     document.getElementById("edit-case-id").value = c.id;
     document.getElementById("edit-case-title").value = c.title;
@@ -820,6 +852,18 @@ function saveReportChanges() {
   const cases = getActiveCasesList();
   const existingIdx = cases.findIndex(item => item.id === id);
 
+  if (existingIdx >= 0) {
+    if (!hasPermission('edit_cases')) {
+      showToast("⛔ No ostentas permiso para modificar este expediente.");
+      return;
+    }
+  } else {
+    if (!hasPermission('create_cases')) {
+      showToast("⛔ No ostentas permiso para abrir nuevos expedientes.");
+      return;
+    }
+  }
+
   const updatedCase = {
     id,
     title,
@@ -840,11 +884,14 @@ function saveReportChanges() {
   if (existingIdx >= 0) {
     cases[existingIdx] = updatedCase;
     showToast(`✅ Expediente ${id} modificado y sincronizado.`);
+    addAuditLog("EXPEDIENTE MODIFICADO", id, title, `Expediente actualizado por ${currentDiscordUser ? currentDiscordUser.username : 'Oficial'}`, currentDiscordUser ? currentDiscordUser.username : "Sistema");
   } else {
     cases.unshift(updatedCase);
     showToast(`✅ Nuevo expediente ${id} registrado en el archivo policial.`);
+    addAuditLog("EXPEDIENTE CREADO", id, title, `Nueva investigación abierta en ${division}`, currentDiscordUser ? currentDiscordUser.username : "Sistema");
   }
 
+  dbUpsertCase(updatedCase);
   saveCasesList(cases);
   audioEngine.playAlertSound();
   closeReportEditor();
@@ -858,19 +905,30 @@ function saveReportChanges() {
 }
 
 window.deleteReportCase = function() {
+  if (!hasPermission('delete_cases')) {
+    showToast("⛔ No ostentas permiso para eliminar expedientes policiales.");
+    audioEngine.playRadioBeep();
+    return;
+  }
   if (!currentEditingCaseId) return;
   if (!confirm(`¿Está seguro de eliminar permanentemente el expediente ${currentEditingCaseId}?`)) return;
 
   dbDeleteCase(currentEditingCaseId);
   const cases = getActiveCasesList().filter(item => item.id !== currentEditingCaseId);
-  // Sync updated list
-  cases.forEach(c => dbUpsertCase(c));
+  saveCasesList(cases);
+
+  addAuditLog("EXPEDIENTE ELIMINADO", currentEditingCaseId, "", "Expediente purgado del archivo judicial", currentDiscordUser ? currentDiscordUser.username : "Sistema");
 
   audioEngine.playRadioBeep();
   closeReportEditor();
   closeModal("case-modal");
   renderCases(getActiveCasesList());
   showToast(`🗑️ Expediente ${currentEditingCaseId} eliminado del archivo.`);
+};
+
+window.deleteCaseFromModal = function(caseId) {
+  currentEditingCaseId = caseId;
+  deleteReportCase();
 };
 
 // --- SIDEBAR DOCK & MOBILE CONTROLS (INSPIRADO EN SAPD PORTAL) ---
@@ -1037,7 +1095,7 @@ function renderCases(casesToRender) {
           <span>${c.leadDetective}</span>
         </div>
         <div class="flex items-center gap-2">
-          ${isDetectiveAuth ? `
+          ${hasPermission('edit_cases') ? `
             <button onclick="event.stopPropagation(); openReportEditor('${c.id}')" class="px-2.5 py-1 rounded bg-blue-600/30 hover:bg-blue-600 border border-blue-500/50 text-blue-300 hover:text-white font-conthrax text-[10px] transition-colors flex items-center gap-1 shadow">
               <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
             </button>
@@ -1214,9 +1272,14 @@ function openCaseModal(caseId) {
         <span>Acceso restringido bajo Ordenanza Penal 10-80</span>
       </div>
       <div class="flex items-center gap-2.5">
-        ${isDetectiveAuth ? `
+        ${hasPermission('edit_cases') ? `
           <button onclick="openReportEditor('${c.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider font-conthrax rounded-lg transition-colors flex items-center gap-1.5 shadow">
             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Modificar Informe
+          </button>
+        ` : ''}
+        ${hasPermission('delete_cases') ? `
+          <button onclick="deleteCaseFromModal('${c.id}')" class="px-3.5 py-2 bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-700/50 text-xs uppercase tracking-wider font-conthrax rounded-lg transition-colors flex items-center gap-1.5 shadow">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
           </button>
         ` : ''}
         <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-lg transition-colors flex items-center gap-1.5">
@@ -1634,12 +1697,15 @@ function renderConfidentialReports(reports) {
   lucide.createIcons();
 }
 
+let currentViewingConfidentialReportId = null;
+
 window.openConfidentialReport = function(reportId) {
   audioEngine.playKeyClick();
   const all = getActiveConfidentialReports();
   const report = all.find(r => r.id === reportId);
   if (!report) return;
 
+  currentViewingConfidentialReportId = reportId;
   const modal = document.getElementById("confidential-report-modal");
   if (!modal) return;
 
@@ -1650,6 +1716,11 @@ window.openConfidentialReport = function(reportId) {
   document.getElementById("view-conf-author").textContent = report.leadDetective;
   document.getElementById("view-conf-date").textContent = report.date;
   document.getElementById("view-conf-summary").textContent = report.summary;
+
+  const editBtn = document.getElementById("view-conf-edit-btn");
+  const deleteBtn = document.getElementById("view-conf-delete-btn");
+  if (editBtn) editBtn.classList.toggle("hidden", !hasPermission('edit_reports'));
+  if (deleteBtn) deleteBtn.classList.toggle("hidden", !hasPermission('delete_reports'));
 
   const evidenceContainer = document.getElementById("view-conf-evidence");
   if (evidenceContainer) {
@@ -1670,21 +1741,101 @@ window.openConfidentialReport = function(reportId) {
 };
 
 window.openNewConfidentialReportModal = function() {
-  if (!isDetectiveAuth) {
-    showToast("🔒 Acceso exclusivo para detectives verificados por Discord.");
-    openDiscordAuthModal();
+  if (!hasPermission('create_reports')) {
+    showToast("🔒 No ostentas permiso para redactar informes clasificados.");
+    audioEngine.playRadioBeep();
     return;
   }
   audioEngine.playKeyClick();
   const modal = document.getElementById("new-confidential-report-modal");
   if (modal) {
+    // Reset to create mode
+    const editIdInput = document.getElementById("edit-conf-id");
+    if (editIdInput) editIdInput.value = "";
+    document.getElementById("new-conf-title").value = "";
+    document.getElementById("new-conf-summary").value = "";
+    document.getElementById("new-conf-evidence").value = "";
+    const titleHeader = document.querySelector("#new-confidential-report-modal h3");
+    if (titleHeader) titleHeader.textContent = "REDACTAR INFORME CLASIFICADO";
+
     modal.classList.remove("hidden");
     lucide.createIcons();
   }
 };
 
+window.openEditConfidentialReportModal = function() {
+  if (!hasPermission('edit_reports')) {
+    showToast("⛔ No tienes permiso para modificar informes clasificados.");
+    audioEngine.playRadioBeep();
+    return;
+  }
+  if (!currentViewingConfidentialReportId) return;
+  const all = getActiveConfidentialReports();
+  const report = all.find(r => r.id === currentViewingConfidentialReportId);
+  if (!report) return;
+
+  closeModal("confidential-report-modal");
+  const modal = document.getElementById("new-confidential-report-modal");
+  if (!modal) return;
+
+  const editIdInput = document.getElementById("edit-conf-id");
+  if (editIdInput) editIdInput.value = report.id;
+
+  document.getElementById("new-conf-title").value = report.title || "";
+  document.getElementById("new-conf-category").value = report.category || "vigilancia";
+  document.getElementById("new-conf-summary").value = report.summary || "";
+  document.getElementById("new-conf-evidence").value = (report.evidence || []).join("\n");
+
+  const titleHeader = document.querySelector("#new-confidential-report-modal h3");
+  if (titleHeader) titleHeader.textContent = `MODIFICAR INFORME: ${report.id}`;
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.deleteConfidentialReport = function() {
+  if (!hasPermission('delete_reports')) {
+    showToast("⛔ No ostentas permiso para eliminar informes clasificados.");
+    audioEngine.playRadioBeep();
+    return;
+  }
+  if (!currentViewingConfidentialReportId) return;
+  if (!confirm(`¿Está seguro de destruir y eliminar permanentemente el informe ${currentViewingConfidentialReportId}?`)) return;
+
+  dbDeleteReport(currentViewingConfidentialReportId);
+  const reports = getActiveConfidentialReports().filter(r => r.id !== currentViewingConfidentialReportId);
+  saveConfidentialReports(reports);
+
+  addAuditLog(
+    "INFORME ELIMINADO",
+    currentViewingConfidentialReportId,
+    "",
+    "Informe clasificado destruido del archivo",
+    currentDiscordUser ? currentDiscordUser.username : "Sistema"
+  );
+
+  audioEngine.playRadioBeep();
+  closeModal("confidential-report-modal");
+  renderConfidentialReports(getActiveConfidentialReports());
+  showToast(`🗑️ Informe clasificado ${currentViewingConfidentialReportId} eliminado del archivo.`);
+};
+
 window.saveNewConfidentialReport = function(event) {
   if (event) event.preventDefault();
+  const editId = document.getElementById("edit-conf-id")?.value.trim();
+
+  if (editId) {
+    if (!hasPermission('edit_reports')) {
+      showToast("⛔ No ostentas permiso para modificar informes clasificados.");
+      return;
+    }
+  } else {
+    if (!hasPermission('create_reports')) {
+      showToast("⛔ No ostentas permiso para redactar informes clasificados.");
+      return;
+    }
+  }
+
   const title = document.getElementById("new-conf-title")?.value.trim();
   const category = document.getElementById("new-conf-category")?.value || "vigilancia";
   const summary = document.getElementById("new-conf-summary")?.value.trim();
@@ -1697,29 +1848,45 @@ window.saveNewConfidentialReport = function(event) {
 
   const evidence = evidenceRaw ? evidenceRaw.split("\n").map(l => l.trim()).filter(Boolean) : [];
   const reports = getActiveConfidentialReports();
-  const newId = "INF-CONF-2026-" + String(reports.length + 1).padStart(2, '0');
 
-  const newReport = {
-    id: newId,
-    title,
-    category,
-    status: "REGISTRADO // EN REVISIÓN",
-    statusType: "active",
-    clearance: currentDiscordUser ? currentDiscordUser.clearance : "NIVEL 2 (CONFIDENCIAL)",
-    leadDetective: currentDiscordUser ? `${currentDiscordUser.username} (${currentDiscordUser.badge})` : "Det. Asignado",
-    date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
-    summary,
-    evidence
-  };
+  if (editId) {
+    const existingIdx = reports.findIndex(r => r.id === editId);
+    if (existingIdx >= 0) {
+      reports[existingIdx] = {
+        ...reports[existingIdx],
+        title,
+        category,
+        summary,
+        evidence
+      };
+      dbUpsertReport(reports[existingIdx]);
+      addAuditLog("INFORME MODIFICADO", editId, title, "Informe clasificado modificado y actualizado", currentDiscordUser ? currentDiscordUser.username : "Sistema");
+      showToast(`✅ Informe confidencial ${editId} actualizado con éxito.`);
+    }
+  } else {
+    const newId = "INF-CONF-2026-" + String(reports.length + 1).padStart(2, '0');
+    const newReport = {
+      id: newId,
+      title,
+      category,
+      status: "REGISTRADO // EN REVISIÓN",
+      statusType: "active",
+      clearance: currentDiscordUser ? currentDiscordUser.clearance : "NIVEL 2 (CONFIDENCIAL)",
+      leadDetective: currentDiscordUser ? `${currentDiscordUser.username} (${currentDiscordUser.badge})` : "Det. Asignado",
+      date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
+      summary,
+      evidence
+    };
+    reports.unshift(newReport);
+    dbUpsertReport(newReport);
+    addAuditLog("INFORME CREADO", newId, title, "Nuevo informe clasificado archivado", currentDiscordUser ? currentDiscordUser.username : "Sistema");
+    showToast(`✅ Informe confidencial ${newId} archivado con éxito.`);
+  }
 
-  reports.unshift(newReport);
-  dbUpsertReport(newReport);
   saveConfidentialReports(reports);
-
   audioEngine.playAlertSound();
   closeModal("new-confidential-report-modal");
   renderConfidentialReports(getActiveConfidentialReports());
-  showToast(`✅ Informe confidencial ${newId} archivado con éxito.`);
 };
 
 function renderAuthorizedTipsInbox() {
@@ -1743,7 +1910,14 @@ function renderAuthorizedTipsInbox() {
     <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono space-y-2">
       <div class="flex items-center justify-between">
         <span class="text-red-400 font-conthrax font-bold">${t.code}</span>
-        <span class="text-slate-400">${t.date}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">${t.date}</span>
+          ${hasPermission('delete_tips') ? `
+            <button onclick="deleteTip('${t.code}')" class="p-1 rounded hover:bg-red-950/60 text-slate-500 hover:text-red-400 transition-colors" title="Descartar / Eliminar Pista">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          ` : ''}
+        </div>
       </div>
       <p class="text-white font-semibold text-sm">${t.location} <span class="text-amber-400 font-conthrax text-xs">(${t.category.toUpperCase()})</span></p>
       <p class="text-slate-300 bg-slate-900 p-3 rounded-lg leading-relaxed">${t.desc}</p>
@@ -1756,6 +1930,20 @@ function renderAuthorizedTipsInbox() {
 
   lucide.createIcons();
 }
+
+window.deleteTip = function(tipCode) {
+  if (!hasPermission('delete_tips')) {
+    showToast("⛔ No ostentas permiso para eliminar pistas ciudadanas.");
+    audioEngine.playRadioBeep();
+    return;
+  }
+  if (!confirm(`¿Eliminar o descartar la pista ${tipCode}?`)) return;
+
+  dbDeleteTip(tipCode);
+  audioEngine.playRadioBeep();
+  renderAuthorizedTipsInbox();
+  showToast(`🗑️ Pista ${tipCode} descartada y eliminada.`);
+};
 
 // --- AUDIO UI TOGGLE ---
 function setupAudioControls() {
@@ -1824,19 +2012,201 @@ function showToast(message) {
 
 
 // =============================================================================
-// --- JEFATURA DE DIVISIÓN // HIGH COMMAND MANAGEMENT ENGINE ---
+// --- JEFATURA DE DIVISIÓN // RANGOS DINÁMICOS & MATRIZ DE PERMISOS ---
 // =============================================================================
 
-// --- RANK METADATA TABLE ---
-const RANK_META = {
-  capitan:   { label: "Capitán de División",         level: 5, clearance: "NIVEL 5 // COMANDO SUPREMO",       cssClass: "rank-badge-capitan",   icon: "👑", color: "amber"  },
-  teniente:  { label: "Teniente de División",         level: 4, clearance: "NIVEL 4 // SUPERVISIÓN OPERATIVA", cssClass: "rank-badge-teniente",  icon: "⭐", color: "blue"   },
-  sgt:       { label: "Sargento de Detectives",       level: 3.5, clearance: "NIVEL 3.5 // MANDO DE TURNO",   cssClass: "rank-badge-sgt",       icon: "🔷", color: "cyan"   },
-  det3:      { label: "Detective III",                level: 3, clearance: "NIVEL 3 // ALTO SECRETO",          cssClass: "rank-badge-det3",      icon: "🔵", color: "purple" },
-  det2:      { label: "Detective II",                 level: 2, clearance: "NIVEL 2 // CONFIDENCIAL",          cssClass: "rank-badge-det2",      icon: "🟢", color: "emerald"},
-  det1:      { label: "Detective I",                  level: 1, clearance: "NIVEL 1 // RESTRINGIDO",           cssClass: "rank-badge-det1",      icon: "⬜", color: "slate"  },
-  aspirante: { label: "Aspirante / Sin Asignar",      level: 0, clearance: "NIVEL 0 // SIN ACCESO",            cssClass: "rank-badge-aspirante", icon: "🔴", color: "red"    }
+// --- DEFAULT RANKS DEFINITION (con matriz completa de 15 permisos) ---
+const DEFAULT_RANKS = {
+  capitan: {
+    id: "capitan",
+    label: "Capitán de División",
+    level: 5,
+    clearance: "NIVEL 5 // COMANDO SUPREMO",
+    cssClass: "rank-badge-capitan",
+    icon: "👑",
+    color: "amber",
+    isSystem: true,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: true,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: true,
+      view_tips: true, delete_tips: true,
+      manage_roster: true, change_ranks: true, kick_agents: true, manage_ranks: true, manage_audit: true
+    }
+  },
+  teniente: {
+    id: "teniente",
+    label: "Teniente de División",
+    level: 4,
+    clearance: "NIVEL 4 // SUPERVISIÓN OPERATIVA",
+    cssClass: "rank-badge-teniente",
+    icon: "⭐",
+    color: "blue",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: true,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: true,
+      manage_roster: true, change_ranks: true, kick_agents: true, manage_ranks: false, manage_audit: true
+    }
+  },
+  sgt: {
+    id: "sgt",
+    label: "Sargento de Detectives",
+    level: 3.5,
+    clearance: "NIVEL 3.5 // MANDO DE TURNO",
+    cssClass: "rank-badge-sgt",
+    icon: "🔷",
+    color: "cyan",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: true, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  det3: {
+    id: "det3",
+    label: "Detective III",
+    level: 3,
+    clearance: "NIVEL 3 // ALTO SECRETO",
+    cssClass: "rank-badge-det3",
+    icon: "🔵",
+    color: "purple",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  det2: {
+    id: "det2",
+    label: "Detective II",
+    level: 2,
+    clearance: "NIVEL 2 // CONFIDENCIAL",
+    cssClass: "rank-badge-det2",
+    icon: "🟢",
+    color: "emerald",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: false, delete_reports: false,
+      view_tips: true, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  det1: {
+    id: "det1",
+    label: "Detective I",
+    level: 1,
+    clearance: "NIVEL 1 // RESTRINGIDO",
+    cssClass: "rank-badge-det1",
+    icon: "⬜",
+    color: "slate",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: false, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: false, delete_reports: false,
+      view_tips: false, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  },
+  aspirante: {
+    id: "aspirante",
+    label: "Aspirante / Sin Asignar",
+    level: 0,
+    clearance: "NIVEL 0 // SIN ACCESO",
+    cssClass: "rank-badge-aspirante",
+    icon: "🔴",
+    color: "red",
+    isSystem: true,
+    permissions: {
+      view_cases: true, create_cases: false, edit_cases: false, delete_cases: false,
+      view_reports: false, create_reports: false, edit_reports: false, delete_reports: false,
+      view_tips: false, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  }
 };
+
+function getDynamicRanks() {
+  const cached = (typeof getCachedRanks === 'function') ? getCachedRanks() : [];
+  if (cached && cached.length > 0) {
+    const map = {};
+    cached.forEach(row => {
+      const rank = (typeof rowToRank === 'function') ? rowToRank(row) : row;
+      map[rank.id] = {
+        ...rank,
+        cssClass: rank.badgeClass || rank.badge_class || 'rank-badge-det1'
+      };
+    });
+    return map;
+  }
+  const local = localStorage.getItem("dd_custom_ranks");
+  if (local) {
+    try {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const map = {};
+        parsed.forEach(r => { map[r.id] = { ...r, cssClass: r.badgeClass || r.cssClass || 'rank-badge-det1' }; });
+        return map;
+      }
+    } catch(e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_RANKS));
+}
+
+function getRankList() {
+  const map = getDynamicRanks();
+  return Object.values(map).sort((a, b) => Number(b.level) - Number(a.level));
+}
+
+// Proxy dinámico para compatibilidad total con cualquier RANK_META[clave]
+const RANK_META = new Proxy({}, {
+  get(target, prop) {
+    const ranks = getDynamicRanks();
+    return ranks[prop] || ranks["aspirante"] || DEFAULT_RANKS["aspirante"];
+  },
+  has(target, prop) {
+    return prop in getDynamicRanks();
+  },
+  ownKeys(target) {
+    return Object.keys(getDynamicRanks());
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    return {
+      value: getDynamicRanks()[prop],
+      enumerable: true,
+      configurable: true
+    };
+  }
+});
+
+// Verificador universal de permisos granulares
+function hasPermission(permKey) {
+  if (!currentDiscordUser) return false;
+  // Capitán de División o Nivel 5 ostenta permiso total absoluto
+  if (currentDiscordUser.rankKey === 'capitan' || (currentDiscordUser.rankLevel !== undefined && currentDiscordUser.rankLevel >= 5)) {
+    return true;
+  }
+  const ranks = getDynamicRanks();
+  const rank = ranks[currentDiscordUser.rankKey];
+  if (!rank || !rank.permissions) return false;
+  return Boolean(rank.permissions[permKey]);
+}
+
+function populateRankSelect(selectId, selectedRankId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const ranks = getRankList();
+  sel.innerHTML = ranks.map(r => `
+    <option value="${r.id}" ${r.id === selectedRankId ? 'selected' : ''}>
+      ${r.icon || '🛡️'} ${r.label} (Nivel ${r.level})
+    </option>
+  `).join("");
+}
 
 // Status CSS helper
 function getStatusBadge(status) {
@@ -1950,7 +2320,6 @@ function getAuditLogs() {
 }
 
 function saveAuditLogs(logs) {
-  // Not used directly anymore — use dbInsertAuditLog / dbClearAuditLogs
   localStorage.setItem("dd_audit_logs", JSON.stringify(logs));
 }
 
@@ -1967,13 +2336,13 @@ function addAuditLog(action, agentName, discordTag, detail, commander) {
 
 // --- KPI & UI UPDATER ---
 function updateJefaturaUI() {
-  const isHighCmd = currentDiscordUser && currentDiscordUser.isHighCommand;
+  const canAccessJefatura = hasPermission('manage_roster') || hasPermission('manage_ranks') || hasPermission('manage_audit') || (currentDiscordUser && currentDiscordUser.rankLevel >= 4);
   const deniedView = document.getElementById("jefatura-denied-view");
   const authorizedView = document.getElementById("jefatura-authorized-view");
 
   if (!deniedView || !authorizedView) return;
 
-  if (isHighCmd) {
+  if (canAccessJefatura) {
     deniedView.classList.add("hidden");
     authorizedView.classList.remove("hidden");
 
@@ -1992,6 +2361,7 @@ function updateJefaturaUI() {
     renderJefaturaKPIs();
     renderJefaturaRoster(getJefaturaRoster());
     renderAuditLogs();
+    renderDynamicRanks();
   } else {
     deniedView.classList.remove("hidden");
     authorizedView.classList.add("hidden");
@@ -2030,7 +2400,345 @@ window.switchJefaturaTab = function(tabName) {
     if (content) content.classList.toggle("hidden", t !== tabName);
   });
   if (tabName === "audit") renderAuditLogs();
+  if (tabName === "escalafon") renderDynamicRanks();
   lucide.createIcons();
+};
+
+// --- DYNAMIC RANKS ENGINE (ESCALAFÓN & MATRIZ DE PERMISOS) ---
+function renderDynamicRanks() {
+  const container = document.getElementById("jefatura-ranks-grid");
+  if (!container) return;
+
+  const ranks = getRankList();
+  const roster = getJefaturaRoster();
+
+  const permLabels = {
+    view_cases: "Ver Casos",
+    create_cases: "Abrir Casos",
+    edit_cases: "Modif. Casos",
+    delete_cases: "Borrar Casos",
+    view_reports: "Ver Informes",
+    create_reports: "Redactar Inf.",
+    edit_reports: "Modif. Inf.",
+    delete_reports: "Borrar Inf.",
+    view_tips: "Ver Pistas",
+    delete_tips: "Borrar Pistas",
+    manage_roster: "Censo",
+    change_ranks: "Ascensos",
+    kick_agents: "Expulsar",
+    manage_ranks: "Matriz Rangos",
+    manage_audit: "Auditoría"
+  };
+
+  const canManageRanks = hasPermission('manage_ranks');
+
+  container.innerHTML = ranks.map(rank => {
+    const officersCount = roster.filter(a => a.rank === rank.id).length;
+    const perms = rank.permissions || {};
+    const activePermKeys = Object.keys(perms).filter(k => perms[k] === true);
+
+    const permBadges = activePermKeys.map(k => {
+      const isDangerous = k.includes('delete') || k === 'kick_agents';
+      const isHigh = k.startsWith('manage_') || k === 'change_ranks';
+      let pillClass = "bg-slate-800 text-slate-300 border-slate-700";
+      if (isDangerous) pillClass = "bg-red-950/40 text-red-300 border-red-800/40";
+      else if (isHigh) pillClass = "bg-amber-500/10 text-amber-300 border-amber-500/30";
+      else if (k.startsWith('create') || k.startsWith('edit')) pillClass = "bg-blue-950/40 text-blue-300 border-blue-800/40";
+
+      return `<span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${pillClass}">${permLabels[k] || k}</span>`;
+    }).join("");
+
+    return `
+      <div class="glass-panel p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition-all group flex flex-col justify-between gap-4">
+        <div>
+          <!-- Header -->
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">${rank.icon || '🛡️'}</span>
+              <div>
+                <h4 class="text-base font-black font-gobold text-white tracking-wide">${rank.label}</h4>
+                <span class="text-[10px] font-mono text-slate-400">ID: <code class="text-amber-400">${rank.id}</code></span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded ${rank.badgeClass || rank.cssClass || 'rank-badge-det1'} font-conthrax text-[10px] font-bold">
+              NVL ${rank.level}
+            </span>
+          </div>
+
+          <div class="space-y-1 my-2.5 font-conthrax text-[10px]">
+            <p class="text-slate-400 truncate"><span class="text-slate-500">Acreditación:</span> ${rank.clearance || 'NIVEL 1'}</p>
+            <p class="text-slate-400"><span class="text-slate-500">Agentes Asignados:</span> <strong class="text-white">${officersCount}</strong> oficial(es)</p>
+          </div>
+
+          <!-- Permissions Cloud -->
+          <div class="pt-2 border-t border-slate-800/70">
+            <span class="text-[9px] text-slate-500 uppercase tracking-wider font-conthrax block mb-1.5">
+              Permisos Habilitados (${activePermKeys.length}/15):
+            </span>
+            <div class="flex flex-wrap gap-1">
+              ${permBadges || '<span class="text-[10px] text-slate-600 italic font-mono">Sin permisos especiales asignados</span>'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 font-conthrax text-[10px]">
+          <span class="text-slate-500">${rank.isSystem ? '🔒 Rango del Sistema' : '⚙️ Rango Personalizado'}</span>
+          <div class="flex items-center gap-1.5">
+            ${canManageRanks ? `
+              <button 
+                onclick="openRankEditor('${rank.id}')" 
+                class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all font-bold uppercase flex items-center gap-1"
+                title="Editar Rango y Matriz de Permisos"
+              >
+                <i data-lucide="sliders" class="w-3 h-3"></i>
+                Permisos
+              </button>
+            ` : ''}
+            ${(!rank.isSystem && canManageRanks) ? `
+              <button 
+                onclick="deleteRank('${rank.id}', '${rank.label.replace(/'/g, "\\'")}', ${officersCount})" 
+                class="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/40 transition-all"
+                title="Eliminar Rango Definitivamente"
+              >
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+}
+
+window.openRankEditor = function(rankId = null) {
+  if (!hasPermission('manage_ranks')) {
+    showToast("⛔ Solo el Mando con permiso de Gestión de Rangos puede configurar rangos.");
+    return;
+  }
+  audioEngine.playKeyClick();
+  const modal = document.getElementById("rank-editor-modal");
+  if (!modal) return;
+
+  const ranks = getDynamicRanks();
+  const isNew = !rankId || !ranks[rankId];
+  const rank = !isNew ? ranks[rankId] : {
+    id: "",
+    label: "",
+    level: 1,
+    clearance: "NIVEL 1 // RESTRINGIDO",
+    icon: "🛡️",
+    badgeClass: "rank-badge-det1",
+    isSystem: false,
+    permissions: {
+      view_cases: true, create_cases: true, edit_cases: false, delete_cases: false,
+      view_reports: true, create_reports: true, edit_reports: false, delete_reports: false,
+      view_tips: false, delete_tips: false,
+      manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+    }
+  };
+
+  document.getElementById("rank-edit-is-new").value = isNew ? "true" : "false";
+  document.getElementById("rank-edit-is-system").value = rank.isSystem ? "true" : "false";
+
+  const idField = document.getElementById("rank-edit-id");
+  idField.value = rank.id;
+  idField.disabled = !isNew; // Slug cannot be changed once created
+
+  document.getElementById("rank-edit-label").value = rank.label;
+  document.getElementById("rank-edit-level").value = rank.level;
+  document.getElementById("rank-edit-icon").value = rank.icon || "🛡️";
+  document.getElementById("rank-edit-clearance").value = rank.clearance || "";
+  document.getElementById("rank-edit-badgeclass").value = rank.badgeClass || rank.cssClass || "rank-badge-det1";
+
+  const sysBadge = document.getElementById("rank-editor-system-badge");
+  const modalTitle = document.getElementById("rank-editor-modal-title");
+  const headerIcon = document.getElementById("rank-editor-header-icon");
+  const deleteBtn = document.getElementById("rank-editor-delete-btn");
+
+  if (sysBadge) sysBadge.classList.toggle("hidden", !rank.isSystem);
+  if (modalTitle) modalTitle.textContent = isNew ? "CREAR NUEVO RANGO POLICIAL" : `CONFIGURAR RANGO: ${rank.label.toUpperCase()}`;
+  if (headerIcon) headerIcon.textContent = rank.icon || "🛡️";
+  if (deleteBtn) deleteBtn.classList.toggle("hidden", rank.isSystem || isNew);
+
+  const permKeys = [
+    "view_cases", "create_cases", "edit_cases", "delete_cases",
+    "view_reports", "create_reports", "edit_reports", "delete_reports",
+    "view_tips", "delete_tips",
+    "manage_roster", "change_ranks", "kick_agents", "manage_ranks", "manage_audit"
+  ];
+
+  permKeys.forEach(k => {
+    const chk = document.getElementById(`perm-${k}`);
+    if (chk) chk.checked = Boolean(rank.permissions && rank.permissions[k]);
+  });
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.saveRankEditor = function(event) {
+  if (event) event.preventDefault();
+  if (!hasPermission('manage_ranks')) {
+    showToast("⛔ No tienes permiso para guardar cambios en los rangos.");
+    return;
+  }
+
+  const isNew = document.getElementById("rank-edit-is-new").value === "true";
+  const isSystem = document.getElementById("rank-edit-is-system").value === "true";
+  let id = document.getElementById("rank-edit-id").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+  const label = document.getElementById("rank-edit-label").value.trim();
+  const level = parseFloat(document.getElementById("rank-edit-level").value) || 0;
+  const icon = document.getElementById("rank-edit-icon").value.trim() || "🛡️";
+  const badgeClass = document.getElementById("rank-edit-badgeclass").value;
+  const clearance = document.getElementById("rank-edit-clearance").value.trim() || `NIVEL ${level}`;
+
+  if (!id || !label) {
+    showToast("⚠️ El identificador y el nombre del rango son obligatorios.");
+    return;
+  }
+
+  const permKeys = [
+    "view_cases", "create_cases", "edit_cases", "delete_cases",
+    "view_reports", "create_reports", "edit_reports", "delete_reports",
+    "view_tips", "delete_tips",
+    "manage_roster", "change_ranks", "kick_agents", "manage_ranks", "manage_audit"
+  ];
+  const permissions = {};
+  permKeys.forEach(k => {
+    const chk = document.getElementById(`perm-${k}`);
+    permissions[k] = Boolean(chk && chk.checked);
+  });
+
+  // El rango Capitán siempre conserva todos los permisos
+  if (id === 'capitan') {
+    permKeys.forEach(k => { permissions[k] = true; });
+  }
+
+  const rankData = {
+    id,
+    label,
+    level,
+    clearance,
+    icon,
+    badgeClass,
+    isSystem,
+    permissions
+  };
+
+  dbUpsertRank(rankData);
+  addAuditLog(
+    isNew ? "RANGO CREADO" : "PERMISOS ACTUALIZADOS",
+    label,
+    `NVL ${level}`,
+    `Rango ${label} (${id}) configurado con ${Object.values(permissions).filter(Boolean).length} permisos activos`,
+    currentDiscordUser ? currentDiscordUser.username : "Sistema"
+  );
+
+  // Actualizar sesión actual si el usuario posee este rango
+  if (currentDiscordUser && currentDiscordUser.rankKey === id) {
+    currentDiscordUser.role = label;
+    currentDiscordUser.rankLevel = level;
+    currentDiscordUser.clearance = clearance;
+    currentDiscordUser.isAuthorizedDetective = hasPermission('view_reports');
+    currentDiscordUser.isHighCommand = hasPermission('manage_roster') || hasPermission('manage_ranks') || hasPermission('manage_audit') || level >= 4;
+    localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+  }
+
+  closeModal("rank-editor-modal");
+  audioEngine.playAlertSound();
+  showToast(`✅ Rango "${label}" y matriz de permisos guardados con éxito.`);
+
+  renderDynamicRanks();
+  renderJefaturaRoster(getJefaturaRoster());
+  updateDiscordAuthUI();
+};
+
+window.deleteRank = function(rankId, rankLabel, officersCount = 0) {
+  if (!hasPermission('manage_ranks')) {
+    showToast("⛔ No tienes permiso para eliminar rangos.");
+    return;
+  }
+  const ranks = getDynamicRanks();
+  const rank = ranks[rankId];
+  if (!rank) return;
+  if (rank.isSystem) {
+    showToast("⛔ Los rangos del sistema protegidos no pueden ser eliminados.");
+    return;
+  }
+
+  let warning = `¿Está seguro de eliminar definitivamente el rango "${rankLabel || rankId}"?`;
+  if (officersCount > 0) {
+    warning += `\n\n⚠️ ATENCIÓN: Hay ${officersCount} oficial(es) asignados a este rango. Serán transferidos automáticamente al rango "Aspirante" sin acceso.`;
+  }
+
+  if (!confirm(warning)) return;
+
+  const roster = getJefaturaRoster();
+  let reassigned = 0;
+  roster.forEach(agent => {
+    if (agent.rank === rankId) {
+      agent.rank = "aspirante";
+      agent.division = "Sin Asignar // Reasignado por Eliminación de Rango";
+      dbUpsertAgent(agent);
+      reassigned++;
+    }
+  });
+
+  dbDeleteRank(rankId);
+  addAuditLog(
+    "RANGO ELIMINADO",
+    rankLabel || rankId,
+    `ID: ${rankId}`,
+    `Rango eliminado. ${reassigned} oficial(es) reasignados a Aspirante.`,
+    currentDiscordUser ? currentDiscordUser.username : "Sistema"
+  );
+
+  audioEngine.playRadioBeep();
+  showToast(`🗑️ Rango "${rankLabel || rankId}" eliminado. ${reassigned} oficial(es) reasignados.`);
+  renderDynamicRanks();
+  renderJefaturaRoster(getJefaturaRoster());
+  renderJefaturaKPIs();
+  updateDiscordAuthUI();
+};
+
+window.deleteRankFromModal = function() {
+  const rankId = document.getElementById("rank-edit-id")?.value;
+  const label = document.getElementById("rank-edit-label")?.value || rankId;
+  const roster = getJefaturaRoster();
+  const officersCount = roster.filter(a => a.rank === rankId).length;
+  closeModal("rank-editor-modal");
+  deleteRank(rankId, label, officersCount);
+};
+
+window.setRankPermissionsAll = function(enabled) {
+  audioEngine.playKeyClick();
+  const permKeys = [
+    "view_cases", "create_cases", "edit_cases", "delete_cases",
+    "view_reports", "create_reports", "edit_reports", "delete_reports",
+    "view_tips", "delete_tips",
+    "manage_roster", "change_ranks", "kick_agents", "manage_ranks", "manage_audit"
+  ];
+  permKeys.forEach(k => {
+    const chk = document.getElementById(`perm-${k}`);
+    if (chk) chk.checked = enabled;
+  });
+};
+
+window.setRankPermissionsDetectivePreset = function() {
+  audioEngine.playKeyClick();
+  const preset = {
+    view_cases: true, create_cases: true, edit_cases: true, delete_cases: false,
+    view_reports: true, create_reports: true, edit_reports: true, delete_reports: false,
+    view_tips: true, delete_tips: false,
+    manage_roster: false, change_ranks: false, kick_agents: false, manage_ranks: false, manage_audit: false
+  };
+  Object.keys(preset).forEach(k => {
+    const chk = document.getElementById(`perm-${k}`);
+    if (chk) chk.checked = preset[k];
+  });
 };
 
 // --- ROSTER RENDERING ---
@@ -2048,6 +2756,9 @@ function renderJefaturaRoster(agents) {
     lucide.createIcons();
     return;
   }
+
+  const canEditRoster = hasPermission('manage_roster');
+  const canKick = hasPermission('kick_agents');
 
   grid.innerHTML = agents.map(agent => {
     const rank   = RANK_META[agent.rank] || RANK_META["aspirante"];
@@ -2098,21 +2809,25 @@ function renderJefaturaRoster(agents) {
         <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 font-conthrax text-[10px]">
           <span class="text-slate-500">Ingreso: ${agent.joinDate || "—"}</span>
           <div class="flex items-center gap-1.5">
-            <button 
-              onclick="openAgentEditor('${agent.discordId}')" 
-              class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all font-bold uppercase flex items-center gap-1"
-              title="Editar Ficha del Agente"
-            >
-              <i data-lucide="edit-3" class="w-3 h-3"></i>
-              Editar
-            </button>
-            <button 
-              onclick="quickKickAgent('${agent.discordId}', '${agent.icName.replace(/'/g, "\\'")}')" 
-              class="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/40 transition-all"
-              title="Expulsar del Cuerpo"
-            >
-              <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
-            </button>
+            ${canEditRoster ? `
+              <button 
+                onclick="openAgentEditor('${agent.discordId}')" 
+                class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all font-bold uppercase flex items-center gap-1"
+                title="Editar Ficha del Agente"
+              >
+                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                Editar
+              </button>
+            ` : ''}
+            ${canKick ? `
+              <button 
+                onclick="quickKickAgent('${agent.discordId}', '${agent.icName.replace(/'/g, "\\'")}')" 
+                class="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/40 transition-all"
+                title="Expulsar del Cuerpo"
+              >
+                <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+              </button>
+            ` : ''}
           </div>
         </div>
       </div>
@@ -2174,8 +2889,8 @@ function setupJefaturaSearch() {
 let currentEditingAgentId = null;
 
 window.openAgentEditor = function(discordId) {
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
-    showToast("⛔ Solo el Mando puede editar fichas de agentes.");
+  if (!hasPermission('manage_roster')) {
+    showToast("⛔ Solo oficiales con permiso de Gestión de Censo pueden editar fichas de agentes.");
     return;
   }
   audioEngine.playKeyClick();
@@ -2189,11 +2904,20 @@ window.openAgentEditor = function(discordId) {
   const modal = document.getElementById("agent-editor-modal");
   if (!modal) return;
 
+  // Populate dynamic ranks into rank dropdown
+  populateRankSelect("edit-agent-rank", agent.rank || "aspirante");
+
+  const rankSelect = document.getElementById("edit-agent-rank");
+  if (rankSelect) {
+    const canChangeRanks = hasPermission('change_ranks');
+    rankSelect.disabled = !canChangeRanks;
+    rankSelect.title = canChangeRanks ? "" : "No tienes permiso para ascender o degradar oficiales.";
+  }
+
   // Populate form fields
   document.getElementById("edit-agent-user-id").value        = agent.discordId;
   document.getElementById("edit-agent-icname").value         = agent.icName || "";
   document.getElementById("edit-agent-badge").value          = agent.badge || "";
-  document.getElementById("edit-agent-rank").value           = agent.rank || "aspirante";
   document.getElementById("edit-agent-division").value       = agent.division || "Sin Asignar // En Evaluación";
   document.getElementById("edit-agent-status").value         = agent.status || "Pendiente";
   document.getElementById("edit-agent-discord-tag").value    = agent.discordTag || "";
@@ -2213,13 +2937,22 @@ window.openAgentEditor = function(discordId) {
     statusBadge.className = `px-2 py-0.5 rounded text-[10px] font-conthrax font-bold ${getStatusBadge(agent.status)}`;
   }
 
+  // Delete/Kick button inside modal
+  const modalKickBtn = document.querySelector("#agent-editor-modal button[onclick*='kickAgentFromModal']");
+  if (modalKickBtn) {
+    modalKickBtn.style.display = hasPermission('kick_agents') ? 'inline-flex' : 'none';
+  }
+
   modal.classList.remove("hidden");
   lucide.createIcons();
 };
 
 window.saveAgentEditor = function(event) {
   if (event) event.preventDefault();
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) return;
+  if (!hasPermission('manage_roster')) {
+    showToast("⛔ No ostentas permiso para modificar fichas del censo.");
+    return;
+  }
 
   const userId = document.getElementById("edit-agent-user-id").value;
   const roster = getJefaturaRoster();
@@ -2235,6 +2968,11 @@ window.saveAgentEditor = function(event) {
   const newBadge  = document.getElementById("edit-agent-badge").value.trim();
   const newDiv    = document.getElementById("edit-agent-division").value;
   const newNotes  = document.getElementById("edit-agent-notes").value.trim();
+
+  if (oldRank !== newRank && !hasPermission('change_ranks')) {
+    showToast("⛔ No tienes permiso para ascender o degradar oficiales de rango.");
+    return;
+  }
 
   const awards = [];
   if (document.getElementById("award-valor").checked)    awards.push("valor");
@@ -2254,7 +2992,6 @@ window.saveAgentEditor = function(event) {
   };
 
   saveJefaturaRoster(roster);
-  // Persist updated agent to Supabase
   dbUpsertAgent(roster[idx]);
 
   // Audit log entry
@@ -2281,11 +3018,11 @@ window.saveAgentEditor = function(event) {
       role:                newIcName,
       rankKey:             newRank,
       rankLevel:           rankData.level,
-      isAuthorizedDetective: rankData.level >= 1,
-      isHighCommand:       rankData.level >= 4,
+      isAuthorizedDetective: hasPermission('view_reports'),
+      isHighCommand:       hasPermission('manage_roster') || hasPermission('manage_ranks') || hasPermission('manage_audit') || rankData.level >= 4,
       clearance:           rankData.clearance
     };
-    isDetectiveAuth = rankData.level >= 1;
+    isDetectiveAuth = hasPermission('view_reports');
     localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
   }
 
@@ -2307,8 +3044,8 @@ window.kickAgentFromModal = function() {
 };
 
 window.quickKickAgent = function(discordId, icName) {
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
-    showToast("⛔ Solo el Mando puede expulsar agentes.");
+  if (!hasPermission('kick_agents')) {
+    showToast("⛔ Solo oficiales con permiso de Expulsión pueden dar de baja a miembros.");
     return;
   }
   audioEngine.playAlertSound();
@@ -2331,14 +3068,16 @@ window.quickKickAgent = function(discordId, icName) {
 
 // --- ADD AGENT MODAL ---
 window.openAddAgentModal = function() {
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
-    showToast("⛔ Solo el Mando puede incorporar nuevos agentes.");
+  if (!hasPermission('manage_roster')) {
+    showToast("⛔ Solo oficiales con permiso de Gestión de Censo pueden incorporar nuevos agentes.");
     return;
   }
   audioEngine.playKeyClick();
   const modal = document.getElementById("add-agent-modal");
   if (modal) {
-    // Reset form
+    // Populate dynamic ranks into rank dropdown
+    populateRankSelect("new-agent-rank", "det1");
+
     const form = document.getElementById("add-agent-form");
     if (form) form.reset();
     modal.classList.remove("hidden");
@@ -2348,7 +3087,10 @@ window.openAddAgentModal = function() {
 
 window.saveNewAgent = function(event) {
   if (event) event.preventDefault();
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) return;
+  if (!hasPermission('manage_roster')) {
+    showToast("⛔ No tienes permiso para incorporar nuevos agentes.");
+    return;
+  }
 
   const discordId  = document.getElementById("new-agent-discord-id")?.value.trim();
   const discordTag = document.getElementById("new-agent-discord-tag")?.value.trim();
@@ -2478,7 +3220,16 @@ function renderAuditLogs() {
     "INCORPORACIÓN AL CENSO":  "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
     "EXPULSIÓN DEL CUERPO":    "text-red-400   border-red-500/30   bg-red-500/5",
     "MANDO RECLAMADO":         "text-amber-400 border-amber-500/30 bg-amber-500/10",
-    "REGISTRO AUTOMÁTICO":     "text-slate-400 border-slate-600/30 bg-slate-800/30"
+    "REGISTRO AUTOMÁTICO":     "text-slate-400 border-slate-600/30 bg-slate-800/30",
+    "RANGO CREADO":            "text-amber-400 border-amber-500/30 bg-amber-500/10",
+    "PERMISOS ACTUALIZADOS":   "text-cyan-400  border-cyan-500/30  bg-cyan-500/10",
+    "RANGO ELIMINADO":         "text-red-400   border-red-500/30   bg-red-500/10",
+    "EXPEDIENTE CREADO":       "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+    "EXPEDIENTE MODIFICADO":   "text-blue-400  border-blue-500/30  bg-blue-500/10",
+    "EXPEDIENTE ELIMINADO":    "text-red-400   border-red-500/30   bg-red-500/10",
+    "INFORME CREADO":          "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
+    "INFORME MODIFICADO":      "text-blue-400  border-blue-500/30  bg-blue-500/10",
+    "INFORME ELIMINADO":       "text-red-400   border-red-500/30   bg-red-500/10"
   };
 
   container.innerHTML = logs.map(log => {
@@ -2503,8 +3254,8 @@ function renderAuditLogs() {
 }
 
 window.clearAuditLogs = function() {
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
-    showToast("⛔ Solo el Mando puede limpiar el historial de auditoría.");
+  if (!hasPermission('manage_audit')) {
+    showToast("⛔ Solo oficiales con permiso de Auditoría pueden limpiar el historial.");
     return;
   }
   dbClearAuditLogs();
@@ -2523,7 +3274,7 @@ window.exportRosterToClipboard = function() {
     groups[rankKey].push(a);
   });
 
-  const order = ["capitan", "teniente", "sgt", "det3", "det2", "det1", "aspirante"];
+  const order = getRankList().map(r => r.id);
   order.forEach(key => {
     if (!groups[key] || groups[key].length === 0) return;
     const meta = RANK_META[key] || {};
@@ -2546,13 +3297,12 @@ window.exportRosterToClipboard = function() {
 
 // --- RESET ROSTER ---
 window.resetRosterToDefault = function() {
-  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
-    showToast("⛔ Solo el Mando puede restablecer el censo.");
+  if (!hasPermission('manage_roster')) {
+    showToast("⛔ Solo oficiales con permiso de Gestión de Censo pueden restablecer el censo.");
     return;
   }
   const defaultRoster = JSON.parse(JSON.stringify(DEFAULT_ROSTER));
   saveJefaturaRoster(defaultRoster);
-  // Sync each default agent to Supabase
   defaultRoster.forEach(agent => dbUpsertAgent(agent));
   addAuditLog("RESTABLECIMIENTO DEL CENSO", "Sistema", "Sistema", "Censo restablecido a valores predeterminados de ejemplo", currentDiscordUser.username);
   audioEngine.playAlertSound();
