@@ -31,45 +31,55 @@ Plataforma web temática e interactiva diseñada específicamente para divisione
   - Elimina expedientes cerrados o archivados.
   - Los cambios persisten en `localStorage` (`dd_custom_cases`).
 
-### 3. 🟣 Verificación / Inicio de Sesión por Discord RP
-- **Botón Discord en Topbar:** Permite a los detectives identificarse con su usuario de Discord.
-- **Credenciales Oficiales de Demostración:**
-  - **Usuario:** `Det. Marcus Cole#404` (o cualquier usuario con prefijo `Det.`, `Tte.`, `Cap.`, `Oficial`, `Detective`).
-  - **Clave PIN de Enlace Policial:** `10-4`
-  - Incluye botón **"Auto-Rellenar Demo Oficial"** para iniciar sesión en 1 clic.
-- **Panel de Perfil Policial:** Al autenticarse, la barra superior muestra el avatar, tag de Discord, rango y placa del oficial, junto a un botón de desconexión.
-- **Permisos Exclusivos:** Habilita los botones de edición de expedientes y la creación de nuevos sumarios policiales.
+### 3. 🤖 Verificación Oficial mediante Bot de Discord (LSPD DetectiveBot v2.4)
+- **Inicio de sesión automatizado por Bot:** El sistema simula la comprobación de roles en el servidor oficial de Discord de la comunidad policial.
+- **Detección Automática de Roles y Rangos:**
+  - `[Capitán // Mando]` -> Nivel 5 (Acceso Supremo)
+  - `[Teniente Supervisor RHD]` -> Nivel 4 (Supervisión)
+  - `[Detective III GND]` -> Nivel 3 (Alto Secreto)
+  - `[Detective I]` -> Nivel 2 (Confidencial)
+  - `[Ciudadano / Sin Rol]` -> Nivel 0 (**¡Acceso denegado a informes y normativa!**)
+- **Selector Rápido de Perfiles:** Permite seleccionar con 1 solo clic cualquiera de los roles oficiales para probar la experiencia con diferentes jerarquías y demostrar cómo el bot deniega el acceso a civiles sin rol.
+- **Credencial Policial Activa:** Muestra avatar, nombre, placa, rol verificado y nivel de clearance en la barra superior y en el panel de informes.
 
 ### 4. 🎯 Los Más Buscados (Most Wanted)
 - Fichas criminales con foto de prontuario, alias, delitos imputados, recompensas monetarias y nivel de riesgo ("Disparar a la vista").
 - Botón **"Aportar Información Anónima"** que redirige y autocompleta el formulario con los datos del fugitivo.
 
-### 3. 💻 Simulador de Terminal Policial MDC (Mobile Data Computer)
-- **Acceso Restringido para Detectives:**
-  - Login rápido con credenciales de prueba: Placa `#404`, Clave PIN `104`.
-- **Base de Datos de Antecedentes:**
-  - Búsqueda en vivo de ciudadanos y sospechosos por Nombre, Alias, DNI o Patente del vehículo.
-  - Historial penal, órdenes vigentes y licencias de conducir.
-- **Control de Órdenes Judiciales:**
-  - Seguimiento de órdenes de captura y allanamiento autorizadas por jueces de rol.
-- **Bitácora Rápida de Campo:**
-  - Los detectives pueden escribir notas de investigación que se guardan en el navegador (`localStorage`).
-- **Bandeja de Entrada de Pistas Ciudadanas:**
-  - Visualización en tiempo real de las denuncias anónimas recibidas.
+### 5. 🔒 Apartado de Informes Policiales Confidenciales & Normativa RP (Acceso Exclusivo con Rango)
+- **Protección Biométrica y Bloqueo a Civiles:**
+  - Si el usuario no ha iniciado sesión o no tiene rango de detective en Discord, se muestra una pantalla de seguridad bloqueada con aviso de clearance restringido.
+  - Si un usuario se autentica como ciudadano, el Bot rechaza el acceso explícitamente notificando la falta de rol policial.
+- **Pestaña 1: Informes Confidenciales:**
+  - Minutas de escuchas telefónicas con transcripción de llamadas e interceptaciones radiales.
+  - Actas de inspección ocular técnico-pericial y cotejos balísticos.
+  - Solicitudes judiciales de allanamiento táctico ("No-Knock").
+  - Informes de compra controlada e infiltración encubierta de GND.
+  - Botón para **Redactar Nuevo Informe Confidencial** e imprimir atestados.
+  - Buscador en vivo y filtros por tipo de diligencia.
+- **Pestaña 2: Normativa Interna & Código de Procedimiento Policial (RP):**
+  - **Capítulo I:** Deber de reserva absoluta y secreto profesional (sanción por revelación de secretos).
+  - **Capítulo II:** Cadena de custodia y preservación de evidencias forenses (CSI).
+  - **Capítulo III:** Operaciones encubiertas e infiltración GND (prohibición de instigación / Entrapment).
+  - **Capítulo IV:** Órdenes judiciales de allanamiento (Warrants) y causa probable.
+  - **Capítulo V:** Uso proporcional de fuerza e incursiones tácticas armadas.
+  - **Capítulo VI:** Tabla completa de rangos y atribuciones del Bureau.
+- **Pestaña 3: Bandeja de Inteligencia Cifrada:**
+  - Visualización en tiempo real de las pistas y denuncias anónimas remitidas por ciudadanos.
 
-### 4. 🔒 Canal Seguro de Denuncias Anónimas
+### 6. 🔒 Canal Seguro de Denuncias Anónimas
 - Formulario para que ciudadanos y confidentes reporten delitos sin exponer su identidad IC.
 - Generador de recibo con código cifrado único (`#TIP-XXXXXX`) y estado de la investigación.
 
-### 5. 🔤 Tipografías de Alto Impacto
+### 7. 🔤 Tipografías de Alto Impacto
 - **GoBold (`font-gobold`):** Fuente bold/condensada de máxima presencia, aplicada en títulos principales, cabeceras de secciones, nombres de oficiales, fichas de sospechosos e insignias.
-- **Conthrax (`font-conthrax`):** Tipografía táctica, futurista y tecnológica, aplicada en la terminal MDC policial, códigos de casos (`#CASE-2026-089`), sellos judiciales, números de placa, transmisiones de radio y reloj ZULU.
+- **Conthrax (`font-conthrax`):** Tipografía táctica, futurista y tecnológica, aplicada en estados tácticos, expedientes, sellos judiciales, números de placa, transmisiones de radio y reloj ZULU.
 
-### 6. 🔊 Motor de Efectos de Sonido Inmersivo (Web Audio API)
-- Beeps de radio policial, tonos de terminal MDC y chimes de alerta generados por sintetizador nativo (no requiere archivos de audio externos ni descargas).
-- Botón en la barra superior para activar o silenciar el sonido.
+### 8. 🔊 Motor de Efectos de Sonido Inmersivo (Web Audio API)
+- Beeps de radio policial y chimes de alerta generados por sintetizador nativo (no requiere archivos de audio externos ni descargas).
+- Botón en la barra superior y pie del menú para activar o silenciar el sonido.
 
-### 7. 📜 Estructura de la División & Convocatorias
+### 9. 📜 Estructura de la División & Convocatorias
 - Organigrama con las 6 ramas especializadas:
   - **RHD** (Robos y Homicidios)
   - **GND** (Narcóticos y Armas)

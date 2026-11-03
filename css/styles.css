@@ -546,6 +546,18 @@ section {
   box-shadow: 0 2px 10px rgba(88, 101, 242, 0.35);
 }
 
+.discord-bot-pill {
+  background: #5865F2;
+  color: #fff;
+  font-family: 'Conthrax', monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .auth-only {
   display: none !important;
 }
@@ -556,6 +568,64 @@ body.is-detective-auth .auth-only {
 
 body.is-detective-auth .guest-only {
   display: none !important;
+}
+
+/* Informes & Normativa Tabs */
+.informes-tab-btn {
+  padding: 0.65rem 1.25rem;
+  font-family: 'Conthrax', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.informes-tab-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.informes-tab-btn.active {
+  color: #d4af37;
+  border-bottom-color: #d4af37;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+/* Security Radar Scanning Animation */
+@keyframes securityScan {
+  0% { transform: translateY(-100%); opacity: 0.8; }
+  50% { opacity: 0.3; }
+  100% { transform: translateY(1000%); opacity: 0; }
+}
+
+.security-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.8), transparent);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+  animation: securityScan 4s infinite linear;
+  pointer-events: none;
+}
+
+/* Normativa Article Card */
+.normativa-card {
+  background: rgba(15, 20, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  transition: all 0.25s ease;
+}
+
+.normativa-card:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* Topbar in Main Content */

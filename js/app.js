@@ -292,100 +292,6 @@ const MOST_WANTED = [
   }
 ];
 
-// --- MDC (MOBILE DATA COMPUTER) SIMULATED POLICE DATABASE ---
-const MDC_DATABASE = {
-  suspects: [
-    {
-      dni: "LS-884920",
-      fullName: "Dante Lorenzo Moretti",
-      alias: "Ghost",
-      birthDate: "14/05/1988 (38 años)",
-      address: "Desconocida (Sin domicilio fijo registrado)",
-      antecedents: [
-        { date: "2021", charge: "Portación de Arma Militar no registrada", sentence: "3 años en libertad condicional" },
-        { date: "2024", charge: "Sospechoso clave en atentado en Liberty City", sentence: "Falta de mérito por testigos desaparecidos" },
-        { date: "2026", charge: "Homicidio en Primer Grado (Caso Penthouse)", sentence: "ORDEN DE CAPTURA VIGENTE" }
-      ],
-      warrants: ["ORDEN JUDICIAL #W-8902 - HOMICIDIO CALIFICADO Y FUGA"],
-      status: "PRÓFUGO ACTIVO",
-      driverLicense: "REVOCADA POR JUEZ",
-      vehicleRegistered: "Bravado Buffalo STX - Matrícula: 48GHO99 (Reportado)"
-    },
-    {
-      dni: "LS-319582",
-      fullName: "Marcus Julian Vance",
-      alias: "El Banquero",
-      birthDate: "03/11/1980 (46 años)",
-      address: "Rockford Hills, Eclipse Towers Penthouse 3",
-      antecedents: [
-        { date: "2022", charge: "Investigación por evasión impositiva", sentence: "Multa de $120,000" }
-      ],
-      warrants: [],
-      status: "OCCISO (VÍCTIMA DE HOMICIDIO EN CASO #CASE-2026-104)",
-      driverLicense: "VÁLIDA",
-      vehicleRegistered: "Pfister Comet S2 - Matrícula: VANCE01"
-    },
-    {
-      dni: "LS-902184",
-      fullName: "Viktor Alexei Kozlov",
-      alias: "El Capitán",
-      birthDate: "22/08/1979 (47 años)",
-      address: "Terminal de Pescadores Nave 14, Muelle Este",
-      antecedents: [
-        { date: "2018", charge: "Contrabando de mercancía no declarada", sentence: "2 años suspendidos" },
-        { date: "2025", charge: "Resistencia a la autoridad y tenencia de explosivos", sentence: "Libertad bajo fianza de $200,000" }
-      ],
-      warrants: ["ORDEN DE ARRESTO #W-9912 - ASOCIACIÓN ILÍCITA Y TRÁFICO"],
-      status: "BUSCADO POR EL DEPARTAMENTO",
-      driverLicense: "VÁLIDA CLASE COMERCIAL",
-      vehicleRegistered: "Remolcador 'Sea Wolf II' & Vapid Sandking XL - Matrícula: 11KOZ9"
-    },
-    {
-      dni: "LS-149021",
-      fullName: "Claire Elizabeth Vance",
-      alias: "Sin Alias",
-      birthDate: "12/01/1985 (41 años)",
-      address: "Vinewood Boulevard 88",
-      antecedents: [
-        { date: "2023", charge: "Altercado público bajo influencia", sentence: "Trabajo comunitario 40h" }
-      ],
-      warrants: [],
-      status: "LIBRE - CITADA A DECLARACIÓN TESTIMONIAL",
-      driverLicense: "VÁLIDA",
-      vehicleRegistered: "Enus Deity - Matrícula: 88VCE2"
-    }
-  ],
-  warrants: [
-    {
-      warrantId: "W-2026-904",
-      target: "Dante 'Ghost' Moretti",
-      judge: "Honorable Juez R. Harrison",
-      reason: "Homicidio en Primer Grado, Posesión de Silenciadores y Conspiración Criminal",
-      issuedAt: "01/NOV/2026",
-      officer: "Det. II Elena Rostova (#512)",
-      status: "VIGENTE"
-    },
-    {
-      warrantId: "W-2026-891",
-      target: "Almacén 'Oceanic Imports' Muelle 4",
-      reason: "Orden de Allanamiento y Registro por sospecha de depósito de estupefacientes",
-      judge: "Honorable Jueza M. Thornton",
-      issuedAt: "29/OCT/2026",
-      officer: "Det. III Marcus Cole (#404)",
-      status: "EJECUTADA CON RESULTADO POSITIVO"
-    },
-    {
-      warrantId: "W-2026-874",
-      target: "Viktor Kozlov",
-      judge: "Honorable Juez R. Harrison",
-      reason: "Captura Inmediata por Tráfico de Drogas a Gran Escala",
-      issuedAt: "30/OCT/2026",
-      officer: "Det. III Marcus Cole (#404)",
-      status: "VIGENTE"
-    }
-  ]
-};
-
 // --- DISCORD AUTHENTICATION & CASE MANAGEMENT ENGINE ---
 let currentDiscordUser = null;
 let isDetectiveAuth = false;
@@ -416,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMostWanted(MOST_WANTED);
   setupCaseFilters();
   setupTipForm();
-  setupMDC();
+  setupInformesHub();
   setupAudioControls();
   setupInteractiveModals();
   setupSidebar();
@@ -424,14 +330,71 @@ document.addEventListener("DOMContentLoaded", () => {
   setupReportEditor();
 });
 
-// --- DISCORD AUTH CONTROLLER (Inspirado en SAPD Portal) ---
+// --- DISCORD BOT AUTHENTICATION & ROLE VERIFICATION ENGINE ---
+const BOT_PROFILES = {
+  capitan: {
+    username: "Cap. David Vance",
+    tag: "David Vance#0101",
+    userId: "101928374650192831",
+    badge: "#101-DIV",
+    role: "Mando Policial - Capitán",
+    rankLevel: 5,
+    isAuthorizedDetective: true,
+    clearance: "NIVEL 5 // COMANDO SUPREMO",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80"
+  },
+  teniente: {
+    username: "Tte. James Sterling",
+    tag: "J_Sterling#0201",
+    userId: "201928374650192832",
+    badge: "#201-DIV",
+    role: "Teniente Supervisor RHD",
+    rankLevel: 4,
+    isAuthorizedDetective: true,
+    clearance: "NIVEL 4 // SUPERVISIÓN RHD",
+    avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80"
+  },
+  det3: {
+    username: "Det. III Marcus Cole",
+    tag: "Marcus_Cole#0404",
+    userId: "404928374650192833",
+    badge: "#404-DIV",
+    role: "Detective III - Líder GND",
+    rankLevel: 3,
+    isAuthorizedDetective: true,
+    clearance: "NIVEL 3 // ALTO SECRETO",
+    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80"
+  },
+  det1: {
+    username: "Det. I Sarah Connor",
+    tag: "S_Connor#0522",
+    userId: "522928374650192834",
+    badge: "#522-DIV",
+    role: "Detective I - Investigador",
+    rankLevel: 2,
+    isAuthorizedDetective: true,
+    clearance: "NIVEL 2 // CONFIDENCIAL",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80"
+  },
+  civil: {
+    username: "Ciudadano_Anon",
+    tag: "Ciudadano_Anon#9999",
+    userId: "999928374650192899",
+    badge: "SIN PLACA",
+    role: "Ciudadano / Sin Rol Policial",
+    rankLevel: 0,
+    isAuthorizedDetective: false,
+    clearance: "NIVEL 0 // ACCESO DENEGADO",
+    avatar: "https://cdn.discordapp.com/embed/avatars/1.png"
+  }
+};
+
 function initDiscordAuth() {
   const saved = localStorage.getItem("dd_discord_user");
   if (saved) {
     try {
       currentDiscordUser = JSON.parse(saved);
-      isDetectiveAuth = true;
-      document.body.classList.add("is-detective-auth");
+      isDetectiveAuth = Boolean(currentDiscordUser && currentDiscordUser.isAuthorizedDetective);
     } catch (e) {
       currentDiscordUser = null;
       isDetectiveAuth = false;
@@ -443,20 +406,63 @@ function initDiscordAuth() {
 function updateDiscordAuthUI() {
   const topbarAvatar = document.getElementById("topbar-discord-avatar");
   const topbarName = document.getElementById("topbar-discord-name");
+  const restrictedView = document.getElementById("informes-restricted-view");
+  const authorizedView = document.getElementById("informes-authorized-view");
+  const civilDeniedAlert = document.getElementById("informes-civil-denied");
+  const civilDeniedText = document.getElementById("informes-civil-denied-text");
 
   if (isDetectiveAuth && currentDiscordUser) {
     document.body.classList.add("is-detective-auth");
     if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
     if (topbarName) topbarName.textContent = currentDiscordUser.username || "Detective Autorizado";
+
+    // Informes Section Views
+    if (restrictedView) restrictedView.classList.add("hidden");
+    if (authorizedView) authorizedView.classList.remove("hidden");
+    if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
+
+    // Ribbon in Informes section
+    const ribbonAvatar = document.getElementById("ribbon-agent-avatar");
+    const ribbonName = document.getElementById("ribbon-agent-name");
+    const ribbonBadge = document.getElementById("ribbon-agent-badge");
+    const ribbonRole = document.getElementById("ribbon-agent-role");
+    const ribbonClearance = document.getElementById("ribbon-clearance-text");
+
+    if (ribbonAvatar) ribbonAvatar.src = currentDiscordUser.avatar;
+    if (ribbonName) ribbonName.textContent = currentDiscordUser.username;
+    if (ribbonBadge) ribbonBadge.textContent = currentDiscordUser.badge;
+    if (ribbonRole) ribbonRole.textContent = `ROL: ${currentDiscordUser.role.toUpperCase()}`;
+    if (ribbonClearance) ribbonClearance.textContent = currentDiscordUser.clearance;
+
+    renderConfidentialReports(getActiveConfidentialReports());
+    renderAuthorizedTipsInbox();
   } else {
     document.body.classList.remove("is-detective-auth");
+    if (topbarAvatar) topbarAvatar.src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (topbarName) topbarName.textContent = "Acceso Detective";
+
+    if (restrictedView) restrictedView.classList.remove("hidden");
+    if (authorizedView) authorizedView.classList.add("hidden");
+
+    // If user logged in as Civil, show rejection alert
+    if (currentDiscordUser && !currentDiscordUser.isAuthorizedDetective) {
+      if (civilDeniedAlert) civilDeniedAlert.classList.remove("hidden");
+      if (civilDeniedText) {
+        civilDeniedText.textContent = `El Bot de Discord detectó que la cuenta @${currentDiscordUser.tag} pertenece al servidor pero NO ostenta un rol de la Detective Division (Capitán a Detective). Los informes clasificados permanecen bloqueados.`;
+      }
+    } else {
+      if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
+    }
   }
 }
 
 window.openDiscordAuthModal = function() {
   audioEngine.playRadioBeep();
   const modal = document.getElementById("discord-auth-modal");
-  if (modal) modal.classList.remove("hidden");
+  if (modal) {
+    modal.classList.remove("hidden");
+    lucide.createIcons();
+  }
 };
 
 window.closeDiscordAuthModal = function() {
@@ -464,41 +470,88 @@ window.closeDiscordAuthModal = function() {
   if (modal) modal.classList.add("hidden");
 };
 
-window.submitDiscordAuth = function(event) {
-  if (event) event.preventDefault();
-  const username = document.getElementById("discord-input-username")?.value.trim() || "Det. Marcus Cole#404";
-  const userId = document.getElementById("discord-input-id")?.value.trim() || "578954458948698122";
-  const key = document.getElementById("discord-input-key")?.value.trim() || "10-4";
+// Autenticación con Bot seleccionando Rol de Demostración
+window.authenticateWithBotRole = function(roleKey) {
+  const profile = BOT_PROFILES[roleKey];
+  if (!profile) return;
 
-  if (!username) {
-    showToast("⚠️ Ingrese su usuario o Tag de Discord");
-    return;
-  }
-
-  audioEngine.playAlertSound();
-  currentDiscordUser = {
-    username,
-    userId,
-    badge: "#404-DIV",
-    role: "Detective Inspector // Mando Policial",
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
-    authAt: new Date().toLocaleString('es-ES')
-  };
-
-  isDetectiveAuth = true;
+  audioEngine.playKeyClick();
+  currentDiscordUser = { ...profile, authAt: new Date().toLocaleString('es-ES') };
+  isDetectiveAuth = profile.isAuthorizedDetective;
   localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+
   updateDiscordAuthUI();
   closeDiscordAuthModal();
   renderCases(getActiveCasesList());
 
-  showToast(`✅ Sesión iniciada como ${currentDiscordUser.username}. Permisos de modificación de expedientes activados.`);
+  if (profile.isAuthorizedDetective) {
+    audioEngine.playAlertSound();
+    showToast(`🤖 DetectiveBot: Conexión con Discord confirmada. Rol validado: [${profile.role}]. Acceso concedido a Informes.`);
+  } else {
+    audioEngine.playRadioBeep();
+    showToast(`⛔ DetectiveBot: Acceso DENEGADO. Tu cuenta @${profile.tag} no posee rol de detective en el Discord.`);
+  }
 };
 
-window.quickDemoDiscordAuth = function() {
-  document.getElementById("discord-input-username").value = "Det. Marcus Cole#404";
-  document.getElementById("discord-input-id").value = "578954458948698122";
-  document.getElementById("discord-input-key").value = "10-4";
-  submitDiscordAuth();
+// Autenticación Manual con Bot
+window.submitManualBotAuth = function(event) {
+  if (event) event.preventDefault();
+  const tag = document.getElementById("bot-input-tag")?.value.trim() || "";
+  const pin = document.getElementById("bot-input-pin")?.value.trim() || "";
+
+  if (!tag) {
+    showToast("⚠️ Ingrese su Tag o Usuario de Discord");
+    return;
+  }
+
+  const lowerTag = tag.toLowerCase();
+  const isOfficer = lowerTag.includes("det") || lowerTag.includes("cap") || lowerTag.includes("tte") || 
+                    lowerTag.includes("oficial") || lowerTag.includes("policia") || lowerTag.includes("lspd") ||
+                    lowerTag.includes("detective") || lowerTag.includes("investigador");
+
+  if (isOfficer) {
+    const customUser = {
+      username: tag.split("#")[0] || tag,
+      tag: tag.includes("#") ? tag : `${tag}#0404`,
+      userId: "7" + Math.floor(100000000000000 + Math.random() * 900000000000000),
+      badge: "#" + Math.floor(100 + Math.random() * 899) + "-DIV",
+      role: "Detective II // Investigador Oficial",
+      rankLevel: 2,
+      isAuthorizedDetective: true,
+      clearance: "NIVEL 2 // CONFIDENCIAL",
+      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
+      authAt: new Date().toLocaleString('es-ES')
+    };
+    currentDiscordUser = customUser;
+    isDetectiveAuth = true;
+    localStorage.setItem("dd_discord_user", JSON.stringify(customUser));
+    updateDiscordAuthUI();
+    closeDiscordAuthModal();
+    renderCases(getActiveCasesList());
+    audioEngine.playAlertSound();
+    showToast(`🤖 DetectiveBot: Usuario @${tag} validado en Discord con rol de Detective. Acceso concedido.`);
+  } else {
+    const civilUser = {
+      username: tag.split("#")[0] || tag,
+      tag: tag.includes("#") ? tag : `${tag}#9999`,
+      userId: "9" + Math.floor(100000000000000 + Math.random() * 900000000000000),
+      badge: "SIN PLACA",
+      role: "Ciudadano / Sin Rol Policial",
+      rankLevel: 0,
+      isAuthorizedDetective: false,
+      clearance: "NIVEL 0 // DENEGADO",
+      avatar: "https://cdn.discordapp.com/embed/avatars/2.png",
+      authAt: new Date().toLocaleString('es-ES')
+    };
+    currentDiscordUser = civilUser;
+    isDetectiveAuth = false;
+    localStorage.setItem("dd_discord_user", JSON.stringify(civilUser));
+    updateDiscordAuthUI();
+    closeDiscordAuthModal();
+    renderCases(getActiveCasesList());
+    audioEngine.playRadioBeep();
+    showToast(`⛔ DetectiveBot: Usuario @${tag} no posee rol de detective en el Discord.`);
+  }
 };
 
 window.logoutDiscordAuth = function() {
@@ -508,7 +561,7 @@ window.logoutDiscordAuth = function() {
   localStorage.removeItem("dd_discord_user");
   updateDiscordAuthUI();
   renderCases(getActiveCasesList());
-  showToast("Sesión de Discord cerrada. Permisos de edición desactivados.");
+  showToast("Sesión de Discord cerrada. Permisos revocados.");
 };
 
 // --- REPORT / CASE EDITOR (MODIFICAR INFORMES POLICIALES) ---
@@ -1219,269 +1272,344 @@ function showTipReceiptModal(tip) {
   lucide.createIcons();
 }
 
-// --- MDC (MOBILE DATA COMPUTER / TERMINAL INTRANET) ---
-let isMdcLoggedIn = false;
-
-function setupMDC() {
-  const loginForm = document.getElementById("mdc-login-form");
-  const quickDemoBtn = document.getElementById("mdc-quick-demo");
-  const searchBtn = document.getElementById("mdc-search-btn");
-  const searchInput = document.getElementById("mdc-query-input");
-  const logoutBtn = document.getElementById("mdc-logout-btn");
-  const newNoteForm = document.getElementById("mdc-new-note-form");
-
-  if (quickDemoBtn) {
-    quickDemoBtn.addEventListener("click", () => {
-      document.getElementById("mdc-badge").value = "404";
-      document.getElementById("mdc-pin").value = "104";
-      loginMDC();
-    });
+// --- INFORMES POLICIALES CONFIDENCIALES & NORMATIVA ENGINE ---
+const DEFAULT_CONFIDENTIAL_REPORTS = [
+  {
+    id: "INF-CONF-2026-01",
+    title: "Minuta de Intervención Telefónica // Red de Tráfico Kozlov",
+    category: "vigilancia",
+    status: "ORDEN JUDICIAL ACTIVA",
+    statusType: "warrant",
+    clearance: "NIVEL 3 (ALTO SECRETO)",
+    leadDetective: "Det. III Marcus Cole (#404)",
+    date: "02/NOV/2026",
+    summary: "Se interceptaron 14 comunicaciones cifradas a través del repetidor sur de Cypress Flats. Los sospechosos hacen alusión a una entrega de 50 fusiles de asalto militares en los muelles de Terminal Island durante la madrugada del 05/NOV. Se ha fijado geolocalización pasiva sin que los investigados sospechen.\n\nCoordenadas trianguladas: Polígono Industrial 4, Nave 8B. Se recomienda apoyo encubierto de GND y grupo de asalto SWAT en reserva.",
+    evidence: [
+      "14 Archivos de audio WAV de llamadas encriptadas intervenidas",
+      "Triangulación de antenas repetidoras en Cypress Flats y Terminal Island",
+      "Fotografías de vigilancia de una furgoneta negra Speedo rondando el perímetro"
+    ]
+  },
+  {
+    id: "INF-CONF-2026-02",
+    title: "Acta de Inspección Ocular y Balística // Homicidio Julian Vance",
+    category: "allanamiento",
+    status: "ELEVADO A FISCALÍA",
+    statusType: "trial",
+    clearance: "NIVEL 2 (CONFIDENCIAL)",
+    leadDetective: "Det. II Elena Rostova (#512)",
+    date: "01/NOV/2026",
+    summary: "Peritaje balístico en Penthouse 3 de Eclipse Towers. El proyectil recuperado presenta estriado dextrógiro de 6 estrías, compatible con cañón suprimido de Glock 19 de uso táctico. Las huellas dactilares levantadas en el cristal exterior fueron cotejadas con la base AFIS arrojando coincidencia preliminar con Dante Moretti.\n\nLa cerradura no fue forzada. Se presume acceso mediante duplicado de tarjeta magnética provista por personal interno.",
+    evidence: [
+      "2 Casquillos 9x19mm Luger con marca de percutor rectilínea",
+      "Informe forense de autopsia #C-904 (Ángulo de disparo descendente 15°)",
+      "Copia de seguridad del circuito cerrado de televisión del ascensor privado"
+    ]
+  },
+  {
+    id: "INF-CONF-2026-03",
+    title: "Solicitud de Orden de Allanamiento Táctico // Almacén 4B Puerto",
+    category: "allanamiento",
+    status: "ORDEN JUDICIAL ACTIVA",
+    statusType: "warrant",
+    clearance: "NIVEL 4 (SUPERVISIÓN)",
+    leadDetective: "Tte. James Sterling (#201)",
+    date: "31/OCT/2026",
+    summary: "Solicitud formal elevada al Honorable Juez R. Harrison para la entrada y registro en el Almacén 4B de Puerto de Los Santos bajo modalidad 'No-Knock'. Existen sospechas fundadas de almacenamiento de explosivos C4 y armamento antiaéreo portátil destinado a carteles internacionales.\n\nPlazo de ejecución: 48 horas tras firma judicial. Se requiere presencia de perito CSI y negociador de rehenes.",
+    evidence: [
+      "Informe de confidente 'Garganta Profunda' validado con prueba poligráfica",
+      "Vigilancia térmica aérea nocturna que revela presencia de 6 guardias armados",
+      "Manifiesto de carga falsificado con origen en Vladivostok"
+    ]
+  },
+  {
+    id: "INF-CONF-2026-04",
+    title: "Informe de Infiltración Encubierta // Compra Controlada GND",
+    category: "vigilancia",
+    status: "OPERACIÓN EN CURSO",
+    statusType: "active",
+    clearance: "NIVEL 3 (ALTO SECRETO)",
+    leadDetective: "Det. III Marcus Cole (#404)",
+    date: "28/OCT/2026",
+    summary: "Agente encubierto bajo identidad 'Niko V.' ejecutó compra simulada de 5 paquetes de estupefacientes purificados y 2 submáquinas Micro SMG. La transacción fue grabada con microcámara de botón autorizada por el Teniente Sterling. Se preservan números de serie del dinero marcado para futuro allanamiento.",
+    evidence: [
+      "$45,000 en billetes marcados con tinta reactiva ultravioleta",
+      "Grabación de video en alta definición de la transacción en taller de Strawberry",
+      "Muestras de laboratorio químico confirmando pureza del 94.2%"
+    ]
+  },
+  {
+    id: "INF-CONF-2026-05",
+    title: "Acta de Decomiso y Depósito Balístico #884 // Fábrica Murrieta",
+    category: "decomiso",
+    status: "SENTENCIADO",
+    statusType: "solved",
+    clearance: "NIVEL 2 (CONFIDENCIAL)",
+    leadDetective: "Det. I Sarah Connor (#522)",
+    date: "25/OCT/2026",
+    summary: "Intervención de emergencia tras llamada ciudadana al 911 reportando disparos en fábrica textil abandonada en Murrieta Heights. Localización de arsenal oculto en doble fondo de hormigón. Armas precintadas con sellos CSI #0981 al #0988 y puestas a disposición de la sala de custodia judicial.",
+    evidence: [
+      "8 Rifles de asalto Carabina MK II sin número de serie visible",
+      "1,400 Cartuchos calibre 5.56x45mm NATO en cajas metálicas selladas",
+      "3 Chalecos antibalas de nivel balístico IV con blindaje cerámico"
+    ]
   }
+];
 
-  if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      loginMDC();
-    });
+function getActiveConfidentialReports() {
+  const custom = localStorage.getItem("dd_confidential_reports");
+  if (custom) {
+    try {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {
+      console.warn("Error parsing confidential reports:", e);
+    }
   }
+  return DEFAULT_CONFIDENTIAL_REPORTS;
+}
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      isMdcLoggedIn = false;
-      document.getElementById("mdc-logged-in-view").classList.add("hidden");
-      document.getElementById("mdc-login-view").classList.remove("hidden");
-      audioEngine.playRadioBeep();
-      showToast("Sesión de la terminal MDC cerrada.");
-    });
-  }
+function saveConfidentialReports(list) {
+  localStorage.setItem("dd_confidential_reports", JSON.stringify(list));
+}
 
-  if (searchBtn && searchInput) {
-    searchBtn.addEventListener("click", () => performMDCSearch());
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") performMDCSearch();
-    });
-  }
-
-  if (newNoteForm) {
-    newNoteForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      saveDetectiveNote();
+function setupInformesHub() {
+  const searchInput = document.getElementById("confidential-search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const all = getActiveConfidentialReports();
+      if (!q) {
+        renderConfidentialReports(all);
+        return;
+      }
+      const filtered = all.filter(r => 
+        r.id.toLowerCase().includes(q) ||
+        r.title.toLowerCase().includes(q) ||
+        r.summary.toLowerCase().includes(q) ||
+        r.leadDetective.toLowerCase().includes(q)
+      );
+      renderConfidentialReports(filtered);
     });
   }
 }
 
-function loginMDC() {
-  const badge = document.getElementById("mdc-badge").value.trim();
-  const pin = document.getElementById("mdc-pin").value.trim();
-
-  if (!badge || !pin) {
-    showToast("⚠️ Ingrese número de placa y código de autorización.");
-    return;
-  }
-
-  audioEngine.playRadioBeep();
-  isMdcLoggedIn = true;
-
-  document.getElementById("mdc-login-view").classList.add("hidden");
-  document.getElementById("mdc-logged-in-view").classList.remove("hidden");
-
-  document.getElementById("mdc-operator-name").textContent = `DET. ASIGNADO: PLACA #${badge}`;
-  showToast(`✅ Acceso concedido a Terminal Policial // Placa #${badge}`);
-
-  renderMDCWarrants();
-  renderDetectiveNotes();
-  renderReceivedTipsInMDC();
-}
-
-function performMDCSearch() {
-  const query = document.getElementById("mdc-query-input").value.trim().toLowerCase();
-  const resultsContainer = document.getElementById("mdc-results-container");
-  if (!resultsContainer) return;
-
+window.switchInformesTab = function(tabName) {
   audioEngine.playKeyClick();
+  const tabs = ["informes", "normativa", "pistas"];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-btn-${t}`);
+    const content = document.getElementById(`tab-content-${t}`);
+    if (btn) btn.classList.toggle("active", t === tabName);
+    if (content) content.classList.toggle("hidden", t !== tabName);
+  });
+  lucide.createIcons();
+};
 
-  if (!query) {
-    resultsContainer.innerHTML = `
-      <div class="text-center py-8 text-slate-500 font-mono text-xs">
-        <i data-lucide="database" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
-        Ingrese un nombre, apellido, DNI o alias para consultar antecedentes policiales.
+window.filterConfidentialReports = function(category) {
+  audioEngine.playKeyClick();
+  const allBtns = document.querySelectorAll(".conf-filter-btn");
+  allBtns.forEach(b => {
+    b.classList.remove("bg-amber-500", "text-black");
+    b.classList.add("bg-slate-800", "text-slate-300");
+  });
+
+  if (event && event.target) {
+    event.target.classList.add("bg-amber-500", "text-black");
+    event.target.classList.remove("bg-slate-800", "text-slate-300");
+  }
+
+  const all = getActiveConfidentialReports();
+  if (category === "all") {
+    renderConfidentialReports(all);
+  } else {
+    renderConfidentialReports(all.filter(r => r.category === category));
+  }
+};
+
+function renderConfidentialReports(reports) {
+  const container = document.getElementById("confidential-reports-grid");
+  const countSpan = document.getElementById("confidential-reports-count");
+  if (countSpan) countSpan.textContent = reports.length;
+  if (!container) return;
+
+  if (reports.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-12 text-center text-slate-500 font-conthrax text-xs">
+        <i data-lucide="folder-search" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+        No se encontraron informes confidenciales con ese criterio.
       </div>
     `;
     lucide.createIcons();
     return;
   }
 
-  const results = MDC_DATABASE.suspects.filter(s =>
-    s.fullName.toLowerCase().includes(query) ||
-    s.alias.toLowerCase().includes(query) ||
-    s.dni.toLowerCase().includes(query) ||
-    s.vehicleRegistered.toLowerCase().includes(query)
-  );
+  container.innerHTML = reports.map(r => {
+    let badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+    if (r.statusType === "warrant") badgeClass = "bg-red-500/10 text-red-400 border-red-500/30";
+    if (r.statusType === "solved") badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+    if (r.statusType === "trial") badgeClass = "bg-purple-500/10 text-purple-400 border-purple-500/30";
 
-  if (results.length === 0) {
-    resultsContainer.innerHTML = `
-      <div class="text-center py-8 text-amber-400 font-mono text-xs bg-slate-950/60 rounded-xl border border-amber-500/20">
-        <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 text-amber-500"></i>
-        NO SE ENCONTRARON REGISTROS POLICIALES PARA: "${query}".
-      </div>
-    `;
-    lucide.createIcons();
-    return;
-  }
-
-  resultsContainer.innerHTML = results.map(s => `
-    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4 mb-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+    return `
+      <div class="glass-panel p-5 rounded-xl border border-slate-800 hover:border-amber-500/40 transition-all group flex flex-col justify-between">
         <div>
-          <span class="text-xs font-mono text-amber-400 font-bold block">${s.dni} // ALIAS: "${s.alias}"</span>
-          <h4 class="text-xl font-bold text-white font-mono">${s.fullName}</h4>
-        </div>
-        <span class="stamp-classified text-xs font-mono font-bold">${s.status}</span>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono text-slate-300">
-        <p><strong class="text-slate-500">FECHA NACIMIENTO:</strong> ${s.birthDate}</p>
-        <p><strong class="text-slate-500">DIRECCIÓN:</strong> ${s.address}</p>
-        <p><strong class="text-slate-500">LICENCIA CONDUCIR:</strong> ${s.driverLicense}</p>
-        <p><strong class="text-slate-500">VEHÍCULO ASOCIADO:</strong> ${s.vehicleRegistered}</p>
-      </div>
-
-      <div>
-        <h5 class="text-xs font-mono font-bold text-red-400 uppercase tracking-wider mb-2">Historial de Antecedentes Penales:</h5>
-        <div class="space-y-1.5">
-          ${s.antecedents.map(a => `
-            <div class="bg-slate-900/80 p-2 rounded border border-slate-800/80 text-xs font-mono flex items-center justify-between">
-              <span class="text-slate-300"><strong>[${a.date}]</strong> ${a.charge}</span>
-              <span class="text-amber-400 font-semibold">${a.sentence}</span>
-            </div>
-          `).join("")}
-        </div>
-      </div>
-
-      ${s.warrants.length > 0 ? `
-        <div class="bg-red-950/40 p-3 rounded-lg border border-red-500/40 text-xs font-mono text-red-300 flex items-center gap-2">
-          <i data-lucide="flame" class="w-4 h-4 text-red-400 shrink-0"></i>
-          <div>
-            <strong>ALERTA DE CAPTURA ACTIVA:</strong> ${s.warrants.join(" // ")}
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-[10px] font-conthrax text-red-400 font-bold">${r.id}</span>
+            <span class="px-2 py-0.5 rounded text-[9px] font-conthrax font-bold border ${badgeClass}">
+              ${r.status}
+            </span>
           </div>
+
+          <h4 class="text-white font-bold font-gobold text-base tracking-wide group-hover:text-amber-400 transition-colors mb-2">
+            ${r.title}
+          </h4>
+
+          <p class="text-slate-400 font-mono text-xs line-clamp-3 leading-relaxed mb-4">
+            ${r.summary}
+          </p>
         </div>
-      ` : `
-        <div class="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-          <i data-lucide="check" class="w-3.5 h-3.5"></i> Sin órdenes de captura pendientes en este momento.
+
+        <div class="pt-3 border-t border-slate-800/80 space-y-3 font-conthrax text-[11px]">
+          <div class="flex items-center justify-between text-slate-500">
+            <span>Redactor: <strong class="text-slate-300 font-normal">${r.leadDetective}</strong></span>
+            <span>${r.date}</span>
+          </div>
+
+          <button 
+            onclick="openConfidentialReport('${r.id}')" 
+            class="w-full py-2 rounded-lg bg-slate-900 hover:bg-amber-500 text-slate-300 hover:text-black font-bold uppercase transition-all border border-slate-700/60 hover:border-amber-500 flex items-center justify-center gap-1.5 text-[10px]"
+          >
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>Ver Informe Completo</span>
+          </button>
         </div>
-      `}
-    </div>
-  `).join("");
+      </div>
+    `;
+  }).join("");
 
   lucide.createIcons();
 }
 
-function renderMDCWarrants() {
-  const container = document.getElementById("mdc-warrants-list");
-  if (!container) return;
-
-  container.innerHTML = MDC_DATABASE.warrants.map(w => `
-    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="font-bold text-amber-400">${w.warrantId}</span>
-        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${w.status === 'VIGENTE' ? 'bg-red-500/20 text-red-400 border border-red-500' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500'}">
-          ${w.status}
-        </span>
-      </div>
-      <p class="text-white font-bold text-sm">${w.target}</p>
-      <p class="text-slate-400 text-xs">${w.reason}</p>
-      <div class="text-slate-500 pt-2 border-t border-slate-800/80 flex items-center justify-between">
-        <span>Emisor: ${w.officer}</span>
-        <span>${w.issuedAt}</span>
-      </div>
-    </div>
-  `).join("");
-}
-
-function saveDetectiveNote() {
-  const textInput = document.getElementById("mdc-note-text");
-  const caseIdInput = document.getElementById("mdc-note-case");
-  if (!textInput || !textInput.value.trim()) return;
-
-  const notes = JSON.parse(localStorage.getItem("lspd_rp_notes") || "[]");
-  const newNote = {
-    id: "LOG-" + Date.now().toString().slice(-4),
-    caseId: caseIdInput.value.trim() || "GENERAL",
-    text: textInput.value.trim(),
-    time: new Date().toLocaleTimeString('es-ES') + " - " + new Date().toLocaleDateString('es-ES')
-  };
-
-  notes.unshift(newNote);
-  localStorage.setItem("lspd_rp_notes", JSON.stringify(notes));
-
-  textInput.value = "";
+window.openConfidentialReport = function(reportId) {
   audioEngine.playKeyClick();
-  renderDetectiveNotes();
-  showToast("Entrada guardada en la bitácora del agente.");
-}
+  const all = getActiveConfidentialReports();
+  const report = all.find(r => r.id === reportId);
+  if (!report) return;
 
-function renderDetectiveNotes() {
-  const container = document.getElementById("mdc-notes-list");
-  if (!container) return;
+  const modal = document.getElementById("confidential-report-modal");
+  if (!modal) return;
 
-  const notes = JSON.parse(localStorage.getItem("lspd_rp_notes") || "[]");
+  document.getElementById("view-conf-code").textContent = report.id;
+  document.getElementById("view-conf-title").textContent = report.title;
+  document.getElementById("view-conf-status").textContent = report.status;
+  document.getElementById("view-conf-clearance").textContent = report.clearance;
+  document.getElementById("view-conf-author").textContent = report.leadDetective;
+  document.getElementById("view-conf-date").textContent = report.date;
+  document.getElementById("view-conf-summary").textContent = report.summary;
 
-  if (notes.length === 0) {
-    container.innerHTML = `<p class="text-slate-500 text-xs font-mono italic text-center py-4">No hay notas registradas aún en esta estación.</p>`;
+  const evidenceContainer = document.getElementById("view-conf-evidence");
+  if (evidenceContainer) {
+    if (report.evidence && report.evidence.length > 0) {
+      evidenceContainer.innerHTML = report.evidence.map(e => `
+        <div class="p-2 rounded bg-slate-900/80 border border-slate-800 flex items-center gap-2 text-slate-300">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+          <span>${e}</span>
+        </div>
+      `).join("");
+    } else {
+      evidenceContainer.innerHTML = `<span class="text-slate-500 italic">No se adjuntaron anexos materiales.</span>`;
+    }
+  }
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.openNewConfidentialReportModal = function() {
+  if (!isDetectiveAuth) {
+    showToast("🔒 Acceso exclusivo para detectives verificados por Discord.");
+    openDiscordAuthModal();
+    return;
+  }
+  audioEngine.playKeyClick();
+  const modal = document.getElementById("new-confidential-report-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    lucide.createIcons();
+  }
+};
+
+window.saveNewConfidentialReport = function(event) {
+  if (event) event.preventDefault();
+  const title = document.getElementById("new-conf-title")?.value.trim();
+  const category = document.getElementById("new-conf-category")?.value || "vigilancia";
+  const summary = document.getElementById("new-conf-summary")?.value.trim();
+  const evidenceRaw = document.getElementById("new-conf-evidence")?.value.trim();
+
+  if (!title || !summary) {
+    showToast("⚠️ Ingrese al menos título y sumario de los hechos.");
     return;
   }
 
-  container.innerHTML = notes.map((n, idx) => `
-    <div class="bg-slate-900/90 p-3 rounded-lg border border-slate-800 text-xs font-mono space-y-1.5 relative group">
-      <div class="flex items-center justify-between text-slate-400">
-        <span class="text-amber-400 font-bold">[${n.caseId}] ${n.id}</span>
-        <span class="text-[10px]">${n.time}</span>
-      </div>
-      <p class="text-slate-200 leading-relaxed">${n.text}</p>
-      <button onclick="deleteDetectiveNote(${idx})" class="text-[10px] text-red-400 hover:text-red-300 font-bold block text-right pt-1">
-        [Eliminar Nota]
-      </button>
-    </div>
-  `).join("");
-}
+  const evidence = evidenceRaw ? evidenceRaw.split("\n").map(l => l.trim()).filter(Boolean) : [];
+  const reports = getActiveConfidentialReports();
+  const newId = "INF-CONF-2026-" + String(reports.length + 1).padStart(2, '0');
 
-window.deleteDetectiveNote = function (index) {
-  const notes = JSON.parse(localStorage.getItem("lspd_rp_notes") || "[]");
-  notes.splice(index, 1);
-  localStorage.setItem("lspd_rp_notes", JSON.stringify(notes));
-  renderDetectiveNotes();
-  showToast("Nota eliminada.");
+  const newReport = {
+    id: newId,
+    title,
+    category,
+    status: "REGISTRADO // EN REVISIÓN",
+    statusType: "active",
+    clearance: currentDiscordUser ? currentDiscordUser.clearance : "NIVEL 2 (CONFIDENCIAL)",
+    leadDetective: currentDiscordUser ? `${currentDiscordUser.username} (${currentDiscordUser.badge})` : "Det. Asignado",
+    date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
+    summary,
+    evidence
+  };
+
+  reports.unshift(newReport);
+  saveConfidentialReports(reports);
+
+  audioEngine.playAlertSound();
+  closeModal("new-confidential-report-modal");
+  renderConfidentialReports(getActiveConfidentialReports());
+  showToast(`✅ Informe confidencial ${newId} archivado con éxito.`);
 };
 
-function renderReceivedTipsInMDC() {
-  const container = document.getElementById("mdc-tips-inbox");
+function renderAuthorizedTipsInbox() {
+  const container = document.getElementById("authorized-tips-inbox");
   if (!container) return;
 
   const tips = JSON.parse(localStorage.getItem("lspd_rp_tips") || "[]");
 
   if (tips.length === 0) {
     container.innerHTML = `
-      <div class="text-slate-500 font-mono text-xs text-center py-4">
-        No hay denuncias anónimas pendientes de revisión.
+      <div class="text-slate-500 font-conthrax text-xs text-center py-8">
+        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+        No hay denuncias anónimas pendientes de revisión en este momento.
       </div>
     `;
+    lucide.createIcons();
     return;
   }
 
   container.innerHTML = tips.map(t => `
-    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs font-mono space-y-1.5">
+    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono space-y-2">
       <div class="flex items-center justify-between">
-        <span class="text-amber-400 font-bold">${t.code}</span>
+        <span class="text-red-400 font-conthrax font-bold">${t.code}</span>
         <span class="text-slate-400">${t.date}</span>
       </div>
-      <p class="text-white font-semibold">${t.location} <span class="text-amber-500">(${t.category.toUpperCase()})</span></p>
-      <p class="text-slate-300 bg-slate-900 p-2 rounded">${t.desc}</p>
+      <p class="text-white font-semibold text-sm">${t.location} <span class="text-amber-400 font-conthrax text-xs">(${t.category.toUpperCase()})</span></p>
+      <p class="text-slate-300 bg-slate-900 p-3 rounded-lg leading-relaxed">${t.desc}</p>
       <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-        <span>Prioridad: ${t.priority.toUpperCase()}</span>
-        <span class="text-emerald-400 font-bold">ACTIVA</span>
+        <span>Prioridad: <strong class="text-red-400 uppercase">${t.priority}</strong></span>
+        <span>Contacto: ${t.contact || 'ANÓNIMO ABSOLUTO'}</span>
       </div>
     </div>
   `).join("");
+
+  lucide.createIcons();
 }
 
 // --- AUDIO UI TOGGLE ---
