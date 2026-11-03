@@ -241,3 +241,276 @@ body {
 .sound-bar:nth-child(3) { animation-delay: 0.4s; }
 .sound-bar:nth-child(4) { animation-delay: 0.1s; }
 
+/* ==========================================================================
+   APP CONTAINER & LATERAL SIDEBAR ARCHITECTURE (Inspirado en SAPD Portal)
+   ========================================================================== */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+  width: 275px;
+  min-width: 275px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 10, 14, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(231, 231, 231, 0.1);
+  z-index: 50;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+/* Docked mode (Icon-only) */
+.sidebar.docked {
+  width: 76px;
+  min-width: 76px;
+}
+
+/* Main Content Wrapper */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  padding: 1.25rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(231, 231, 231, 0.08);
+  position: relative;
+  min-height: 72px;
+}
+
+.sidebar-dock-toggle {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-dock-toggle:hover {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* Sidebar Quick Alert Widget */
+.sidebar-alert-indicator {
+  margin: 0.75rem 0.85rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sidebar-alert-indicator:hover {
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+/* Navigation List */
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.nav-section-title {
+  font-family: 'Conthrax', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(231, 231, 231, 0.4);
+  text-transform: uppercase;
+  padding: 0.75rem 0.6rem 0.25rem;
+  white-space: nowrap;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-family: 'Conthrax', monospace;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+
+.nav-link.active {
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.04) 100%);
+  color: #d4af37;
+  border-left: 3px solid #d4af37;
+  font-weight: 700;
+}
+
+.nav-index {
+  font-size: 0.65rem;
+  color: rgba(212, 175, 55, 0.5);
+  font-weight: 700;
+  min-width: 18px;
+}
+
+.nav-badge-pill {
+  margin-left: auto;
+  font-size: 0.62rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.nav-link.active .nav-badge-pill {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.4);
+  color: #f3e5ab;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(231, 231, 231, 0.08);
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Docked Behavior */
+.sidebar.docked .brand-info,
+.sidebar.docked .nav-section-title,
+.sidebar.docked .nav-link span:not(.sidebar-tooltip),
+.sidebar.docked .nav-index,
+.sidebar.docked .nav-badge-pill,
+.sidebar.docked .alert-full-text,
+.sidebar.docked .sidebar-footer-text {
+  display: none !important;
+}
+
+.sidebar.docked .sidebar-header {
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.sidebar.docked .sidebar-dock-toggle {
+  margin: 0.5rem auto 0;
+  transform: rotate(180deg);
+}
+
+.sidebar.docked .nav-link {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.sidebar.docked .sidebar-alert-indicator {
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+/* Tooltip on hover when docked */
+.sidebar-tooltip {
+  display: none;
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0f1522;
+  color: #f8fafc;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-family: 'Conthrax', monospace;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.sidebar.docked .nav-link:hover .sidebar-tooltip {
+  display: block;
+}
+
+/* Topbar in Main Content */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(8, 10, 14, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(231, 231, 231, 0.08);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: 5px 0 25px rgba(0,0,0,0.8);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 45;
+  }
+  .sidebar-backdrop.active {
+    display: block;
+  }
+}
+

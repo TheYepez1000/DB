@@ -396,22 +396,93 @@ document.addEventListener("DOMContentLoaded", () => {
   setupMDC();
   setupAudioControls();
   setupInteractiveModals();
+  setupSidebar();
+  setupScrollSpy();
 });
+
+// --- SIDEBAR DOCK & MOBILE CONTROLS (INSPIRADO EN SAPD PORTAL) ---
+function setupSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const isDocked = localStorage.getItem("dd_sidebar_docked") === "true";
+  
+  if (isDocked && sidebar && window.innerWidth > 1024) {
+    sidebar.classList.add("docked");
+  }
+
+  window.toggleSidebarDock = function() {
+    if (!sidebar) return;
+    audioEngine.playKeyClick();
+    const docked = sidebar.classList.toggle("docked");
+    localStorage.setItem("dd_sidebar_docked", docked);
+  };
+
+  window.toggleSidebarMobile = function() {
+    if (!sidebar) return;
+    audioEngine.playKeyClick();
+    const backdrop = document.getElementById("sidebar-backdrop");
+    const isOpen = sidebar.classList.toggle("mobile-open");
+    if (backdrop) {
+      backdrop.classList.toggle("active", isOpen);
+    }
+  };
+
+  // Close sidebar drawer upon clicking any link on mobile screens
+  document.querySelectorAll(".sidebar-nav .nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      audioEngine.playKeyClick();
+      if (window.innerWidth <= 1024 && sidebar) {
+        sidebar.classList.remove("mobile-open");
+        const backdrop = document.getElementById("sidebar-backdrop");
+        if (backdrop) backdrop.classList.remove("active");
+      }
+    });
+  });
+}
+
+function setupScrollSpy() {
+  const sections = ["inicio", "casos", "buscados", "mdc-terminal", "denuncias", "unidades", "convocatoria"];
+  const navLinks = document.querySelectorAll(".sidebar-nav .nav-link");
+
+  function onScroll() {
+    const scrollPos = window.scrollY + 200;
+    
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const secId = sections[i];
+      const elem = document.getElementById(secId);
+      if (elem && elem.offsetTop <= scrollPos) {
+        navLinks.forEach(link => {
+          const href = link.getAttribute("href");
+          if (href === `#${secId}`) {
+            link.classList.add("active");
+          } else {
+            link.classList.remove("active");
+          }
+        });
+        break;
+      }
+    }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+}
 
 // --- CLOCK & STATUS SYSTEM ---
 function initClock() {
-  const timeElem = document.getElementById("live-time");
-  const zuluElem = document.getElementById("zulu-time");
+  const timeElems = [document.getElementById("live-time"), document.getElementById("sidebar-live-time")];
+  const zuluElems = [document.getElementById("zulu-time"), document.getElementById("sidebar-zulu-time")];
 
   function update() {
     const now = new Date();
-    if (timeElem) {
-      timeElem.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
-    }
-    if (zuluElem) {
-      const zulu = now.toISOString().substring(11, 19) + "Z";
-      zuluElem.textContent = zulu;
-    }
+    const timeStr = now.toLocaleTimeString('es-ES', { hour12: false });
+    const zuluStr = now.toISOString().substring(11, 19) + "Z";
+
+    timeElems.forEach(el => {
+      if (el) el.textContent = timeStr;
+    });
+
+    zuluElems.forEach(el => {
+      if (el) el.textContent = zuluStr;
+    });
   }
   update();
   setInterval(update, 1000);
@@ -1107,22 +1178,24 @@ function renderReceivedTipsInMDC() {
 
 // --- AUDIO UI TOGGLE ---
 function setupAudioControls() {
-  const toggleBtn = document.getElementById("audio-toggle-btn");
-  const audioStatusText = document.getElementById("audio-status-text");
+  const toggleBtns = document.querySelectorAll(".audio-toggle-btn, #audio-toggle-btn");
+  const audioStatusTexts = document.querySelectorAll(".audio-status-text, #audio-status-text");
 
-  if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
+  toggleBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
       const isEnabled = audioEngine.toggle();
-      if (audioStatusText) {
-        audioStatusText.textContent = isEnabled ? "AUDIO ON" : "AUDIO MUTED";
-      }
-      toggleBtn.classList.toggle("text-amber-400", isEnabled);
-      toggleBtn.classList.toggle("text-slate-500", !isEnabled);
+      audioStatusTexts.forEach(txt => {
+        txt.textContent = isEnabled ? "AUDIO ON" : "AUDIO MUTED";
+      });
+      toggleBtns.forEach(b => {
+        b.classList.toggle("text-amber-400", isEnabled);
+        b.classList.toggle("text-slate-500", !isEnabled);
+      });
 
       if (isEnabled) audioEngine.playRadioBeep();
       showToast(isEnabled ? "Efectos de radio y terminal activados." : "Efectos de audio silenciados.");
     });
-  }
+  });
 }
 
 // --- MODAL UTILITIES ---

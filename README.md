@@ -1,12 +1,20 @@
 # 🕵️‍♂️ Detective Division // LSPD Investigation Bureau (Roleplay)
 
-Plataforma web temática e interactiva diseñada específicamente para divisiones de investigación, bufetes de detectives y crimen organizado en comunidades de **Roleplay (FiveM, GTA V RP, SA-MP, RedM)**.
+Plataforma web temática e interactiva diseñada específicamente para divisiones de investigación, bufetes de detectives y crimen organizado en comunidades de **Roleplay (FiveM, GTA V RP, SA-MP, RedM)**, inspirada en la arquitectura de portales policiales modernos como **SAPD Portal (La Nación RP)**.
 
 ---
 
-## 🌟 Características Principales
+## 🌟 Características y Arquitectura del Sistema
 
-### 1. 🛡️ Tablón de Casos & Expedientes de Investigación
+### 1. 📑 Menú Lateral Táctico (Sidebar Navigation - Estilo SAPD Portal)
+- **Barra de navegación lateral acoplable/desacoplable:** Permite alternar entre vista completa (275px) y vista compacta de solo iconos (76px) mediante el botón de toggle o tecla de acceso rápido.
+- **Identificador de Alerta Operativa:** Widget interactivo con indicador pulsante de nivel de alerta (*CÓDIGO 2 - ELEVADO*).
+- **Categorías organizadas y numeradas:** Índices numéricos (`01`, `02`, `03`...) con distintivos tácticos (*14 Casos*, *TOP 4*, *MDC 404*, *Cifrado*).
+- **Tooltips flotantes:** Al acoplar la barra lateral, cada icono despliega su información detallada al pasar el cursor.
+- **Sidebar Footer Integrado:** Reloj de tiempo local del servidor RP y reloj militar **ZULU**, además del interruptor de audio de radio.
+- **Topbar en Área de Contenido:** Barra superior con botón de menú para móviles, marquesina con alertas de radio y accesos rápidos a MDC y Denuncias.
+
+### 2. 🛡️ Tablón de Casos & Expedientes de Investigación
 - **Filtros por especialidad:** Homicidios (RHD), Narcóticos y Pandillas (GND), Robos Bancarios, Desapariciones y Asuntos Internos (IAD).
 - **Buscador en tiempo real** por palabra clave, detective a cargo o código de sumario.
 - **Dossier Policial Completo (Modal Interactivo):**

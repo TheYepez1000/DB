@@ -46,21 +46,6 @@
 </head>
 <body class="min-h-screen text-slate-100 selection:bg-amber-500 selection:text-black">
 
-  <!-- POLICE TAPE MARQUEE TICKER -->
-  <div class="bg-black border-b border-amber-500/30 overflow-hidden py-1.5 flex items-center font-conthrax text-xs">
-    <div class="flex items-center gap-2 px-4 shrink-0 bg-red-600 text-white font-bold tracking-wider uppercase text-[10px] py-0.5 rounded shadow">
-      <span class="w-2 h-2 rounded-full bg-white animate-ping"></span> CANAL POLICIAL
-    </div>
-    <div class="relative w-full overflow-hidden whitespace-nowrap">
-      <div class="inline-block animate-[marquee_30s_linear_infinite] text-slate-300 text-xs">
-        <span class="mx-6 text-amber-400 font-bold">[10-99 ALERTA MÁXIMA]</span> Dante 'Ghost' Moretti buscado por homicidio agravado en Rockford Hills. Recompensa de $75,000.
-        <span class="mx-6 text-blue-400 font-bold">[10-15 INFORME RHD]</span> 4 sujetos puestos a disposición judicial por atraco a sucursal bancaria Fleeca.
-        <span class="mx-6 text-emerald-400 font-bold">[10-8 ESTADO OPERATIVO]</span> Redadas nocturnas de GND en muelles de carga autorizadas por juez de turno.
-        <span class="mx-6 text-red-400 font-bold">[10-33 FRECUENCIA DE EMERGENCIA]</span> Mantener estricto silencio de radio durante allanamientos tácticos.
-      </div>
-    </div>
-  </div>
-
   <style>
     @keyframes marquee {
       0% { transform: translateX(100%); }
@@ -68,68 +53,182 @@
     }
   </style>
 
-  <!-- NAVBAR -->
-  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
-        
-        <!-- Logo & Department Name -->
-        <a href="#inicio" class="flex items-center gap-3.5 group">
-          <div class="relative w-12 h-12 flex items-center justify-center bg-gradient-to-br from-amber-400 via-amber-600 to-amber-900 rounded-full p-0.5 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+  <!-- App Wrapper (Inspirado en SAPD Portal La Nación) -->
+  <div class="app-container">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebarMobile()"></div>
+
+    <!-- Lateral Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Sidebar Header -->
+      <div class="sidebar-header">
+        <a href="#inicio" class="flex items-center gap-3 group">
+          <div class="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-amber-400 via-amber-600 to-amber-900 rounded-full p-0.5 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
             <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center border border-amber-400/50">
-              <i data-lucide="shield" class="w-6 h-6 text-amber-400"></i>
+              <i data-lucide="shield" class="w-5 h-5 text-amber-400"></i>
             </div>
-            <!-- Star inside shield -->
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span class="text-amber-400 text-xs font-black">★</span>
+              <span class="text-amber-400 text-[10px] font-black">★</span>
             </div>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-conthrax font-bold tracking-widest text-amber-400 uppercase">DIVISIÓN DE INVESTIGACIÓN</span>
-              <span class="px-1.5 py-0.2 bg-blue-900/60 border border-blue-500/40 text-blue-300 font-conthrax text-[10px] rounded">CID-RP</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black tracking-wide text-white font-gobold">
-              DETECTIVE DIVISION
+          <div class="brand-info">
+            <h1 class="text-lg font-black tracking-wide text-white font-gobold leading-none">
+              D.D. BUREAU
             </h1>
+            <span class="text-[10px] font-conthrax text-amber-400 tracking-wider">Nación Los Santos</span>
           </div>
         </a>
 
-        <!-- Desktop Navigation -->
-        <nav class="hidden xl:flex items-center gap-6 font-conthrax text-xs">
-          <a href="#inicio" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider">Inicio</a>
-          <a href="#unidades" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider">Unidades</a>
-          <a href="#casos" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider">Expedientes</a>
-          <a href="#buscados" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider">Más Buscados</a>
-          <a href="#denuncias" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider text-amber-400 font-bold">Denuncias Anónimas</a>
-          <a href="#convocatoria" class="text-slate-300 hover:text-amber-400 transition-colors uppercase tracking-wider">Reclutamiento</a>
-        </nav>
+        <button class="sidebar-dock-toggle" id="sidebar-dock-toggle" onclick="toggleSidebarDock()" title="Acoplar / Desacoplar menú lateral">
+          <i data-lucide="chevron-left" class="w-4 h-4" id="sidebar-dock-icon"></i>
+        </button>
+      </div>
 
-        <!-- Right Quick Actions: Clock, Audio & MDC Access -->
-        <div class="flex items-center gap-3">
-          <!-- Audio Toggle -->
-          <button id="audio-toggle-btn" title="Activar/Silenciar Efectos de Sonido" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 hover:bg-slate-800 font-conthrax text-xs text-amber-400 transition-colors">
+      <!-- Quick Alert Status Widget in Sidebar -->
+      <a href="#inicio" class="sidebar-alert-indicator">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
+          <span class="alert-full-text font-conthrax text-xs text-orange-400 font-bold">CÓDIGO 2 // ELEVADO</span>
+        </div>
+        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-500 alert-full-text"></i>
+        <span class="sidebar-tooltip">Nivel Operativo: Código 2 (Elevado)</span>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        
+        <div class="nav-section-title">Navegación Principal</div>
+        
+        <a class="nav-link active" href="#inicio">
+          <span class="nav-index">01</span>
+          <i data-lucide="shield" class="w-4 h-4 shrink-0"></i>
+          <span>Inicio / Central</span>
+          <span class="sidebar-tooltip">Inicio / Central</span>
+        </a>
+
+        <a class="nav-link" href="#casos">
+          <span class="nav-index">02</span>
+          <i data-lucide="folder-open" class="w-4 h-4 shrink-0"></i>
+          <span>Expedientes & Casos</span>
+          <span class="nav-badge-pill">14 Casos</span>
+          <span class="sidebar-tooltip">Expedientes de Investigación</span>
+        </a>
+
+        <a class="nav-link" href="#buscados">
+          <span class="nav-index">03</span>
+          <i data-lucide="crosshair" class="w-4 h-4 shrink-0 text-red-400"></i>
+          <span>Los Más Buscados</span>
+          <span class="nav-badge-pill text-red-400 border-red-500/30">TOP 4</span>
+          <span class="sidebar-tooltip">Fugitivos Más Buscados</span>
+        </a>
+
+        <a class="nav-link" href="#denuncias">
+          <span class="nav-index">04</span>
+          <i data-lucide="shield-alert" class="w-4 h-4 shrink-0 text-amber-400"></i>
+          <span>Denuncias Anónimas</span>
+          <span class="nav-badge-pill text-amber-400 border-amber-500/30">Cifrado</span>
+          <span class="sidebar-tooltip">Canal de Denuncias Anónimas</span>
+        </a>
+
+        <div class="nav-section-title">Operaciones & Inteligencia</div>
+
+        <a class="nav-link" href="#mdc-terminal">
+          <span class="nav-index">05</span>
+          <i data-lucide="terminal" class="w-4 h-4 shrink-0 text-blue-400"></i>
+          <span>Terminal MDC Agentes</span>
+          <span class="nav-badge-pill text-blue-400 border-blue-500/30">MDC 404</span>
+          <span class="sidebar-tooltip">Terminal MDC Intranet Policial</span>
+        </a>
+
+        <a class="nav-link" href="#unidades">
+          <span class="nav-index">06</span>
+          <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
+          <span>Unidades del Bureau</span>
+          <span class="nav-badge-pill">6 Ramas</span>
+          <span class="sidebar-tooltip">Unidades Especializadas (RHD, GND, CSI)</span>
+        </a>
+
+        <a class="nav-link" href="#convocatoria">
+          <span class="nav-index">07</span>
+          <i data-lucide="user-check" class="w-4 h-4 shrink-0"></i>
+          <span>Reclutamiento</span>
+          <span class="nav-badge-pill text-emerald-400 border-emerald-500/30">Abierto</span>
+          <span class="sidebar-tooltip">Convocatoria & Requisitos</span>
+        </a>
+
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <!-- Audio button -->
+        <button class="audio-toggle-btn flex items-center justify-between px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-amber-400 hover:bg-slate-800 transition-colors w-full font-conthrax text-xs">
+          <div class="flex items-center gap-2">
             <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
-            <span id="audio-status-text" class="text-[11px]">AUDIO ON</span>
-          </button>
-
-          <!-- System Clock -->
-          <div class="hidden md:flex flex-col text-right font-conthrax text-xs border-l border-slate-800 pl-3">
-            <span class="text-amber-400 font-bold" id="live-time">00:00:00</span>
-            <span class="text-[10px] text-slate-500" id="zulu-time">ZULU-RP</span>
+            <span class="sidebar-footer-text audio-status-text">AUDIO ON</span>
           </div>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        </button>
 
-          <!-- MDC Button -->
-          <a href="#mdc-terminal" class="relative group px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-conthrax font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2">
-            <i data-lucide="terminal" class="w-4 h-4"></i>
-            <span>Portal MDC</span>
-            <span class="w-2 h-2 rounded-full bg-black/60 animate-ping"></span>
-          </a>
+        <!-- Clocks -->
+        <div class="sidebar-footer-text font-conthrax text-[11px] text-slate-400 bg-black/40 p-2.5 rounded border border-slate-800 flex justify-between items-center">
+          <div>
+            <span class="text-slate-500 block text-[9px]">LOCAL RP</span>
+            <span id="sidebar-live-time" class="text-amber-400 font-bold">00:00:00</span>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-500 block text-[9px]">HORA ZULU</span>
+            <span id="sidebar-zulu-time" class="text-white font-bold">ZULU-RP</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <main class="main-content" id="main-content">
+
+      <!-- Topbar Header (Inspirado en SAPD Portal) -->
+      <header class="topbar">
+        <!-- Left: Mobile Hamburger & Breadcrumb -->
+        <div class="flex items-center gap-3">
+          <button id="sidebar-mobile-toggle" onclick="toggleSidebarMobile()" class="lg:hidden p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white" title="Abrir Menú">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          
+          <div class="hidden sm:flex items-center gap-2 font-conthrax text-xs">
+            <span class="text-amber-400 font-bold">DETECTIVE DIVISION</span>
+            <span class="text-slate-600">//</span>
+            <span class="text-slate-400">PORTAL OFICIAL DE INVESTIGACIÓN CRIMINAL</span>
+          </div>
         </div>
 
-      </div>
-    </div>
-  </header>
+        <!-- Center: Marquee Radio Ticker in Topbar -->
+        <div class="hidden md:flex flex-1 max-w-md mx-4 overflow-hidden relative font-conthrax text-[11px] bg-slate-950/80 px-3 py-1.5 rounded-full border border-slate-800">
+          <span class="text-red-500 font-bold uppercase mr-2 shrink-0 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span> RADIO:
+          </span>
+          <div class="overflow-hidden whitespace-nowrap w-full">
+            <div class="inline-block animate-[marquee_25s_linear_infinite] text-slate-300">
+              [10-99] Dante Moretti buscado en Rockford Hills &nbsp;•&nbsp; [10-15] 4 detenidos por atraco Fleeca &nbsp;•&nbsp; [10-8] Redadas GND activas en muelles.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="#mdc-terminal" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-conthrax font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-md flex items-center gap-1.5">
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Portal MDC</span>
+          </a>
+
+          <a href="#denuncias" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-red-500/40 text-red-300 font-conthrax font-bold text-xs uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-red-400"></i>
+            <span class="hidden sm:inline">Denunciar</span>
+          </a>
+        </div>
+      </header>
 
   <!-- HERO SECTION -->
   <section id="inicio" class="relative pt-12 pb-20 lg:pt-20 lg:pb-32 overflow-hidden border-b border-slate-800">
@@ -881,6 +980,12 @@
       </div>
     </div>
   </footer>
+
+  </main>
+  <!-- End Main Content Wrapper -->
+
+  </div>
+  <!-- End App Wrapper -->
 
   <!-- MODAL: CASE DOSSIER DETAIL -->
   <div id="case-modal" class="rp-modal fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
