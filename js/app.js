@@ -386,10 +386,33 @@ const MDC_DATABASE = {
   ]
 };
 
+// --- DISCORD AUTHENTICATION & CASE MANAGEMENT ENGINE ---
+let currentDiscordUser = null;
+let isDetectiveAuth = false;
+let isManualNavigation = false;
+
+function getActiveCasesList() {
+  const custom = localStorage.getItem("dd_custom_cases");
+  if (custom) {
+    try {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {
+      console.warn("Error parsing custom cases:", e);
+    }
+  }
+  return RP_CASES;
+}
+
+function saveCasesList(list) {
+  localStorage.setItem("dd_custom_cases", JSON.stringify(list));
+}
+
 // --- APP CONTROLLER ---
 document.addEventListener("DOMContentLoaded", () => {
+  initDiscordAuth();
   initClock();
-  renderCases(RP_CASES);
+  renderCases(getActiveCasesList());
   renderMostWanted(MOST_WANTED);
   setupCaseFilters();
   setupTipForm();
@@ -398,7 +421,262 @@ document.addEventListener("DOMContentLoaded", () => {
   setupInteractiveModals();
   setupSidebar();
   setupScrollSpy();
+  setupReportEditor();
 });
+
+// --- DISCORD AUTH CONTROLLER (Inspirado en SAPD Portal) ---
+function initDiscordAuth() {
+  const saved = localStorage.getItem("dd_discord_user");
+  if (saved) {
+    try {
+      currentDiscordUser = JSON.parse(saved);
+      isDetectiveAuth = true;
+      document.body.classList.add("is-detective-auth");
+    } catch (e) {
+      currentDiscordUser = null;
+      isDetectiveAuth = false;
+    }
+  }
+  updateDiscordAuthUI();
+}
+
+function updateDiscordAuthUI() {
+  const topbarAvatar = document.getElementById("topbar-discord-avatar");
+  const topbarName = document.getElementById("topbar-discord-name");
+
+  if (isDetectiveAuth && currentDiscordUser) {
+    document.body.classList.add("is-detective-auth");
+    if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (topbarName) topbarName.textContent = currentDiscordUser.username || "Detective Autorizado";
+  } else {
+    document.body.classList.remove("is-detective-auth");
+  }
+}
+
+window.openDiscordAuthModal = function() {
+  audioEngine.playRadioBeep();
+  const modal = document.getElementById("discord-auth-modal");
+  if (modal) modal.classList.remove("hidden");
+};
+
+window.closeDiscordAuthModal = function() {
+  const modal = document.getElementById("discord-auth-modal");
+  if (modal) modal.classList.add("hidden");
+};
+
+window.submitDiscordAuth = function(event) {
+  if (event) event.preventDefault();
+  const username = document.getElementById("discord-input-username")?.value.trim() || "Det. Marcus Cole#404";
+  const userId = document.getElementById("discord-input-id")?.value.trim() || "578954458948698122";
+  const key = document.getElementById("discord-input-key")?.value.trim() || "10-4";
+
+  if (!username) {
+    showToast("⚠️ Ingrese su usuario o Tag de Discord");
+    return;
+  }
+
+  audioEngine.playAlertSound();
+  currentDiscordUser = {
+    username,
+    userId,
+    badge: "#404-DIV",
+    role: "Detective Inspector // Mando Policial",
+    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
+    authAt: new Date().toLocaleString('es-ES')
+  };
+
+  isDetectiveAuth = true;
+  localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+  updateDiscordAuthUI();
+  closeDiscordAuthModal();
+  renderCases(getActiveCasesList());
+
+  showToast(`✅ Sesión iniciada como ${currentDiscordUser.username}. Permisos de modificación de expedientes activados.`);
+};
+
+window.quickDemoDiscordAuth = function() {
+  document.getElementById("discord-input-username").value = "Det. Marcus Cole#404";
+  document.getElementById("discord-input-id").value = "578954458948698122";
+  document.getElementById("discord-input-key").value = "10-4";
+  submitDiscordAuth();
+};
+
+window.logoutDiscordAuth = function() {
+  audioEngine.playRadioBeep();
+  currentDiscordUser = null;
+  isDetectiveAuth = false;
+  localStorage.removeItem("dd_discord_user");
+  updateDiscordAuthUI();
+  renderCases(getActiveCasesList());
+  showToast("Sesión de Discord cerrada. Permisos de edición desactivados.");
+};
+
+// --- REPORT / CASE EDITOR (MODIFICAR INFORMES POLICIALES) ---
+let currentEditingCaseId = null;
+
+function setupReportEditor() {
+  const form = document.getElementById("report-editor-form");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      saveReportChanges();
+    });
+  }
+}
+
+window.openReportEditor = function(caseId = null) {
+  if (!isDetectiveAuth) {
+    showToast("🔒 Debes autenticarte con tu Discord de oficial para modificar informes.");
+    openDiscordAuthModal();
+    return;
+  }
+
+  audioEngine.playKeyClick();
+  currentEditingCaseId = caseId;
+  const modal = document.getElementById("report-editor-modal");
+  if (!modal) return;
+
+  const headerTitle = document.getElementById("editor-modal-title");
+  const deleteBtn = document.getElementById("editor-delete-btn");
+
+  const cases = getActiveCasesList();
+  const c = caseId ? cases.find(item => item.id === caseId) : null;
+
+  if (c) {
+    if (headerTitle) headerTitle.textContent = `MODIFICAR INFORME: ${c.id}`;
+    if (deleteBtn) deleteBtn.classList.remove("hidden");
+
+    document.getElementById("edit-case-id").value = c.id;
+    document.getElementById("edit-case-title").value = c.title;
+    document.getElementById("edit-case-division").value = c.division;
+    document.getElementById("edit-case-category").value = c.category;
+    document.getElementById("edit-case-status").value = c.status;
+    document.getElementById("edit-case-statustype").value = c.statusType;
+    document.getElementById("edit-case-priority").value = c.priority;
+    document.getElementById("edit-case-detective").value = c.leadDetective;
+    document.getElementById("edit-case-date").value = c.date;
+    document.getElementById("edit-case-location").value = c.location;
+    document.getElementById("edit-case-image").value = c.image;
+    document.getElementById("edit-case-summary").value = c.summary;
+    document.getElementById("edit-case-evidence").value = (c.evidence || []).join("\n");
+    document.getElementById("edit-case-suspects").value = (c.suspects || []).map(s => `${s.name} | ${s.role} | ${s.status}`).join("\n");
+  } else {
+    // New case
+    if (headerTitle) headerTitle.textContent = "CREAR NUEVO EXPEDIENTE POLICIAL";
+    if (deleteBtn) deleteBtn.classList.add("hidden");
+
+    const newId = "CASE-2026-" + Math.floor(100 + Math.random() * 900);
+    document.getElementById("edit-case-id").value = newId;
+    document.getElementById("edit-case-title").value = "";
+    document.getElementById("edit-case-division").value = "RHD - Robos & Homicidios";
+    document.getElementById("edit-case-category").value = "homicide";
+    document.getElementById("edit-case-status").value = "BAJO INVESTIGACIÓN";
+    document.getElementById("edit-case-statustype").value = "active";
+    document.getElementById("edit-case-priority").value = "CÓDIGO 3 (ALTA)";
+    document.getElementById("edit-case-detective").value = currentDiscordUser ? `${currentDiscordUser.username} (${currentDiscordUser.badge})` : "Det. Asignado";
+    document.getElementById("edit-case-date").value = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+    document.getElementById("edit-case-location").value = "Los Santos Metropolitan";
+    document.getElementById("edit-case-image").value = "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80";
+    document.getElementById("edit-case-summary").value = "";
+    document.getElementById("edit-case-evidence").value = "";
+    document.getElementById("edit-case-suspects").value = "";
+  }
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.closeReportEditor = function() {
+  const modal = document.getElementById("report-editor-modal");
+  if (modal) modal.classList.add("hidden");
+};
+
+function saveReportChanges() {
+  const id = document.getElementById("edit-case-id").value.trim();
+  const title = document.getElementById("edit-case-title").value.trim();
+  const division = document.getElementById("edit-case-division").value.trim();
+  const category = document.getElementById("edit-case-category").value;
+  const status = document.getElementById("edit-case-status").value.trim();
+  const statusType = document.getElementById("edit-case-statustype").value;
+  const priority = document.getElementById("edit-case-priority").value.trim();
+  const leadDetective = document.getElementById("edit-case-detective").value.trim();
+  const date = document.getElementById("edit-case-date").value.trim();
+  const location = document.getElementById("edit-case-location").value.trim();
+  const image = document.getElementById("edit-case-image").value.trim();
+  const summary = document.getElementById("edit-case-summary").value.trim();
+  
+  const evidenceRaw = document.getElementById("edit-case-evidence").value.trim();
+  const evidence = evidenceRaw ? evidenceRaw.split("\n").map(l => l.trim()).filter(Boolean) : [];
+
+  const suspectsRaw = document.getElementById("edit-case-suspects").value.trim();
+  const suspects = suspectsRaw ? suspectsRaw.split("\n").map(l => {
+    const parts = l.split("|").map(p => p.trim());
+    return {
+      name: parts[0] || "Sospechoso No Identificado",
+      role: parts[1] || "Persona de Interés",
+      status: parts[2] || "Bajo Búsqueda"
+    };
+  }).filter(s => s.name) : [];
+
+  if (!title || !summary) {
+    showToast("⚠️ Ingrese al menos título y sinopsis del informe");
+    return;
+  }
+
+  const cases = getActiveCasesList();
+  const existingIdx = cases.findIndex(item => item.id === id);
+
+  const updatedCase = {
+    id,
+    title,
+    division,
+    category,
+    status,
+    statusType,
+    priority,
+    leadDetective,
+    date,
+    location,
+    summary,
+    evidence,
+    suspects,
+    image: image || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80"
+  };
+
+  if (existingIdx >= 0) {
+    cases[existingIdx] = updatedCase;
+    showToast(`✅ Expediente ${id} modificado y sincronizado.`);
+  } else {
+    cases.unshift(updatedCase);
+    showToast(`✅ Nuevo expediente ${id} registrado en el archivo policial.`);
+  }
+
+  saveCasesList(cases);
+  audioEngine.playAlertSound();
+  closeReportEditor();
+  renderCases(getActiveCasesList());
+
+  // If dossier was open, update it
+  const caseModal = document.getElementById("case-modal");
+  if (caseModal && !caseModal.classList.contains("hidden")) {
+    openCaseModal(id);
+  }
+}
+
+window.deleteReportCase = function() {
+  if (!currentEditingCaseId) return;
+  if (!confirm(`¿Está seguro de eliminar permanentemente el expediente ${currentEditingCaseId}?`)) return;
+
+  const cases = getActiveCasesList();
+  const filtered = cases.filter(item => item.id !== currentEditingCaseId);
+  saveCasesList(filtered);
+
+  audioEngine.playRadioBeep();
+  closeReportEditor();
+  closeModal("case-modal");
+  renderCases(getActiveCasesList());
+  showToast(`🗑️ Expediente ${currentEditingCaseId} eliminado del archivo.`);
+};
 
 // --- SIDEBAR DOCK & MOBILE CONTROLS (INSPIRADO EN SAPD PORTAL) ---
 function setupSidebar() {
@@ -426,10 +704,18 @@ function setupSidebar() {
     }
   };
 
-  // Close sidebar drawer upon clicking any link on mobile screens
-  document.querySelectorAll(".sidebar-nav .nav-link").forEach(link => {
-    link.addEventListener("click", () => {
+  // Click on nav links: smoothly set active immediately and lock scrollspy temporarily
+  document.querySelectorAll(".sidebar-nav .nav-link, .sidebar-alert-indicator").forEach(link => {
+    link.addEventListener("click", (e) => {
       audioEngine.playKeyClick();
+      const href = link.getAttribute("href");
+      if (href && href.startsWith("#")) {
+        isManualNavigation = true;
+        document.querySelectorAll(".sidebar-nav .nav-link").forEach(l => l.classList.remove("active"));
+        if (link.classList.contains("nav-link")) link.classList.add("active");
+        setTimeout(() => { isManualNavigation = false; }, 900);
+      }
+
       if (window.innerWidth <= 1024 && sidebar) {
         sidebar.classList.remove("mobile-open");
         const backdrop = document.getElementById("sidebar-backdrop");
@@ -439,27 +725,35 @@ function setupSidebar() {
   });
 }
 
+// --- FIXED SCROLL SPY: DYNAMIC & ACCURATE DOM ORDER ---
 function setupScrollSpy() {
-  const sections = ["inicio", "casos", "buscados", "mdc-terminal", "denuncias", "unidades", "convocatoria"];
   const navLinks = document.querySelectorAll(".sidebar-nav .nav-link");
 
   function onScroll() {
-    const scrollPos = window.scrollY + 200;
+    if (isManualNavigation) return;
+    const scrollPos = window.scrollY + 140;
     
-    for (let i = sections.length - 1; i >= 0; i--) {
-      const secId = sections[i];
-      const elem = document.getElementById(secId);
-      if (elem && elem.offsetTop <= scrollPos) {
-        navLinks.forEach(link => {
-          const href = link.getAttribute("href");
-          if (href === `#${secId}`) {
-            link.classList.add("active");
-          } else {
-            link.classList.remove("active");
-          }
-        });
+    // Read all section elements with IDs directly from the DOM in real order
+    const sectionElements = Array.from(document.querySelectorAll("section[id]"));
+    
+    let currentSectionId = "";
+    for (let i = sectionElements.length - 1; i >= 0; i--) {
+      const sec = sectionElements[i];
+      if (sec.offsetTop <= scrollPos) {
+        currentSectionId = sec.id;
         break;
       }
+    }
+    
+    if (currentSectionId) {
+      navLinks.forEach(link => {
+        const href = link.getAttribute("href");
+        if (href === `#${currentSectionId}`) {
+          link.classList.add("active");
+        } else {
+          link.classList.remove("active");
+        }
+      });
     }
   }
 
@@ -547,9 +841,16 @@ function renderCases(casesToRender) {
           <i data-lucide="shield-alert" class="w-4 h-4 text-amber-500"></i>
           <span>${c.leadDetective}</span>
         </div>
-        <button class="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-          Expediente <i data-lucide="chevron-right" class="w-4 h-4"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          ${isDetectiveAuth ? `
+            <button onclick="event.stopPropagation(); openReportEditor('${c.id}')" class="px-2.5 py-1 rounded bg-blue-600/30 hover:bg-blue-600 border border-blue-500/50 text-blue-300 hover:text-white font-conthrax text-[10px] transition-colors flex items-center gap-1 shadow">
+              <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
+            </button>
+          ` : ''}
+          <button class="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            Expediente <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
       </div>
     `;
 
@@ -568,7 +869,8 @@ function setupCaseFilters() {
   let currentQuery = "";
 
   function applyFilter() {
-    const filtered = RP_CASES.filter(c => {
+    const activeCases = getActiveCasesList();
+    const filtered = activeCases.filter(c => {
       const matchCategory = currentCategory === "all" || c.category === currentCategory;
       const matchSearch = c.title.toLowerCase().includes(currentQuery.toLowerCase()) ||
         c.id.toLowerCase().includes(currentQuery.toLowerCase()) ||
@@ -604,7 +906,8 @@ function setupCaseFilters() {
 
 // --- CASE DETAIL MODAL ---
 function openCaseModal(caseId) {
-  const c = RP_CASES.find(item => item.id === caseId);
+  const cases = getActiveCasesList();
+  const c = cases.find(item => item.id === caseId);
   if (!c) return;
 
   audioEngine.playRadioBeep();
@@ -715,12 +1018,17 @@ function openCaseModal(caseId) {
         <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
         <span>Acceso restringido bajo Ordenanza Penal 10-80</span>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2.5">
+        ${isDetectiveAuth ? `
+          <button onclick="openReportEditor('${c.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider font-conthrax rounded-lg transition-colors flex items-center gap-1.5 shadow">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Modificar Informe
+          </button>
+        ` : ''}
         <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono rounded-lg transition-colors flex items-center gap-1.5">
-          <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir Informe
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
         </button>
         <button onclick="closeModal('case-modal')" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider font-mono rounded-lg transition-colors">
-          Cerrar Expediente
+          Cerrar
         </button>
       </div>
     </div>
