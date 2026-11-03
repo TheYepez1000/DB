@@ -189,5 +189,51 @@ VALUES
 ON CONFLICT (discord_id) DO NOTHING;
 
 -- ============================================================
+-- 7. REPLICACIÓN EN TIEMPO REAL (SUPABASE REALTIME)
+-- Permite que todos los usuarios vean los cambios al instante sin recargar
+-- ============================================================
+DO $$
+BEGIN
+  -- Agregar cada tabla a la publicación de realtime si no está ya presente
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.ranks;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.agents;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.cases;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.reports;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.tips;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.audit_logs;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
+END $$;
+
+-- Configurar REPLICA IDENTITY FULL para que los eventos DELETE y UPDATE envíen la fila completa
+ALTER TABLE public.ranks      REPLICA IDENTITY FULL;
+ALTER TABLE public.agents     REPLICA IDENTITY FULL;
+ALTER TABLE public.cases      REPLICA IDENTITY FULL;
+ALTER TABLE public.reports    REPLICA IDENTITY FULL;
+ALTER TABLE public.tips       REPLICA IDENTITY FULL;
+ALTER TABLE public.audit_logs REPLICA IDENTITY FULL;
+
+-- ============================================================
 -- FIN DEL SCRIPT
 -- ============================================================

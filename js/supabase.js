@@ -27,22 +27,47 @@ let CACHE = {
 };
 
 // ─── DB STATUS INDICATOR ─────────────────────────────────────────────────────
+// ─── DB STATUS INDICATOR & LIVE SYNC PULSE ──────────────────────────────────
+let _syncPulseTimeout = null;
+
 function showDBStatus(state) {
   const dot  = document.getElementById('db-status-indicator');
   const text = document.getElementById('db-status-text');
   if (!dot || !text) return;
-  dot.classList.remove('bg-amber-400', 'bg-emerald-400', 'bg-red-500', 'animate-pulse');
+  dot.classList.remove('bg-amber-400', 'bg-emerald-400', 'bg-red-500', 'bg-cyan-400', 'animate-pulse', 'animate-ping');
 
   if (state === 'connecting') {
     dot.classList.add('bg-amber-400', 'animate-pulse');
     text.textContent = 'Conectando BD…';
+    text.classList.remove('text-cyan-400');
   } else if (state === 'online') {
     dot.classList.add('bg-emerald-400');
     text.textContent = 'Supabase OK';
+    text.classList.remove('text-cyan-400');
   } else {
     dot.classList.add('bg-red-500');
     text.textContent = 'BD offline';
+    text.classList.remove('text-cyan-400');
   }
+}
+
+function showDBSyncPulse(label = 'Sincronizado en vivo') {
+  const dot  = document.getElementById('db-status-indicator');
+  const text = document.getElementById('db-status-text');
+  if (!dot || !text) return;
+
+  dot.classList.remove('bg-amber-400', 'bg-red-500', 'bg-emerald-400');
+  dot.classList.add('bg-cyan-400', 'animate-ping');
+  text.textContent = label;
+  text.classList.add('text-cyan-400');
+
+  clearTimeout(_syncPulseTimeout);
+  _syncPulseTimeout = setTimeout(() => {
+    dot.classList.remove('animate-ping', 'bg-cyan-400');
+    dot.classList.add('bg-emerald-400');
+    text.textContent = 'Supabase OK';
+    text.classList.remove('text-cyan-400');
+  }, 2200);
 }
 
 // ─── INIT — parallel load of all tables ──────────────────────────────────────
@@ -74,7 +99,6 @@ async function initSupabase() {
       CACHE.ranks = ranksRes.data;
     } else {
       CACHE.ranks = _getDefaultRanksRows();
-      // Try seed if empty
       _seedDefaultRanksToSupabase();
     }
 
@@ -93,7 +117,7 @@ async function initSupabase() {
       '| tips:', CACHE.tips.length,
       '| cases:', CACHE.cases.length);
 
-    // Subscribe to realtime changes
+    // Subscribe to realtime & broadcast sync
     _subscribeRealtime();
 
   } catch (err) {
@@ -138,43 +162,423 @@ function _loadFromLocalStorage() {
   CACHE.loaded = true;
 }
 
-// ─── REALTIME ────────────────────────────────────────────────────────────────
-function _subscribeRealtime() {
+// ─── DEDUPLICATION HELPER ───────────────────────────────────────────────────
+const _recentlyProcessed = new Map();
+function _shouldProcess(key) {
+  const now = Date.now();
+  const last = _recentlyProcessed.get(key) || 0;
+  if (now - last < 400) return false;
+  _recentlyProcessed.set(key, now);
+  if (_recentlyProcessed.size > 200) {
+    for (const [k, t] of _recentlyProcessed.entries()) {
+      if (now - t > 5000) _recentlyProcessed.delete(k);
+    }
+  }
+  return true;
+}
+
+// ─── BROADCAST CHANNEL (PEER-TO-PEER INSTANT REALTIME) ──────────────────────
+let _liveBroadcastChannel = null;
+
+function _initBroadcastChannel() {
   if (!db) return;
   try {
-    // Agents realtime
-    db.channel('dd-agents-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          CACHE.agents.push(payload.new);
-        } else if (payload.eventType === 'UPDATE') {
-          const idx = CACHE.agents.findIndex(r => r.discord_id === payload.new.discord_id);
-          if (idx >= 0) CACHE.agents[idx] = payload.new;
-          else CACHE.agents.push(payload.new);
-        } else if (payload.eventType === 'DELETE') {
-          CACHE.agents = CACHE.agents.filter(r => r.discord_id !== payload.old.discord_id);
-        }
-        _refreshJefaturaViews();
+    _liveBroadcastChannel = db.channel('dd-live-sync', {
+      config: { broadcast: { self: false } }
+    });
+    _liveBroadcastChannel
+      .on('broadcast', { event: 'dd-sync' }, (payload) => {
+        if (!payload || !payload.payload) return;
+        _handleLiveBroadcastMessage(payload.payload);
       })
-      .subscribe();
-
-    // Ranks realtime
-    db.channel('dd-ranks-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ranks' }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          CACHE.ranks.push(payload.new);
-        } else if (payload.eventType === 'UPDATE') {
-          const idx = CACHE.ranks.findIndex(r => r.id === payload.new.id);
-          if (idx >= 0) CACHE.ranks[idx] = payload.new;
-          else CACHE.ranks.push(payload.new);
-        } else if (payload.eventType === 'DELETE') {
-          CACHE.ranks = CACHE.ranks.filter(r => r.id !== payload.old.id);
-        }
-        _refreshJefaturaViews();
-      })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[DB] Canal Broadcast dd-live-sync:', status);
+      });
   } catch (e) {
-    console.warn('[DB] Realtime subscribe failed:', e);
+    console.warn('[DB] Broadcast channel init failed:', e);
+  }
+}
+
+async function _broadcastLiveSync(entity, action, data) {
+  if (!_liveBroadcastChannel) return;
+  try {
+    const sender = (typeof currentDiscordUser !== 'undefined' && currentDiscordUser)
+      ? (currentDiscordUser.username || currentDiscordUser.icName || 'Oficial')
+      : 'Oficial';
+    await _liveBroadcastChannel.send({
+      type: 'broadcast',
+      event: 'dd-sync',
+      payload: { entity, action, data, sender, timestamp: Date.now() }
+    });
+  } catch (e) {
+    console.warn('[DB] Broadcast send failed:', e);
+  }
+}
+
+function _handleLiveBroadcastMessage(msg) {
+  if (!msg || !msg.entity) return;
+  const { entity, action, data, sender } = msg;
+  _dispatchEntityUpdate(entity, action, data, 'broadcast', sender);
+}
+
+// ─── POSTGRES CHANGES REALTIME (SUPABASE REALTIME) ──────────────────────────
+let _pgRealtimeChannel = null;
+
+function _subscribeRealtime() {
+  if (!db) return;
+
+  _initBroadcastChannel();
+
+  try {
+    _pgRealtimeChannel = db.channel('dd-all-tables-rt');
+
+    _pgRealtimeChannel
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ranks' }, (payload) => {
+        _dispatchEntityUpdate('ranks', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, (payload) => {
+        _dispatchEntityUpdate('agents', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, (payload) => {
+        _dispatchEntityUpdate('cases', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
+        _dispatchEntityUpdate('reports', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tips' }, (payload) => {
+        _dispatchEntityUpdate('tips', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, (payload) => {
+        _dispatchEntityUpdate('audit_logs', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
+      .subscribe((status) => {
+        console.log('[DB] Canal Postgres Realtime dd-all-tables-rt:', status);
+      });
+
+    // Gentle background sync every 15s for total consistency
+    setInterval(_backgroundSyncAll, 15000);
+
+  } catch (e) {
+    console.warn('[DB] Realtime subscribe error:', e);
+  }
+}
+
+// ─── DISPATCH ENTITY UPDATES TO SPECIALIZED HANDLERS ─────────────────────────
+function _dispatchEntityUpdate(entity, action, data, source = 'postgres', sender = '') {
+  if (!data) return;
+  const dedupKey = `${entity}:${action}:${data.id || data.discord_id || data.discordId || data.code || ''}`;
+  if (!_shouldProcess(dedupKey)) return;
+
+  console.log(`[DB Realtime] Sincronizando ${entity} [${action}] vía ${source}`);
+
+  if (entity === 'agents') {
+    _handleAgentsRealtime(action, data, sender);
+  } else if (entity === 'ranks') {
+    _handleRanksRealtime(action, data, sender);
+  } else if (entity === 'cases') {
+    _handleCasesRealtime(action, data, sender);
+  } else if (entity === 'reports') {
+    _handleReportsRealtime(action, data, sender);
+  } else if (entity === 'tips') {
+    _handleTipsRealtime(action, data, sender);
+  } else if (entity === 'audit_logs') {
+    _handleAuditLogsRealtime(action, data, sender);
+  }
+}
+
+// ─── 1. AGENTS REALTIME HANDLER ──────────────────────────────────────────────
+function _handleAgentsRealtime(action, row, sender) {
+  const discordId = row.discord_id || row.discordId;
+  if (!discordId) return;
+
+  const rowData = row.discord_id ? row : agentToRow(row);
+
+  if (action === 'DELETE') {
+    CACHE.agents = CACHE.agents.filter(a => a.discord_id !== discordId);
+  } else {
+    const idx = CACHE.agents.findIndex(a => a.discord_id === discordId);
+    if (idx >= 0) CACHE.agents[idx] = { ...CACHE.agents[idx], ...rowData };
+    else CACHE.agents.push(rowData);
+  }
+
+  try {
+    localStorage.setItem('dd_jefatura_roster', JSON.stringify(CACHE.agents.map(rowToAgent)));
+  } catch(e) {}
+
+  // Si el oficial modificado es el usuario de esta sesión
+  if (typeof currentDiscordUser !== 'undefined' && currentDiscordUser && currentDiscordUser.id === discordId) {
+    if (action === 'DELETE' || rowData.status === 'Expulsado') {
+      currentDiscordUser.rankKey = 'aspirante';
+      currentDiscordUser.role = 'Expulsado // Sin Acceso';
+      currentDiscordUser.isAuthorizedDetective = false;
+      currentDiscordUser.isHighCommand = false;
+      localStorage.setItem('dd_discord_user', JSON.stringify(currentDiscordUser));
+      if (typeof updateDiscordAuthUI === 'function') updateDiscordAuthUI();
+      if (typeof showToast === 'function') showToast("🚨 JEFATURA: Has sido dado de baja de la Detective Division.");
+      if (typeof audioEngine !== 'undefined' && audioEngine.playAlertSound) audioEngine.playAlertSound();
+    } else {
+      const oldRank = currentDiscordUser.rankKey;
+      const newRank = rowData.rank || 'aspirante';
+      const rankMeta = (typeof RANK_META !== 'undefined' && RANK_META[newRank]) ? RANK_META[newRank] : null;
+
+      currentDiscordUser.rankKey   = newRank;
+      currentDiscordUser.badge     = rowData.badge || currentDiscordUser.badge;
+      currentDiscordUser.role      = rowData.ic_name || currentDiscordUser.role;
+      currentDiscordUser.rankLevel = rankMeta ? rankMeta.level : 0;
+      currentDiscordUser.clearance = rankMeta ? rankMeta.clearance : 'NIVEL 0';
+      if (typeof hasPermission === 'function') {
+        currentDiscordUser.isAuthorizedDetective = hasPermission('view_reports');
+        currentDiscordUser.isHighCommand = hasPermission('manage_roster') || hasPermission('manage_ranks') || hasPermission('manage_audit') || (rankMeta && rankMeta.level >= 4);
+      }
+      localStorage.setItem('dd_discord_user', JSON.stringify(currentDiscordUser));
+      if (typeof updateDiscordAuthUI === 'function') updateDiscordAuthUI();
+      if (oldRank !== newRank) {
+        if (typeof showToast === 'function') showToast(`🔄 JEFATURA: Tu rango ha sido actualizado a ${rankMeta ? rankMeta.label : newRank}.`);
+        if (typeof audioEngine !== 'undefined' && audioEngine.playAlertSound) audioEngine.playAlertSound();
+      }
+    }
+  }
+
+  _refreshJefaturaViews();
+  showDBSyncPulse('Agentes actualizados');
+}
+
+// ─── 2. RANKS REALTIME HANDLER ───────────────────────────────────────────────
+function _handleRanksRealtime(action, row, sender) {
+  const rankId = row.id;
+  if (!rankId) return;
+
+  const rowData = row.badge_class !== undefined ? row : rankToRow(row);
+
+  if (action === 'DELETE') {
+    CACHE.ranks = CACHE.ranks.filter(r => r.id !== rankId);
+  } else {
+    const idx = CACHE.ranks.findIndex(r => r.id === rankId);
+    if (idx >= 0) CACHE.ranks[idx] = { ...CACHE.ranks[idx], ...rowData };
+    else CACHE.ranks.push(rowData);
+    CACHE.ranks.sort((a, b) => Number(b.level) - Number(a.level));
+  }
+
+  try {
+    localStorage.setItem('dd_custom_ranks', JSON.stringify(CACHE.ranks.map(rowToRank)));
+  } catch(e) {}
+
+  // Si el usuario actual tiene este rango, recalcular permisos
+  if (typeof currentDiscordUser !== 'undefined' && currentDiscordUser && currentDiscordUser.rankKey === rankId) {
+    const rankObj = rowToRank(rowData);
+    currentDiscordUser.role = rankObj.label || currentDiscordUser.role;
+    currentDiscordUser.rankLevel = rankObj.level;
+    currentDiscordUser.clearance = rankObj.clearance;
+    if (typeof hasPermission === 'function') {
+      currentDiscordUser.isAuthorizedDetective = hasPermission('view_reports');
+      currentDiscordUser.isHighCommand = hasPermission('manage_roster') || hasPermission('manage_ranks') || hasPermission('manage_audit') || rankObj.level >= 4;
+    }
+    localStorage.setItem('dd_discord_user', JSON.stringify(currentDiscordUser));
+    if (typeof updateDiscordAuthUI === 'function') updateDiscordAuthUI();
+    if (typeof showToast === 'function') showToast(`🛡️ Permisos del rango "${rankObj.label}" actualizados en vivo.`);
+  }
+
+  if (typeof renderDynamicRanks === 'function') renderDynamicRanks();
+  _refreshJefaturaViews();
+  showDBSyncPulse('Rangos sincronizados');
+}
+
+// ─── 3. CASES REALTIME HANDLER ───────────────────────────────────────────────
+function _handleCasesRealtime(action, row, sender) {
+  const caseId = row.id;
+  if (!caseId) return;
+
+  const rowData = row.case_date !== undefined ? row : caseToRow(row);
+
+  if (action === 'DELETE') {
+    CACHE.cases = CACHE.cases.filter(c => c.id !== caseId);
+  } else {
+    const idx = CACHE.cases.findIndex(c => c.id === caseId);
+    if (idx >= 0) CACHE.cases[idx] = { ...CACHE.cases[idx], ...rowData };
+    else CACHE.cases.unshift(rowData);
+  }
+
+  try {
+    localStorage.setItem('dd_custom_cases', JSON.stringify(CACHE.cases.map(rowToCase)));
+  } catch(e) {}
+
+  if (typeof renderCases === 'function' && typeof getActiveCasesList === 'function') {
+    renderCases(getActiveCasesList());
+  }
+
+  // Si el modal de caso está abierto
+  const caseModal = document.getElementById('case-modal');
+  if (caseModal && !caseModal.classList.contains('hidden')) {
+    const openCaseId = typeof currentEditingCaseId !== 'undefined' ? currentEditingCaseId : null;
+    if (openCaseId === caseId) {
+      if (action === 'DELETE') {
+        if (typeof closeModal === 'function') closeModal('case-modal');
+        if (typeof showToast === 'function') showToast(`⚠️ El expediente ${caseId} ha sido eliminado por otro oficial.`);
+      } else {
+        if (typeof openCaseModal === 'function') openCaseModal(caseId);
+      }
+    }
+  }
+
+  showDBSyncPulse('Expedientes al día');
+}
+
+// ─── 4. REPORTS REALTIME HANDLER ─────────────────────────────────────────────
+function _handleReportsRealtime(action, row, sender) {
+  const repId = row.id;
+  if (!repId) return;
+
+  const rowData = row.report_date !== undefined ? row : reportToRow(row);
+
+  if (action === 'DELETE') {
+    CACHE.reports = CACHE.reports.filter(r => r.id !== repId);
+  } else {
+    const idx = CACHE.reports.findIndex(r => r.id === repId);
+    if (idx >= 0) CACHE.reports[idx] = { ...CACHE.reports[idx], ...rowData };
+    else CACHE.reports.unshift(rowData);
+  }
+
+  try {
+    localStorage.setItem('dd_confidential_reports', JSON.stringify(CACHE.reports.map(rowToReport)));
+  } catch(e) {}
+
+  if (typeof renderConfidentialReports === 'function' && typeof getActiveConfidentialReports === 'function') {
+    renderConfidentialReports(getActiveConfidentialReports());
+  }
+
+  const repModal = document.getElementById('confidential-report-modal');
+  if (repModal && !repModal.classList.contains('hidden')) {
+    const viewingId = typeof currentViewingConfidentialReportId !== 'undefined' ? currentViewingConfidentialReportId : null;
+    if (viewingId === repId) {
+      if (action === 'DELETE') {
+        if (typeof closeModal === 'function') closeModal('confidential-report-modal');
+        if (typeof showToast === 'function') showToast(`⚠️ El informe clasificado ${repId} ha sido eliminado.`);
+      } else {
+        if (typeof window.openConfidentialReport === 'function') window.openConfidentialReport(repId);
+      }
+    }
+  }
+
+  showDBSyncPulse('Informes actualizados');
+}
+
+// ─── 5. TIPS REALTIME HANDLER ────────────────────────────────────────────────
+function _handleTipsRealtime(action, row, sender) {
+  const code = row.code;
+  if (!code) return;
+
+  const rowData = row.created_at !== undefined ? row : tipToRow(row);
+
+  if (action === 'DELETE') {
+    CACHE.tips = CACHE.tips.filter(t => t.code !== code);
+  } else {
+    const idx = CACHE.tips.findIndex(t => t.code === code);
+    if (idx >= 0) CACHE.tips[idx] = { ...CACHE.tips[idx], ...rowData };
+    else CACHE.tips.unshift(rowData);
+  }
+
+  try {
+    localStorage.setItem('lspd_rp_tips', JSON.stringify(CACHE.tips.map(rowToTip)));
+  } catch(e) {}
+
+  if (typeof renderAuthorizedTipsInbox === 'function') {
+    renderAuthorizedTipsInbox();
+  }
+
+  if (action === 'INSERT') {
+    if (typeof hasPermission === 'function' && hasPermission('view_tips')) {
+      if (typeof showToast === 'function') showToast(`🔔 NUEVA DENUNCIA CIUDADANA [${code}] recibida.`);
+      if (typeof audioEngine !== 'undefined' && audioEngine.playRadioBeep) audioEngine.playRadioBeep();
+    }
+  }
+
+  showDBSyncPulse('Denuncias sincronizadas');
+}
+
+// ─── 6. AUDIT LOGS REALTIME HANDLER ──────────────────────────────────────────
+function _handleAuditLogsRealtime(action, row, sender) {
+  const rowData = row.created_at !== undefined ? row : {
+    id: row.id || ('LOG-' + Date.now()),
+    action: row.action || '',
+    agent_name: row.agentName || row.agent_name || '',
+    discord_tag: row.discordTag || row.discord_tag || '',
+    detail: row.detail || '',
+    commander: row.commander || 'Sistema',
+    created_at: new Date().toISOString()
+  };
+
+  if (action === 'CLEAR') {
+    CACHE.auditLogs = [];
+  } else {
+    CACHE.auditLogs.unshift(rowData);
+    if (CACHE.auditLogs.length > 200) CACHE.auditLogs.splice(200);
+  }
+
+  if (typeof renderAuditLogs === 'function') renderAuditLogs();
+  showDBSyncPulse('Auditoría sincronizada');
+}
+
+// ─── BACKGROUND GENTLE SYNC (FALLBACK CADA 15S) ─────────────────────────────
+async function _backgroundSyncAll() {
+  if (!db || !navigator.onLine) return;
+  try {
+    const [ranksRes, agentsRes, casesRes, reportsRes, tipsRes, logsRes] = await Promise.all([
+      db.from('ranks').select('*').order('level', { ascending: false }),
+      db.from('agents').select('*').order('created_at', { ascending: true }),
+      db.from('cases').select('*').order('case_date', { ascending: false }),
+      db.from('reports').select('*').order('report_date', { ascending: false }),
+      db.from('tips').select('*').order('created_at', { ascending: false }),
+      db.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200)
+    ]);
+
+    let changed = false;
+
+    if (ranksRes.data && JSON.stringify(ranksRes.data) !== JSON.stringify(CACHE.ranks)) {
+      CACHE.ranks = ranksRes.data;
+      if (typeof renderDynamicRanks === 'function') renderDynamicRanks();
+      changed = true;
+    }
+
+    if (agentsRes.data && JSON.stringify(agentsRes.data) !== JSON.stringify(CACHE.agents)) {
+      CACHE.agents = agentsRes.data;
+      if (typeof renderJefaturaRoster === 'function') renderJefaturaRoster(CACHE.agents.map(rowToAgent));
+      if (typeof renderJefaturaKPIs === 'function') renderJefaturaKPIs();
+      changed = true;
+    }
+
+    if (casesRes.data && JSON.stringify(casesRes.data) !== JSON.stringify(CACHE.cases)) {
+      CACHE.cases = casesRes.data;
+      if (typeof renderCases === 'function' && typeof getActiveCasesList === 'function') {
+        renderCases(getActiveCasesList());
+      }
+      changed = true;
+    }
+
+    if (reportsRes.data && JSON.stringify(reportsRes.data) !== JSON.stringify(CACHE.reports)) {
+      CACHE.reports = reportsRes.data;
+      if (typeof renderConfidentialReports === 'function' && typeof getActiveConfidentialReports === 'function') {
+        renderConfidentialReports(getActiveConfidentialReports());
+      }
+      changed = true;
+    }
+
+    if (tipsRes.data && JSON.stringify(tipsRes.data) !== JSON.stringify(CACHE.tips)) {
+      CACHE.tips = tipsRes.data;
+      if (typeof renderAuthorizedTipsInbox === 'function') renderAuthorizedTipsInbox();
+      changed = true;
+    }
+
+    if (logsRes.data && JSON.stringify(logsRes.data) !== JSON.stringify(CACHE.auditLogs)) {
+      CACHE.auditLogs = logsRes.data;
+      if (typeof renderAuditLogs === 'function') renderAuditLogs();
+      changed = true;
+    }
+
+    if (changed) {
+      showDBSyncPulse('Sincronizado');
+    }
+  } catch(e) {
+    // Silencioso en fondo
   }
 }
 
@@ -377,6 +781,8 @@ async function dbUpsertRank(rank) {
     localStorage.setItem('dd_custom_ranks', JSON.stringify(CACHE.ranks.map(rowToRank)));
   } catch (e) {}
 
+  _broadcastLiveSync('ranks', 'UPSERT', row);
+
   if (!db) return;
   try {
     const { error } = await db.from('ranks').upsert(row, { onConflict: 'id' });
@@ -391,6 +797,8 @@ async function dbDeleteRank(rankId) {
   try {
     localStorage.setItem('dd_custom_ranks', JSON.stringify(CACHE.ranks.map(rowToRank)));
   } catch (e) {}
+
+  _broadcastLiveSync('ranks', 'DELETE', { id: rankId });
 
   if (!db) return;
   try {
@@ -452,6 +860,8 @@ async function dbUpsertAgent(agent) {
   if (idx >= 0) CACHE.agents[idx] = { ...CACHE.agents[idx], ...row };
   else CACHE.agents.push(row);
 
+  _broadcastLiveSync('agents', 'UPSERT', row);
+
   if (!db) {
     localStorage.setItem('dd_jefatura_roster', JSON.stringify(getCachedRoster().map(rowToAgent)));
     return;
@@ -467,6 +877,8 @@ async function dbUpsertAgent(agent) {
 
 async function dbDeleteAgent(discordId) {
   CACHE.agents = CACHE.agents.filter(r => r.discord_id !== discordId);
+  _broadcastLiveSync('agents', 'DELETE', { discord_id: discordId });
+
   if (!db) {
     localStorage.setItem('dd_jefatura_roster', JSON.stringify(getCachedRoster().map(rowToAgent)));
     return;
@@ -515,18 +927,21 @@ async function dbInsertAuditLog({ action, agentName, discordTag, detail, command
   CACHE.auditLogs.unshift(entry);
   if (CACHE.auditLogs.length > 200) CACHE.auditLogs.splice(200);
 
+  const dbRow = {
+    action:      action,
+    agent_name:  agentName,
+    discord_tag: discordTag,
+    detail:      detail,
+    commander:   commander || 'Sistema'
+  };
+
+  _broadcastLiveSync('audit_logs', 'INSERT', dbRow);
+
   if (!db) {
     localStorage.setItem('dd_audit_logs', JSON.stringify(CACHE.auditLogs));
     return;
   }
   try {
-    const dbRow = {
-      action:      action,
-      agent_name:  agentName,
-      discord_tag: discordTag,
-      detail:      detail,
-      commander:   commander || 'Sistema'
-    };
     const { error } = await db.from('audit_logs').insert(dbRow);
     if (error) console.warn('[DB] insert audit log error:', error);
   } catch (e) {
@@ -537,6 +952,8 @@ async function dbInsertAuditLog({ action, agentName, discordTag, detail, command
 
 async function dbClearAuditLogs() {
   CACHE.auditLogs = [];
+  _broadcastLiveSync('audit_logs', 'CLEAR', {});
+
   if (!db) {
     localStorage.removeItem('dd_audit_logs');
     return;
@@ -596,6 +1013,8 @@ async function dbUpsertReport(report) {
   if (idx >= 0) CACHE.reports[idx] = { ...CACHE.reports[idx], ...row };
   else CACHE.reports.unshift(row);
 
+  _broadcastLiveSync('reports', 'UPSERT', row);
+
   if (!db) {
     localStorage.setItem('dd_confidential_reports', JSON.stringify(getCachedReports().map(rowToReport)));
     return;
@@ -611,6 +1030,8 @@ async function dbUpsertReport(report) {
 
 async function dbDeleteReport(reportId) {
   CACHE.reports = CACHE.reports.filter(r => r.id !== reportId);
+  _broadcastLiveSync('reports', 'DELETE', { id: reportId });
+
   if (!db) {
     localStorage.setItem('dd_confidential_reports', JSON.stringify(getCachedReports().map(rowToReport)));
     return;
@@ -665,6 +1086,8 @@ async function dbInsertTip(tip) {
     created_at: new Date().toISOString()
   });
 
+  _broadcastLiveSync('tips', 'INSERT', row);
+
   if (!db) {
     localStorage.setItem('lspd_rp_tips', JSON.stringify(getCachedTips().map(rowToTip)));
     return;
@@ -680,6 +1103,8 @@ async function dbInsertTip(tip) {
 
 async function dbDeleteTip(tipCode) {
   CACHE.tips = CACHE.tips.filter(r => r.code !== tipCode);
+  _broadcastLiveSync('tips', 'DELETE', { code: tipCode });
+
   if (!db) {
     localStorage.setItem('lspd_rp_tips', JSON.stringify(getCachedTips().map(rowToTip)));
     return;
@@ -747,6 +1172,8 @@ async function dbUpsertCase(c) {
   if (idx >= 0) CACHE.cases[idx] = { ...CACHE.cases[idx], ...row };
   else CACHE.cases.unshift(row);
 
+  _broadcastLiveSync('cases', 'UPSERT', row);
+
   if (!db) {
     localStorage.setItem('dd_custom_cases', JSON.stringify(getCachedCases().map(rowToCase)));
     return;
@@ -762,6 +1189,8 @@ async function dbUpsertCase(c) {
 
 async function dbDeleteCase(caseId) {
   CACHE.cases = CACHE.cases.filter(r => r.id !== caseId);
+  _broadcastLiveSync('cases', 'DELETE', { id: caseId });
+
   if (!db) {
     localStorage.setItem('dd_custom_cases', JSON.stringify(getCachedCases().map(rowToCase)));
     return;

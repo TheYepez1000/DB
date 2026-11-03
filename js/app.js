@@ -314,8 +314,9 @@ function getActiveCasesList() {
 }
 
 function saveCasesList(list) {
-  // Legacy wrapper — batch upsert all cases to Supabase
-  list.forEach(c => dbUpsertCase(c));
+  try {
+    localStorage.setItem("dd_custom_cases", JSON.stringify(list));
+  } catch (e) {}
 }
 
 // --- APP CONTROLLER ---
@@ -1576,8 +1577,9 @@ function getActiveConfidentialReports() {
 }
 
 function saveConfidentialReports(list) {
-  // Legacy wrapper — batch upsert all reports to Supabase
-  list.forEach(r => dbUpsertReport(r));
+  try {
+    localStorage.setItem("dd_confidential_reports", JSON.stringify(list));
+  } catch (e) {}
 }
 
 function setupInformesHub() {
@@ -2303,8 +2305,9 @@ function getJefaturaRoster() {
 }
 
 function saveJefaturaRoster(list) {
-  // Sync each agent to Supabase
-  list.forEach(agent => dbUpsertAgent(agent));
+  try {
+    localStorage.setItem("dd_jefatura_roster", JSON.stringify(list));
+  } catch (e) {}
 }
 
 // --- AUDIT LOG STORAGE ---
