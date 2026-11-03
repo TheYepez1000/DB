@@ -328,6 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSidebar();
   setupScrollSpy();
   setupReportEditor();
+  setupJefaturaSearch();
 });
 
 // --- DISCORD OAUTH2 AUTHENTICATION & ROLE VERIFICATION ENGINE ---
@@ -479,22 +480,70 @@ async function fetchDiscordUserProfile(token) {
 
     const badgeNum = "#" + (data.id.slice(-3) || "404") + "-DIV";
 
-    currentDiscordUser = {
-      id: data.id,
-      username: displayName,
-      tag: fullTag,
-      userId: data.id,
-      badge: badgeNum,
-      role: "Detective II // Investigador Oficial",
-      rankLevel: 3,
-      isAuthorizedDetective: true,
-      clearance: "NIVEL 3 // ALTO SECRETO",
-      avatar: avatarUrl,
-      oauthVerified: true,
-      authAt: new Date().toLocaleString('es-ES')
-    };
+    // Check if this user is already registered in the roster
+    const roster = getJefaturaRoster();
+    const existingAgent = roster.find(a => a.discordId === data.id);
 
-    isDetectiveAuth = true;
+    if (existingAgent) {
+      // User exists in roster — use their registered rank/role
+      const rankMeta = RANK_META[existingAgent.rank] || RANK_META["det1"];
+      currentDiscordUser = {
+        id: data.id,
+        username: displayName,
+        tag: fullTag,
+        userId: data.id,
+        badge: existingAgent.badge || badgeNum,
+        role: existingAgent.icName || rankMeta.label,
+        rankKey: existingAgent.rank,
+        rankLevel: rankMeta.level,
+        isAuthorizedDetective: rankMeta.level >= 1,
+        isHighCommand: rankMeta.level >= 4,
+        clearance: rankMeta.clearance,
+        avatar: avatarUrl,
+        oauthVerified: true,
+        rosterAgent: existingAgent,
+        authAt: new Date().toLocaleString('es-ES')
+      };
+      isDetectiveAuth = rankMeta.level >= 1;
+    } else {
+      // New user — assign default Aspirante rank with no access, and auto-register them
+      const newAgent = {
+        discordId: data.id,
+        discordTag: fullTag,
+        icName: displayName,
+        badge: badgeNum,
+        rank: "aspirante",
+        division: "Sin Asignar // En Evaluación",
+        status: "Pendiente",
+        awards: [],
+        notes: "",
+        avatar: avatarUrl,
+        joinDate: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+      };
+      roster.push(newAgent);
+      saveJefaturaRoster(roster);
+      addAuditLog("REGISTRO AUTOMÁTICO", displayName, fullTag, "Aspirante Sin Acceso", "Sistema OAuth2 — primer inicio de sesión detectado");
+
+      currentDiscordUser = {
+        id: data.id,
+        username: displayName,
+        tag: fullTag,
+        userId: data.id,
+        badge: badgeNum,
+        role: "Aspirante // Pendiente de Asignación de Rango",
+        rankKey: "aspirante",
+        rankLevel: 0,
+        isAuthorizedDetective: false,
+        isHighCommand: false,
+        clearance: "NIVEL 0 // SIN ACCESO",
+        avatar: avatarUrl,
+        oauthVerified: true,
+        rosterAgent: newAgent,
+        authAt: new Date().toLocaleString('es-ES')
+      };
+      isDetectiveAuth = false;
+    }
+
     localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
     updateDiscordAuthUI();
     renderCases(getActiveCasesList());
@@ -511,17 +560,31 @@ function updateDiscordAuthUI() {
   const topbarAvatar = document.getElementById("topbar-discord-avatar");
   const topbarName = document.getElementById("topbar-discord-name");
   const restrictedView = document.getElementById("informes-restricted-view");
+  const pendingView = document.getElementById("informes-pending-view");
   const authorizedView = document.getElementById("informes-authorized-view");
   const civilDeniedAlert = document.getElementById("informes-civil-denied");
   const civilDeniedText = document.getElementById("informes-civil-denied-text");
+  const topbarJefaturaBtn = document.getElementById("topbar-jefatura-btn");
 
   if (isDetectiveAuth && currentDiscordUser) {
     document.body.classList.add("is-detective-auth");
     if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
     if (topbarName) topbarName.textContent = currentDiscordUser.username || "Detective Autorizado";
 
+    // Show Jefatura topbar button only for high command
+    if (topbarJefaturaBtn) {
+      if (currentDiscordUser.isHighCommand) {
+        topbarJefaturaBtn.classList.remove("hidden");
+        topbarJefaturaBtn.classList.add("flex");
+      } else {
+        topbarJefaturaBtn.classList.add("hidden");
+        topbarJefaturaBtn.classList.remove("flex");
+      }
+    }
+
     // Informes Section Views
     if (restrictedView) restrictedView.classList.add("hidden");
+    if (pendingView) pendingView.classList.add("hidden");
     if (authorizedView) authorizedView.classList.remove("hidden");
     if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
 
@@ -540,16 +603,37 @@ function updateDiscordAuthUI() {
 
     renderConfidentialReports(getActiveConfidentialReports());
     renderAuthorizedTipsInbox();
+  } else if (currentDiscordUser && !isDetectiveAuth && currentDiscordUser.rankKey === "aspirante") {
+    // Aspirante: logged in but no access yet — show pending view
+    document.body.classList.remove("is-detective-auth");
+    if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+    if (topbarName) topbarName.textContent = currentDiscordUser.username || "Aspirante";
+    if (topbarJefaturaBtn) { topbarJefaturaBtn.classList.add("hidden"); topbarJefaturaBtn.classList.remove("flex"); }
+
+    if (restrictedView) restrictedView.classList.add("hidden");
+    if (authorizedView) authorizedView.classList.add("hidden");
+    if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
+    if (pendingView) {
+      pendingView.classList.remove("hidden");
+      const pendingAvatar = document.getElementById("pending-agent-avatar");
+      const pendingName = document.getElementById("pending-agent-name");
+      const pendingTag = document.getElementById("pending-agent-tag");
+      if (pendingAvatar) pendingAvatar.src = currentDiscordUser.avatar;
+      if (pendingName) pendingName.textContent = currentDiscordUser.username;
+      if (pendingTag) pendingTag.textContent = `@${currentDiscordUser.tag}`;
+    }
   } else {
     document.body.classList.remove("is-detective-auth");
     if (topbarAvatar) topbarAvatar.src = "https://cdn.discordapp.com/embed/avatars/0.png";
     if (topbarName) topbarName.textContent = "Acceso Detective";
+    if (topbarJefaturaBtn) { topbarJefaturaBtn.classList.add("hidden"); topbarJefaturaBtn.classList.remove("flex"); }
 
+    if (pendingView) pendingView.classList.add("hidden");
     if (restrictedView) restrictedView.classList.remove("hidden");
     if (authorizedView) authorizedView.classList.add("hidden");
 
     // If user logged in as Civil, show rejection alert
-    if (currentDiscordUser && !currentDiscordUser.isAuthorizedDetective) {
+    if (currentDiscordUser && !currentDiscordUser.isAuthorizedDetective && currentDiscordUser.rankKey !== "aspirante") {
       if (civilDeniedAlert) civilDeniedAlert.classList.remove("hidden");
       if (civilDeniedText) {
         civilDeniedText.textContent = `El sistema detectó que la cuenta @${currentDiscordUser.tag} no ostenta un rol de la Detective Division (Capitán a Detective). Los informes clasificados permanecen bloqueados.`;
@@ -558,6 +642,9 @@ function updateDiscordAuthUI() {
       if (civilDeniedAlert) civilDeniedAlert.classList.add("hidden");
     }
   }
+
+  // Update Jefatura section UI
+  updateJefaturaUI();
 }
 
 window.openDiscordAuthModal = function() {
@@ -580,7 +667,13 @@ window.authenticateWithBotRole = function(roleKey) {
   if (!profile) return;
 
   audioEngine.playKeyClick();
-  currentDiscordUser = { ...profile, authAt: new Date().toLocaleString('es-ES') };
+  currentDiscordUser = {
+    ...profile,
+    rankKey: roleKey,
+    rankLevel: profile.rankLevel,
+    isHighCommand: profile.rankLevel >= 4,
+    authAt: new Date().toLocaleString('es-ES')
+  };
   isDetectiveAuth = profile.isAuthorizedDetective;
   localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
 
@@ -1721,3 +1814,728 @@ function showToast(message) {
   }, 4000);
 }
 
+
+// =============================================================================
+// --- JEFATURA DE DIVISIÓN // HIGH COMMAND MANAGEMENT ENGINE ---
+// =============================================================================
+
+// --- RANK METADATA TABLE ---
+const RANK_META = {
+  capitan:   { label: "Capitán de División",         level: 5, clearance: "NIVEL 5 // COMANDO SUPREMO",       cssClass: "rank-badge-capitan",   icon: "👑", color: "amber"  },
+  teniente:  { label: "Teniente de División",         level: 4, clearance: "NIVEL 4 // SUPERVISIÓN OPERATIVA", cssClass: "rank-badge-teniente",  icon: "⭐", color: "blue"   },
+  sgt:       { label: "Sargento de Detectives",       level: 3.5, clearance: "NIVEL 3.5 // MANDO DE TURNO",   cssClass: "rank-badge-sgt",       icon: "🔷", color: "cyan"   },
+  det3:      { label: "Detective III",                level: 3, clearance: "NIVEL 3 // ALTO SECRETO",          cssClass: "rank-badge-det3",      icon: "🔵", color: "purple" },
+  det2:      { label: "Detective II",                 level: 2, clearance: "NIVEL 2 // CONFIDENCIAL",          cssClass: "rank-badge-det2",      icon: "🟢", color: "emerald"},
+  det1:      { label: "Detective I",                  level: 1, clearance: "NIVEL 1 // RESTRINGIDO",           cssClass: "rank-badge-det1",      icon: "⬜", color: "slate"  },
+  aspirante: { label: "Aspirante / Sin Asignar",      level: 0, clearance: "NIVEL 0 // SIN ACCESO",            cssClass: "rank-badge-aspirante", icon: "🔴", color: "red"    }
+};
+
+// Status CSS helper
+function getStatusBadge(status) {
+  const map = {
+    "Activo":      "status-badge-activo",
+    "Pendiente":   "status-badge-pendiente",
+    "Suspendido":  "status-badge-suspendido",
+    "Expulsado":   "status-badge-expulsado"
+  };
+  return map[status] || "status-badge-pendiente";
+}
+
+// --- ROSTER STORAGE ---
+const DEFAULT_ROSTER = [
+  {
+    discordId:   "101928374650192831",
+    discordTag:  "Cap.Vance#0101",
+    icName:      "Cap. David Vance",
+    badge:       "#101-DIV",
+    rank:        "capitan",
+    division:    "Mando Supremo // Bureau Executive",
+    status:      "Activo",
+    awards:      ["valor", "servicio", "merito"],
+    notes:       "Comandante fundador de la Detective Division. 12 años de servicio activo.",
+    avatar:      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
+    joinDate:    "01/ENE/2024"
+  },
+  {
+    discordId:   "201928374650192832",
+    discordTag:  "J_Sterling#0201",
+    icName:      "Tte. James Sterling",
+    badge:       "#201-DIV",
+    rank:        "teniente",
+    division:    "RHD - Robos & Homicidios",
+    status:      "Activo",
+    awards:      ["servicio", "tirador"],
+    notes:       "Supervisor de RHD e incursiones tácticas. Especialista en negociación de rehenes.",
+    avatar:      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80",
+    joinDate:    "15/MAR/2024"
+  },
+  {
+    discordId:   "404928374650192833",
+    discordTag:  "Marcus_Cole#0404",
+    icName:      "Det. III Marcus Cole",
+    badge:       "#404-DIV",
+    rank:        "det3",
+    division:    "GND - Narcóticos & Infiltración",
+    status:      "Activo",
+    awards:      ["valor"],
+    notes:       "Líder de operaciones GND encubiertas. Especialización en infiltración de cárteles.",
+    avatar:      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
+    joinDate:    "20/ABR/2024"
+  },
+  {
+    discordId:   "512928374650192834",
+    discordTag:  "E_Rostova#0512",
+    icName:      "Det. II Elena Rostova",
+    badge:       "#512-DIV",
+    rank:        "det2",
+    division:    "RHD - Robos & Homicidios",
+    status:      "Activo",
+    awards:      ["merito"],
+    notes:       "Especialista en homicidios calificados y peritaje balístico.",
+    avatar:      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    joinDate:    "05/JUL/2024"
+  },
+  {
+    discordId:   "522928374650192835",
+    discordTag:  "S_Connor#0522",
+    icName:      "Det. I Sarah Connor",
+    badge:       "#522-DIV",
+    rank:        "det1",
+    division:    "CSI - Forense y Balística",
+    status:      "Activo",
+    awards:      [],
+    notes:       "Detective de primera asignación. Excelentes resultados en las evaluaciones CSI.",
+    avatar:      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
+    joinDate:    "01/SEP/2024"
+  }
+];
+
+function getJefaturaRoster() {
+  try {
+    const saved = localStorage.getItem("dd_jefatura_roster");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) { console.warn("Error parsing roster:", e); }
+  return JSON.parse(JSON.stringify(DEFAULT_ROSTER));
+}
+
+function saveJefaturaRoster(list) {
+  localStorage.setItem("dd_jefatura_roster", JSON.stringify(list));
+}
+
+// --- AUDIT LOG STORAGE ---
+function getAuditLogs() {
+  try {
+    const saved = localStorage.getItem("dd_audit_logs");
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return [];
+}
+
+function saveAuditLogs(logs) {
+  localStorage.setItem("dd_audit_logs", JSON.stringify(logs));
+}
+
+function addAuditLog(action, agentName, discordTag, detail, commander) {
+  const logs = getAuditLogs();
+  logs.unshift({
+    id: "LOG-" + Date.now(),
+    action,
+    agentName,
+    discordTag,
+    detail,
+    commander: commander || (currentDiscordUser ? currentDiscordUser.username : "Sistema"),
+    timestamp: new Date().toLocaleString('es-ES')
+  });
+  // Keep max 200 entries
+  if (logs.length > 200) logs.splice(200);
+  saveAuditLogs(logs);
+}
+
+// --- KPI & UI UPDATER ---
+function updateJefaturaUI() {
+  const isHighCmd = currentDiscordUser && currentDiscordUser.isHighCommand;
+  const deniedView = document.getElementById("jefatura-denied-view");
+  const authorizedView = document.getElementById("jefatura-authorized-view");
+
+  if (!deniedView || !authorizedView) return;
+
+  if (isHighCmd) {
+    deniedView.classList.add("hidden");
+    authorizedView.classList.remove("hidden");
+
+    // Commander Ribbon
+    const cmdAvatar = document.getElementById("jefatura-commander-avatar");
+    const cmdName   = document.getElementById("jefatura-commander-name");
+    const cmdBadge  = document.getElementById("jefatura-commander-badge");
+    const cmdRole   = document.getElementById("jefatura-commander-role");
+
+    if (cmdAvatar) cmdAvatar.src = currentDiscordUser.avatar || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80";
+    if (cmdName)   cmdName.textContent   = currentDiscordUser.username;
+    if (cmdBadge)  cmdBadge.textContent  = currentDiscordUser.badge;
+    if (cmdRole)   cmdRole.textContent   = currentDiscordUser.role.toUpperCase();
+
+    // Render KPIs and roster
+    renderJefaturaKPIs();
+    renderJefaturaRoster(getJefaturaRoster());
+    renderAuditLogs();
+  } else {
+    deniedView.classList.remove("hidden");
+    authorizedView.classList.add("hidden");
+
+    // Show "Reclamar Mando" button only if user is logged in
+    const claimBtn = document.getElementById("jefatura-claim-mando-btn");
+    if (claimBtn) {
+      claimBtn.style.display = currentDiscordUser ? "flex" : "none";
+    }
+  }
+}
+
+function renderJefaturaKPIs() {
+  const roster = getJefaturaRoster();
+  const total   = roster.length;
+  const activos = roster.filter(a => a.status === "Activo" && a.rank !== "aspirante").length;
+  const pending = roster.filter(a => a.status === "Pendiente" || a.rank === "aspirante").length;
+  const suspended = roster.filter(a => a.status === "Suspendido" || a.status === "Expulsado").length;
+
+  const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  el("kpi-total-roster",       total);
+  el("kpi-active-detectives",  activos);
+  el("kpi-pending-aspirants",  pending);
+  el("kpi-suspended-count",    suspended);
+  el("filter-pending-count",   pending);
+}
+
+// --- JEFATURA TABS ---
+window.switchJefaturaTab = function(tabName) {
+  audioEngine.playKeyClick();
+  const tabs = ["censo", "audit", "escalafon"];
+  tabs.forEach(t => {
+    const btn     = document.getElementById(`tab-btn-jefatura-${t}`);
+    const content = document.getElementById(`tab-content-jefatura-${t}`);
+    if (btn)     btn.classList.toggle("active", t === tabName);
+    if (content) content.classList.toggle("hidden", t !== tabName);
+  });
+  if (tabName === "audit") renderAuditLogs();
+  lucide.createIcons();
+};
+
+// --- ROSTER RENDERING ---
+function renderJefaturaRoster(agents) {
+  const grid = document.getElementById("jefatura-roster-grid");
+  if (!grid) return;
+
+  if (agents.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full py-14 text-center text-slate-500 font-conthrax text-xs">
+        <i data-lucide="users" class="w-10 h-10 mx-auto mb-3 opacity-30"></i>
+        No se encontraron agentes con ese criterio de búsqueda.
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  grid.innerHTML = agents.map(agent => {
+    const rank   = RANK_META[agent.rank] || RANK_META["aspirante"];
+    const statBadge = getStatusBadge(agent.status);
+
+    const awardIcons = [];
+    if (agent.awards && agent.awards.includes("valor"))    awardIcons.push('<span title="Medalla al Valor" class="text-amber-400">🎖️</span>');
+    if (agent.awards && agent.awards.includes("servicio")) awardIcons.push('<span title="Cruz por Servicios" class="text-blue-400">✚</span>');
+    if (agent.awards && agent.awards.includes("tirador"))  awardIcons.push('<span title="Tirador Táctico" class="text-emerald-400">🎯</span>');
+    if (agent.awards && agent.awards.includes("merito"))   awardIcons.push('<span title="Estrella al Mérito" class="text-purple-400">⭐</span>');
+
+    const avatarSrc = agent.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+
+    return `
+      <div class="glass-panel rounded-xl p-5 border border-slate-800 hover:border-amber-500/40 transition-all group flex flex-col gap-4">
+        <!-- Agent Header -->
+        <div class="flex items-center gap-3">
+          <div class="relative shrink-0">
+            <img src="${avatarSrc}" alt="Avatar" class="w-12 h-12 rounded-xl object-cover border-2 border-slate-700 group-hover:border-amber-500/50 transition-colors"
+              onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+            <span class="absolute -bottom-1 -right-1 text-[10px] leading-none">${rank.icon}</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-sm font-black font-gobold text-white tracking-wide truncate">${agent.icName}</h4>
+            <span class="font-conthrax text-[9px] text-slate-400 truncate block">@${agent.discordTag}</span>
+            <span class="font-conthrax text-[10px] text-amber-400 font-bold">${agent.badge}</span>
+          </div>
+        </div>
+
+        <!-- Rank & Division -->
+        <div class="space-y-1.5 font-conthrax text-[11px]">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded ${rank.cssClass} font-bold text-[10px]">${rank.label}</span>
+            <span class="px-2 py-0.5 rounded ${statBadge} font-bold text-[10px]">${agent.status}</span>
+          </div>
+          <p class="text-slate-400 text-[10px] font-mono truncate">${agent.division}</p>
+        </div>
+
+        <!-- Awards Row -->
+        ${awardIcons.length > 0 ? `<div class="flex items-center gap-1.5 text-base">${awardIcons.join("")}</div>` : ''}
+
+        <!-- Notes (truncated) -->
+        ${agent.notes ? `
+          <p class="text-[10px] text-slate-500 font-mono italic leading-relaxed line-clamp-2">${agent.notes}</p>
+        ` : ''}
+
+        <!-- Footer: Date & Actions -->
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 font-conthrax text-[10px]">
+          <span class="text-slate-500">Ingreso: ${agent.joinDate || "—"}</span>
+          <div class="flex items-center gap-1.5">
+            <button 
+              onclick="openAgentEditor('${agent.discordId}')" 
+              class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all font-bold uppercase flex items-center gap-1"
+              title="Editar Ficha del Agente"
+            >
+              <i data-lucide="edit-3" class="w-3 h-3"></i>
+              Editar
+            </button>
+            <button 
+              onclick="quickKickAgent('${agent.discordId}', '${agent.icName.replace(/'/g, "\\'")}')" 
+              class="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/40 transition-all"
+              title="Expulsar del Cuerpo"
+            >
+              <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+}
+
+// --- ROSTER FILTER & SEARCH ---
+window.filterJefaturaRoster = function(filterKey) {
+  audioEngine.playKeyClick();
+
+  // Update button styles
+  document.querySelectorAll(".jef-filter-btn").forEach(b => {
+    b.classList.remove("bg-amber-500", "text-black");
+    b.classList.add("bg-slate-800", "text-slate-300");
+  });
+  if (event && event.target) {
+    event.target.classList.add("bg-amber-500", "text-black");
+    event.target.classList.remove("bg-slate-800", "text-slate-300");
+  }
+
+  const all = getJefaturaRoster();
+  let filtered = all;
+
+  if (filterKey === "pending") {
+    filtered = all.filter(a => a.status === "Pendiente" || a.rank === "aspirante");
+  } else if (filterKey === "active") {
+    filtered = all.filter(a => a.status === "Activo");
+  } else if (filterKey === "command") {
+    filtered = all.filter(a => (RANK_META[a.rank] || {}).level >= 4);
+  } else if (filterKey === "suspended") {
+    filtered = all.filter(a => a.status === "Suspendido" || a.status === "Expulsado");
+  }
+
+  renderJefaturaRoster(filtered);
+};
+
+function setupJefaturaSearch() {
+  const input = document.getElementById("jefatura-search-input");
+  if (!input) return;
+  input.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    const all = getJefaturaRoster();
+    if (!q) { renderJefaturaRoster(all); return; }
+    const filtered = all.filter(a =>
+      (a.icName || "").toLowerCase().includes(q) ||
+      (a.discordTag || "").toLowerCase().includes(q) ||
+      (a.badge || "").toLowerCase().includes(q) ||
+      (a.division || "").toLowerCase().includes(q) ||
+      (a.discordId || "").includes(q)
+    );
+    renderJefaturaRoster(filtered);
+  });
+}
+
+// --- AGENT EDITOR MODAL ---
+let currentEditingAgentId = null;
+
+window.openAgentEditor = function(discordId) {
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
+    showToast("⛔ Solo el Mando puede editar fichas de agentes.");
+    return;
+  }
+  audioEngine.playKeyClick();
+
+  const roster = getJefaturaRoster();
+  const agent = roster.find(a => a.discordId === discordId);
+  if (!agent) return;
+
+  currentEditingAgentId = discordId;
+
+  const modal = document.getElementById("agent-editor-modal");
+  if (!modal) return;
+
+  // Populate form fields
+  document.getElementById("edit-agent-user-id").value        = agent.discordId;
+  document.getElementById("edit-agent-icname").value         = agent.icName || "";
+  document.getElementById("edit-agent-badge").value          = agent.badge || "";
+  document.getElementById("edit-agent-rank").value           = agent.rank || "aspirante";
+  document.getElementById("edit-agent-division").value       = agent.division || "Sin Asignar // En Evaluación";
+  document.getElementById("edit-agent-status").value         = agent.status || "Pendiente";
+  document.getElementById("edit-agent-discord-tag").value    = agent.discordTag || "";
+  document.getElementById("edit-agent-notes").value          = agent.notes || "";
+  document.getElementById("edit-agent-discord-sub").textContent = `Discord ID: ${agent.discordId}`;
+
+  // Awards
+  document.getElementById("award-valor").checked    = (agent.awards || []).includes("valor");
+  document.getElementById("award-servicio").checked = (agent.awards || []).includes("servicio");
+  document.getElementById("award-tirador").checked  = (agent.awards || []).includes("tirador");
+  document.getElementById("award-merito").checked   = (agent.awards || []).includes("merito");
+
+  // Header status badge
+  const statusBadge = document.getElementById("edit-agent-header-status");
+  if (statusBadge) {
+    statusBadge.textContent = agent.status;
+    statusBadge.className = `px-2 py-0.5 rounded text-[10px] font-conthrax font-bold ${getStatusBadge(agent.status)}`;
+  }
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.saveAgentEditor = function(event) {
+  if (event) event.preventDefault();
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) return;
+
+  const userId = document.getElementById("edit-agent-user-id").value;
+  const roster = getJefaturaRoster();
+  const idx = roster.findIndex(a => a.discordId === userId);
+  if (idx === -1) return;
+
+  const oldAgent = roster[idx];
+  const oldRank  = oldAgent.rank;
+
+  const newRank   = document.getElementById("edit-agent-rank").value;
+  const newStatus = document.getElementById("edit-agent-status").value;
+  const newIcName = document.getElementById("edit-agent-icname").value.trim();
+  const newBadge  = document.getElementById("edit-agent-badge").value.trim();
+  const newDiv    = document.getElementById("edit-agent-division").value;
+  const newNotes  = document.getElementById("edit-agent-notes").value.trim();
+
+  const awards = [];
+  if (document.getElementById("award-valor").checked)    awards.push("valor");
+  if (document.getElementById("award-servicio").checked) awards.push("servicio");
+  if (document.getElementById("award-tirador").checked)  awards.push("tirador");
+  if (document.getElementById("award-merito").checked)   awards.push("merito");
+
+  roster[idx] = {
+    ...oldAgent,
+    icName:   newIcName,
+    badge:    newBadge,
+    rank:     newRank,
+    division: newDiv,
+    status:   newStatus,
+    notes:    newNotes,
+    awards
+  };
+
+  saveJefaturaRoster(roster);
+
+  // Audit log entry
+  const rankLabel = (RANK_META[newRank] || {}).label || newRank;
+  if (oldRank !== newRank) {
+    addAuditLog("CAMBIO DE RANGO", newIcName, oldAgent.discordTag, `${(RANK_META[oldRank]||{}).label||oldRank} → ${rankLabel}`, currentDiscordUser.username);
+  }
+  if (oldAgent.status !== newStatus) {
+    addAuditLog("CAMBIO DE ESTADO", newIcName, oldAgent.discordTag, `${oldAgent.status} → ${newStatus}`, currentDiscordUser.username);
+  }
+  if (oldAgent.icName !== newIcName) {
+    addAuditLog("CAMBIO DE NOMBRE IC", newIcName, oldAgent.discordTag, `"${oldAgent.icName}" → "${newIcName}"`, currentDiscordUser.username);
+  }
+  if (oldAgent.badge !== newBadge) {
+    addAuditLog("CAMBIO DE PLACA", newIcName, oldAgent.discordTag, `${oldAgent.badge} → ${newBadge}`, currentDiscordUser.username);
+  }
+
+  // If editing the logged-in user, refresh their session
+  if (currentDiscordUser && currentDiscordUser.id === userId) {
+    const rankData = RANK_META[newRank] || RANK_META["aspirante"];
+    currentDiscordUser = {
+      ...currentDiscordUser,
+      badge:               newBadge,
+      role:                newIcName,
+      rankKey:             newRank,
+      rankLevel:           rankData.level,
+      isAuthorizedDetective: rankData.level >= 1,
+      isHighCommand:       rankData.level >= 4,
+      clearance:           rankData.clearance
+    };
+    isDetectiveAuth = rankData.level >= 1;
+    localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+  }
+
+  closeModal("agent-editor-modal");
+  audioEngine.playAlertSound();
+  showToast(`✅ Ficha de ${newIcName} actualizada con éxito.`);
+  renderJefaturaKPIs();
+  renderJefaturaRoster(getJefaturaRoster());
+  updateDiscordAuthUI();
+};
+
+// --- KICK AGENT ---
+window.kickAgentFromModal = function() {
+  const userId = document.getElementById("edit-agent-user-id")?.value;
+  if (!userId) return;
+  const icName = document.getElementById("edit-agent-icname")?.value || userId;
+  quickKickAgent(userId, icName);
+  closeModal("agent-editor-modal");
+};
+
+window.quickKickAgent = function(discordId, icName) {
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
+    showToast("⛔ Solo el Mando puede expulsar agentes.");
+    return;
+  }
+  audioEngine.playAlertSound();
+
+  const roster = getJefaturaRoster();
+  const idx = roster.findIndex(a => a.discordId === discordId);
+  if (idx === -1) return;
+
+  roster[idx].status = "Expulsado";
+  roster[idx].rank   = "aspirante"; // Revoke all access
+
+  saveJefaturaRoster(roster);
+  addAuditLog("EXPULSIÓN DEL CUERPO", icName, roster[idx].discordTag, "Baja definitiva. Acceso revocado.", currentDiscordUser.username);
+
+  showToast(`🚨 ${icName} ha sido expulsado/a de la Detective Division.`);
+  renderJefaturaKPIs();
+  renderJefaturaRoster(getJefaturaRoster());
+};
+
+// --- ADD AGENT MODAL ---
+window.openAddAgentModal = function() {
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
+    showToast("⛔ Solo el Mando puede incorporar nuevos agentes.");
+    return;
+  }
+  audioEngine.playKeyClick();
+  const modal = document.getElementById("add-agent-modal");
+  if (modal) {
+    // Reset form
+    const form = document.getElementById("add-agent-form");
+    if (form) form.reset();
+    modal.classList.remove("hidden");
+    lucide.createIcons();
+  }
+};
+
+window.saveNewAgent = function(event) {
+  if (event) event.preventDefault();
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) return;
+
+  const discordId  = document.getElementById("new-agent-discord-id")?.value.trim();
+  const discordTag = document.getElementById("new-agent-discord-tag")?.value.trim();
+  const icName     = document.getElementById("new-agent-icname")?.value.trim();
+  const badge      = document.getElementById("new-agent-badge")?.value.trim();
+  const rank       = document.getElementById("new-agent-rank")?.value || "det1";
+  const division   = document.getElementById("new-agent-division")?.value || "Sin Asignar // En Evaluación";
+
+  if (!discordId || !icName || !badge) {
+    showToast("⚠️ Discord ID, Nombre IC y Placa son obligatorios.");
+    return;
+  }
+
+  const roster = getJefaturaRoster();
+  if (roster.find(a => a.discordId === discordId)) {
+    showToast("⚠️ Ya existe un agente con ese Discord ID en el censo.");
+    return;
+  }
+
+  const rankData = RANK_META[rank] || RANK_META["det1"];
+
+  const newAgent = {
+    discordId,
+    discordTag,
+    icName,
+    badge,
+    rank,
+    division,
+    status:   "Activo",
+    awards:   [],
+    notes:    "",
+    avatar:   `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random()*6)}.png`,
+    joinDate: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+  };
+
+  roster.push(newAgent);
+  saveJefaturaRoster(roster);
+  addAuditLog("INCORPORACIÓN AL CENSO", icName, discordTag, `Rango: ${rankData.label} // División: ${division}`, currentDiscordUser.username);
+
+  closeModal("add-agent-modal");
+  audioEngine.playAlertSound();
+  showToast(`✅ ${icName} (${badge}) incorporado/a al censo de la División.`);
+  renderJefaturaKPIs();
+  renderJefaturaRoster(getJefaturaRoster());
+};
+
+// --- CLAIM HIGH COMMAND (founder/setup mode) ---
+window.claimHighCommandForCurrentAccount = function() {
+  if (!currentDiscordUser) {
+    showToast("⚠️ Debes iniciar sesión con Discord primero.");
+    openDiscordAuthModal();
+    return;
+  }
+
+  audioEngine.playAlertSound();
+  const roster = getJefaturaRoster();
+  const existing = roster.find(a => a.discordId === currentDiscordUser.id);
+
+  if (existing) {
+    // Promote existing user to Capitán
+    existing.rank   = "capitan";
+    existing.status = "Activo";
+    existing.division = "Mando Supremo // Bureau Executive";
+  } else {
+    // Add as Capitán
+    roster.unshift({
+      discordId:   currentDiscordUser.id,
+      discordTag:  currentDiscordUser.tag,
+      icName:      currentDiscordUser.username,
+      badge:       currentDiscordUser.badge,
+      rank:        "capitan",
+      division:    "Mando Supremo // Bureau Executive",
+      status:      "Activo",
+      awards:      ["valor", "servicio"],
+      notes:       "Fundador/a de la División. Acceso reclamado como Capitán de Mando.",
+      avatar:      currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png",
+      joinDate:    new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+    });
+  }
+
+  saveJefaturaRoster(roster);
+  addAuditLog("MANDO RECLAMADO", currentDiscordUser.username, currentDiscordUser.tag, "Capitán de División por reclamación de Fundador", "Sistema");
+
+  // Update session
+  currentDiscordUser = {
+    ...currentDiscordUser,
+    role:                "Capitán de División",
+    rankKey:             "capitan",
+    rankLevel:           5,
+    isAuthorizedDetective: true,
+    isHighCommand:       true,
+    clearance:           "NIVEL 5 // COMANDO SUPREMO"
+  };
+  isDetectiveAuth = true;
+  localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+
+  updateDiscordAuthUI();
+  showToast(`👑 ¡Mando reclamado! Bienvenido/a al Despacho de Jefatura, ${currentDiscordUser.username}.`);
+};
+
+// --- AUDIT LOG RENDERER ---
+function renderAuditLogs() {
+  const container = document.getElementById("jefatura-audit-list");
+  if (!container) return;
+
+  const logs = getAuditLogs();
+  if (logs.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-10 text-slate-500 font-conthrax text-xs">
+        <i data-lucide="clipboard-list" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
+        No hay entradas de auditoría registradas todavía.
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  const actionColors = {
+    "CAMBIO DE RANGO":         "text-amber-400 border-amber-500/30 bg-amber-500/5",
+    "CAMBIO DE ESTADO":        "text-blue-400  border-blue-500/30  bg-blue-500/5",
+    "CAMBIO DE NOMBRE IC":     "text-cyan-400  border-cyan-500/30  bg-cyan-500/5",
+    "CAMBIO DE PLACA":         "text-purple-400 border-purple-500/30 bg-purple-500/5",
+    "INCORPORACIÓN AL CENSO":  "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
+    "EXPULSIÓN DEL CUERPO":    "text-red-400   border-red-500/30   bg-red-500/5",
+    "MANDO RECLAMADO":         "text-amber-400 border-amber-500/30 bg-amber-500/10",
+    "REGISTRO AUTOMÁTICO":     "text-slate-400 border-slate-600/30 bg-slate-800/30"
+  };
+
+  container.innerHTML = logs.map(log => {
+    const colors = actionColors[log.action] || "text-slate-300 border-slate-700/30 bg-slate-800/20";
+    return `
+      <div class="p-3 rounded-lg border ${colors} flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex flex-col gap-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-bold uppercase text-[10px] font-conthrax">${log.action}</span>
+            <span class="text-white font-semibold">${log.agentName}</span>
+            <span class="text-slate-400 text-[10px]">@${log.discordTag}</span>
+          </div>
+          <span class="text-slate-300 text-[11px]">${log.detail}</span>
+          <span class="text-slate-500 text-[10px]">Ordenado por: <strong class="text-slate-300">${log.commander}</strong></span>
+        </div>
+        <span class="text-[10px] text-slate-500 whitespace-nowrap shrink-0">${log.timestamp}</span>
+      </div>
+    `;
+  }).join("");
+
+  lucide.createIcons();
+}
+
+window.clearAuditLogs = function() {
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
+    showToast("⛔ Solo el Mando puede limpiar el historial de auditoría.");
+    return;
+  }
+  saveAuditLogs([]);
+  renderAuditLogs();
+  showToast("🗑️ Historial de auditoría limpiado.");
+};
+
+// --- EXPORT ROSTER ---
+window.exportRosterToClipboard = function() {
+  const roster = getJefaturaRoster();
+  const lines = ["📋 **CENSO OFICIAL // DETECTIVE DIVISION**\n"];
+  const groups = {};
+  roster.forEach(a => {
+    const rankKey = a.rank || "aspirante";
+    if (!groups[rankKey]) groups[rankKey] = [];
+    groups[rankKey].push(a);
+  });
+
+  const order = ["capitan", "teniente", "sgt", "det3", "det2", "det1", "aspirante"];
+  order.forEach(key => {
+    if (!groups[key] || groups[key].length === 0) return;
+    const meta = RANK_META[key] || {};
+    lines.push(`\n**${meta.icon || "—"} ${meta.label || key}**`);
+    groups[key].forEach(a => {
+      lines.push(`• ${a.icName} ${a.badge} | ${a.discordTag} | ${a.division} | Estado: ${a.status}`);
+    });
+  });
+
+  lines.push(`\n_Actualizado: ${new Date().toLocaleString('es-ES')}_`);
+  const text = lines.join("\n");
+
+  navigator.clipboard.writeText(text).then(() => {
+    audioEngine.playKeyClick();
+    showToast("📋 Censo exportado al portapapeles (formato Discord).");
+  }).catch(() => {
+    showToast("⚠️ No se pudo copiar al portapapeles. Permiso denegado.");
+  });
+};
+
+// --- RESET ROSTER ---
+window.resetRosterToDefault = function() {
+  if (!currentDiscordUser || !currentDiscordUser.isHighCommand) {
+    showToast("⛔ Solo el Mando puede restablecer el censo.");
+    return;
+  }
+  saveJefaturaRoster(JSON.parse(JSON.stringify(DEFAULT_ROSTER)));
+  addAuditLog("RESTABLECIMIENTO DEL CENSO", "Sistema", "Sistema", "Censo restablecido a valores predeterminados de ejemplo", currentDiscordUser.username);
+  audioEngine.playAlertSound();
+  showToast("🔄 Censo restablecido a los datos de ejemplo.");
+  renderJefaturaKPIs();
+  renderJefaturaRoster(getJefaturaRoster());
+};
