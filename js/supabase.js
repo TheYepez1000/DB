@@ -1699,7 +1699,7 @@ async function dbMarkMessagesRead(fromId, toId) {
 
 /**
  * Add a falta (sanction) to an agent. Stored in agents.faltas JSON column.
- * falta: { id, type, description, date, commander }
+ * falta: { id, level, type, description, date, commander }
  */
 async function dbAddFalta(agentDiscordId, falta) {
   const roster = getCachedRoster();
@@ -1707,20 +1707,48 @@ async function dbAddFalta(agentDiscordId, falta) {
   if (!agentRow) return;
 
   let faltas = [];
-  try { faltas = JSON.parse(agentRow.faltas || '[]'); } catch(e) {}
-  falta.id = 'falta_' + Date.now();
-  falta.date = new Date().toISOString();
-  faltas.push(falta);
+  try { faltas = typeof agentRow.faltas === 'string' ? JSON.parse(agentRow.faltas || '[]') : (agentRow.faltas || []); } catch(e) {}
+  falta.id = falta.id || ('falta_' + Date.now());
+  falta.date = falta.date || new Date().toISOString();
+  falta.level = falta.level || 'leve';
+  faltas.unshift(falta);
   agentRow.faltas = JSON.stringify(faltas);
 
   if (!db) {
     localStorage.setItem('dd_jefatura_roster', JSON.stringify(roster.map(rowToAgent)));
-    return;
+    return falta;
   }
   try {
     const { error } = await db.from('agents').update({ faltas: agentRow.faltas }).eq('discord_id', agentDiscordId);
     if (error) console.warn('[DB] add falta error:', error);
   } catch(e) { console.warn('[DB] add falta exception:', e); }
+  return falta;
+}
+
+/**
+ * Update an existing falta
+ */
+async function dbUpdateFalta(agentDiscordId, faltaId, updatedData) {
+  const roster = getCachedRoster();
+  const agentRow = roster.find(r => r.discord_id === agentDiscordId);
+  if (!agentRow) return;
+
+  let faltas = [];
+  try { faltas = typeof agentRow.faltas === 'string' ? JSON.parse(agentRow.faltas || '[]') : (agentRow.faltas || []); } catch(e) {}
+  const idx = faltas.findIndex(f => f.id === faltaId);
+  if (idx === -1) return;
+  faltas[idx] = { ...faltas[idx], ...updatedData };
+  agentRow.faltas = JSON.stringify(faltas);
+
+  if (!db) {
+    localStorage.setItem('dd_jefatura_roster', JSON.stringify(roster.map(rowToAgent)));
+    return faltas[idx];
+  }
+  try {
+    const { error } = await db.from('agents').update({ faltas: agentRow.faltas }).eq('discord_id', agentDiscordId);
+    if (error) console.warn('[DB] update falta error:', error);
+  } catch(e) { console.warn('[DB] update falta exception:', e); }
+  return faltas[idx];
 }
 
 /**
@@ -1731,10 +1759,13 @@ async function dbRemoveFalta(agentDiscordId, faltaId) {
   const agentRow = roster.find(r => r.discord_id === agentDiscordId);
   if (!agentRow) return;
   let faltas = [];
-  try { faltas = JSON.parse(agentRow.faltas || '[]'); } catch(e) {}
+  try { faltas = typeof agentRow.faltas === 'string' ? JSON.parse(agentRow.faltas || '[]') : (agentRow.faltas || []); } catch(e) {}
   faltas = faltas.filter(f => f.id !== faltaId);
   agentRow.faltas = JSON.stringify(faltas);
-  if (!db) return;
+  if (!db) {
+    localStorage.setItem('dd_jefatura_roster', JSON.stringify(roster.map(rowToAgent)));
+    return;
+  }
   try {
     await db.from('agents').update({ faltas: agentRow.faltas }).eq('discord_id', agentDiscordId);
   } catch(e) {}
@@ -1747,7 +1778,7 @@ function dbGetFaltas(agentDiscordId) {
   const roster = getCachedRoster();
   const agentRow = roster.find(r => r.discord_id === agentDiscordId);
   if (!agentRow) return [];
-  try { return JSON.parse(agentRow.faltas || '[]'); } catch(e) { return []; }
+  try { return typeof agentRow.faltas === 'string' ? JSON.parse(agentRow.faltas || '[]') : (agentRow.faltas || []); } catch(e) { return []; }
 }
 
 // ============================================================

@@ -774,9 +774,10 @@ function getSubdivisionIdFromDivision(divisionStr) {
   const d = (divisionStr || '').toUpperCase();
   if (d.includes('RHD') || d.includes('HOMICIDIO') || d.includes('ROBO')) return 'rhd';
   if (d.includes('GND') || d.includes('NARC') || d.includes('PANDILLA')) return 'gnd';
-  if (d.includes('CSI') || d.includes('FORENSE') || d.includes('BALÍST')) return 'csi';
+  if (d.includes('AIB') || d.includes('ASUNTOS') || d.includes('INTERNOS') || d.includes('IAD') || d.includes('INTERNO') || d.includes('DISCIPLINA')) return 'iad';
+  if (d.includes('CSI') || d.includes('FORENSE') || d.includes('BALÍST') || d.includes('BALISTICA')) return 'csi';
+  if (d.includes('SWAT') || d.includes('TACTIC') || d.includes('TÁCTIC') || d.includes('OPERACIONES TACTICAS')) return 'swat';
   if (d.includes('CID') || d.includes('CIBER') || d.includes('FRAUDE')) return 'cid';
-  if (d.includes('IAD') || d.includes('INTERNO') || d.includes('ASUNTO')) return 'iad';
   if (d.includes('CCD') || d.includes('FRÍO') || d.includes('DESAPAR') || d.includes('FRIO')) return 'ccd';
   return null;
 }
@@ -2143,6 +2144,25 @@ const SUBDIVISIONS_DATA = {
       "Confirmación genética de restos óseos o biológicos mediante ADN mitocondrial."
     ],
     equipment: ["Kits de Extracción de ADN en Huesos y Tejidos Secos", "Drones Térmicos de Búsqueda Rural", "Acceso a Microfilms y Archivos Históricos", "Vehículo Todo Terreno 4x4"]
+  },
+  swat: {
+    id: "swat",
+    code: "SWAT",
+    name: "Operaciones Tácticas",
+    fullName: "Special Weapons and Tactics (SWAT)",
+    badgeColor: "emerald",
+    icon: "crosshair",
+    channel: "RADIO TAC-SWAT (142.900 MHz CIFRADA)",
+    clearance: "NIVEL 4 // ASALTO TÁCTICO",
+    motto: "«Semper Paratus — Entrada contundente y resolución crítica»",
+    description: "Equipo de asalto y respuesta armada para rescate de rehenes, neutralización de tiradores activos e incursiones de alto riesgo.",
+    sopSteps: [
+      "Establecimiento del puesto de mando táctico perimetral y despliegue de francotiradores.",
+      "Breaching táctico con explosivos controlados o ariete hidráulico.",
+      "Despeje dinámico habitación por habitación asegurando rehenes e incomunicando sospechosos.",
+      "Custodia estricta del escenario y entrega del inmueble a los detectives de homicidios/narcóticos."
+    ],
+    equipment: ["Subfusil HK MP5A3 / Carabina Colt M4A1", "Ariete Hidráulico de Breaching", "Escudo Balístico con Ventana Nivel IV", "Vehículo Blindado Lenco BearCat"]
   }
 };
 
@@ -4175,6 +4195,12 @@ window.openAgentEditor = function(discordId) {
   document.getElementById("edit-agent-notes").value          = agent.notes || "";
   document.getElementById("edit-agent-discord-sub").textContent = `Discord ID: ${agent.discordId}`;
 
+  // Avatar / Foto
+  const avatarInput = document.getElementById("edit-agent-avatar");
+  const avatarPreview = document.getElementById("edit-agent-avatar-preview");
+  if (avatarInput) avatarInput.value = agent.avatar || "";
+  if (avatarPreview) avatarPreview.src = agent.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+
   // Awards
   document.getElementById("award-valor").checked    = (agent.awards || []).includes("valor");
   document.getElementById("award-servicio").checked = (agent.awards || []).includes("servicio");
@@ -4219,6 +4245,7 @@ window.saveAgentEditor = function(event) {
   const newBadge  = document.getElementById("edit-agent-badge").value.trim();
   const newDiv    = document.getElementById("edit-agent-division").value;
   const newNotes  = document.getElementById("edit-agent-notes").value.trim();
+  const newAvatar = document.getElementById("edit-agent-avatar")?.value.trim() || oldAgent.avatar;
 
   if (oldRank !== newRank && !hasPermission('change_ranks')) {
     showToast("⛔ No tienes permiso para ascender o degradar oficiales de rango.");
@@ -4239,6 +4266,7 @@ window.saveAgentEditor = function(event) {
     division: newDiv,
     status:   newStatus,
     notes:    newNotes,
+    avatar:   newAvatar,
     awards
   };
 
@@ -4578,7 +4606,7 @@ window.resetRosterToDefault = function() {
 // Extend switchJefaturaTab to handle new tabs
 const _origSwitchJefaturaTab = window.switchJefaturaTab || function(){};
 window.switchJefaturaTab = function(tab) {
-  const allTabs = ['censo','audit','escalafon','subdivisions','solicitudes','mensajes'];
+  const allTabs = ['censo','audit','escalafon','subdivisions','solicitudes','mensajes','faltas'];
   allTabs.forEach(t => {
     const btn = document.getElementById(`tab-btn-jefatura-${t}`);
     const content = document.getElementById(`tab-content-jefatura-${t}`);
@@ -4588,6 +4616,11 @@ window.switchJefaturaTab = function(tab) {
   if (tab === 'subdivisions') renderJefaturaSubdivisionsTab();
   if (tab === 'solicitudes') renderSolicitudesList();
   if (tab === 'mensajes') { renderJefaturaMensajes(); }
+  if (tab === 'faltas') { renderJefaturaFaltasTab(); }
+  if (tab === 'censo') { renderJefaturaRoster(getJefaturaRoster()); }
+  if (tab === 'audit') { renderAuditLogs(); }
+  if (tab === 'escalafon') { renderDynamicRanks(); }
+  if (window.lucide) window.lucide.createIcons();
 };
 
 // ============================================================
@@ -4704,6 +4737,20 @@ window.assignSubdivisionToAgent = async function() {
 
   saveJefaturaRoster(roster);
   await dbUpsertAgent(agent);
+
+  // Si el agente asignado es el usuario que tiene sesión iniciada, actualizar inmediatamente su sesión
+  if (currentDiscordUser && currentDiscordUser.id === agentId) {
+    currentDiscordUser = {
+      ...currentDiscordUser,
+      rosterAgent: { ...agent },
+      division: divLabel,
+      subdivisionRole: agent.subdivisionRole
+    };
+    try {
+      localStorage.setItem("dd_discord_user", JSON.stringify(currentDiscordUser));
+    } catch(e) {}
+  }
+
   addAuditLog('ASIGNACIÓN SUBDIVISIÓN', agent.icName, agent.discordTag,
     `Subdivisión: ${subdiv || 'Sin Asignar'} // Cargo: ${role}`, currentDiscordUser?.username || 'Sistema');
 
@@ -4715,6 +4762,7 @@ window.assignSubdivisionToAgent = async function() {
   renderJefaturaSubdivisionsTab();
   renderMandoGrid();
   renderSubdivisionPrivatePanel();
+  if (typeof renderMiPerfil === 'function') renderMiPerfil();
   updateDiscordAuthUI();
   showToast(`✅ ${agent.icName} → ${subdiv || 'Sin Asignar'} (${role})`);
 };
@@ -5026,10 +5074,18 @@ function renderPerfilFaltas() {
     container.innerHTML = '<p class="text-slate-500 py-4 text-center">Sin faltas o sanciones registradas. ✅</p>';
     return;
   }
+  const levelBadges = {
+    'leve': '<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold border border-yellow-500/30 text-[10px]">LEVE</span>',
+    'grave': '<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 font-bold border border-orange-500/30 text-[10px]">GRAVE</span>',
+    'muy_grave': '<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold border border-red-500/30 text-[10px]">MUY GRAVE</span>'
+  };
   container.innerHTML = faltas.map(f => `
     <div class="p-3 rounded-xl bg-amber-900/20 border border-amber-500/30">
       <div class="flex items-center justify-between mb-1">
-        <span class="text-amber-300 font-bold text-xs uppercase">${f.type || 'Sanción'}</span>
+        <div class="flex items-center gap-2">
+          ${levelBadges[f.level] || levelBadges['leve']}
+          <span class="text-amber-300 font-bold text-xs uppercase">${f.type || 'Sanción'}</span>
+        </div>
         <span class="text-[10px] text-slate-500">${f.date ? new Date(f.date).toLocaleDateString('es-ES') : '—'}</span>
       </div>
       <p class="text-white text-xs">${f.description || '—'}</p>
@@ -5122,27 +5178,214 @@ window.sendPerfilChatMessage = async function() {
 };
 
 // ============================================================
-// JEFATURA — FALTAS (Añadir/Eliminar a agente)
+// JEFATURA — APARTADO COMPLETO DE GESTIÓN DE FALTAS Y SANCIONES
 // ============================================================
 
-window.openAddFaltaModal = function(agentDiscordId) {
-  if (!hasPermission('manage_roster')) { showToast('⛔ Sin permiso.'); return; }
-  const agent = getJefaturaRoster().find(a => a.discordId === agentDiscordId);
-  if (!agent) return;
+function renderJefaturaFaltasTab() {
+  const container = document.getElementById('jef-faltas-list');
+  if (!container) return;
 
-  // Reutilizamos showConfirmModal-like approach con un prompt
-  const type = prompt(`Tipo de falta para ${agent.icName} (amonestación/suspensión/expulsión):`, 'amonestación');
-  if (!type) return;
-  const desc = prompt('Descripción de la falta/motivo:');
-  if (!desc) return;
+  const roster = getJefaturaRoster();
+  const search = (document.getElementById('jef-faltas-search')?.value || '').toLowerCase().trim();
+  const levelFilter = document.getElementById('jef-faltas-level-filter')?.value || 'all';
 
-  dbAddFalta(agentDiscordId, {
-    type, description: desc,
-    commander: currentDiscordUser?.username || 'Jefatura'
-  }).then(() => {
-    addAuditLog('FALTA REGISTRADA', agent.icName, agent.discordTag, `Tipo: ${type} — ${desc}`, currentDiscordUser?.username);
-    showToast(`⚠️ Falta registrada para ${agent.icName}`);
+  // Recopilar todas las faltas de todos los agentes
+  const allFaltas = [];
+  roster.forEach(agent => {
+    const faltas = dbGetFaltas(agent.discordId);
+    faltas.forEach(f => {
+      allFaltas.push({
+        ...f,
+        agentDiscordId: agent.discordId,
+        agentName: agent.icName,
+        agentBadge: agent.badge,
+        agentAvatar: agent.avatar
+      });
+    });
   });
+
+  // Filtrado
+  const filtered = allFaltas.filter(item => {
+    const matchesSearch = !search ||
+      item.agentName.toLowerCase().includes(search) ||
+      (item.description || '').toLowerCase().includes(search) ||
+      (item.type || '').toLowerCase().includes(search);
+    const matchesLevel = levelFilter === 'all' || item.level === levelFilter;
+    return matchesSearch && matchesLevel;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="text-slate-500 py-6 text-center text-xs">No hay faltas registradas con los filtros actuales. ✅</p>';
+    return;
+  }
+
+  const levelBadges = {
+    'leve': '<span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold border border-yellow-500/30 text-[10px]">LEVE</span>',
+    'grave': '<span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 font-bold border border-orange-500/30 text-[10px]">GRAVE</span>',
+    'muy_grave': '<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold border border-red-500/30 text-[10px]">MUY GRAVE</span>'
+  };
+
+  container.innerHTML = filtered.map(item => `
+    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-red-500/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="flex items-start gap-3 flex-1 min-w-0">
+        <img src="${item.agentAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-700">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-white font-bold text-xs">${item.agentName}</span>
+            <span class="text-slate-500 text-[10px]">${item.agentBadge}</span>
+            ${levelBadges[item.level] || levelBadges['leve']}
+            <span class="text-red-400 font-bold text-[10px] uppercase">• ${item.type || 'Sanción'}</span>
+          </div>
+          <p class="text-slate-300 text-xs font-mono mb-1 leading-relaxed">${item.description || 'Sin descripción'}</p>
+          <div class="flex items-center gap-3 text-[10px] text-slate-500">
+            <span>Fecha: <strong class="text-slate-400">${item.date ? new Date(item.date).toLocaleDateString('es-ES') : '—'}</strong></span>
+            <span>Impuesta por: <strong class="text-slate-400">${item.commander || 'Jefatura'}</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+        <button onclick="openEditFaltaModal('${item.agentDiscordId}', '${item.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 font-bold uppercase text-[10px] transition-all flex items-center gap-1">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+        </button>
+        <button onclick="confirmDeleteFalta('${item.agentDiscordId}', '${item.id}', '${item.agentName.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900 border border-red-500/30 text-red-300 font-bold uppercase text-[10px] transition-all flex items-center gap-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Quitar
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function _populateFaltaAgentSelect(selectedId) {
+  const select = document.getElementById('falta-modal-agent-select');
+  if (!select) return;
+  const roster = getJefaturaRoster();
+  select.innerHTML = roster.map(a => `
+    <option value="${a.discordId}" ${a.discordId === selectedId ? 'selected' : ''}>
+      ${a.icName} (${a.badge}) — ${a.discordId}
+    </option>
+  `).join('');
+}
+
+window.openNewFaltaModal = function(preselectedAgentId) {
+  if (!hasPermission('manage_roster')) { showToast('⛔ No tienes permiso para imponer sanciones.'); return; }
+  const modal = document.getElementById('falta-modal');
+  if (!modal) return;
+
+  _populateFaltaAgentSelect(preselectedAgentId || '');
+  document.getElementById('falta-modal-title').textContent = 'Registrar Falta Disciplinaria';
+  document.getElementById('falta-modal-subtitle').textContent = 'Régimen sancionador de la Detective Division';
+  document.getElementById('falta-modal-falta-id').value = '';
+  document.getElementById('falta-modal-type').value = '';
+  document.getElementById('falta-modal-description').value = '';
+  document.getElementById('falta-modal-level').value = 'leve';
+  document.getElementById('falta-modal-agent-select').disabled = false;
+  document.getElementById('falta-modal-delete-btn').classList.add('hidden');
+
+  modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.openAddFaltaModal = function(agentDiscordId) {
+  window.openNewFaltaModal(agentDiscordId);
+};
+
+window.openEditFaltaModal = function(agentDiscordId, faltaId) {
+  if (!hasPermission('manage_roster')) { showToast('⛔ Sin permiso.'); return; }
+  const modal = document.getElementById('falta-modal');
+  if (!modal) return;
+
+  const faltas = dbGetFaltas(agentDiscordId);
+  const falta = faltas.find(f => f.id === faltaId);
+  if (!falta) return;
+
+  _populateFaltaAgentSelect(agentDiscordId);
+  document.getElementById('falta-modal-title').textContent = 'Modificar Sanción / Falta';
+  document.getElementById('falta-modal-subtitle').textContent = `Falta ID: ${faltaId}`;
+  document.getElementById('falta-modal-agent-id').value = agentDiscordId;
+  document.getElementById('falta-modal-falta-id').value = faltaId;
+  document.getElementById('falta-modal-type').value = falta.type || '';
+  document.getElementById('falta-modal-description').value = falta.description || '';
+  document.getElementById('falta-modal-level').value = falta.level || 'leve';
+  document.getElementById('falta-modal-agent-select').value = agentDiscordId;
+  document.getElementById('falta-modal-agent-select').disabled = true;
+  document.getElementById('falta-modal-delete-btn').classList.remove('hidden');
+
+  modal.classList.remove('hidden');
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.saveFaltaModal = async function(event) {
+  if (event) event.preventDefault();
+  if (!hasPermission('manage_roster')) { showToast('⛔ Sin permiso.'); return; }
+
+  const faltaId = document.getElementById('falta-modal-falta-id').value.trim();
+  const agentId = document.getElementById('falta-modal-agent-select').value;
+  const level = document.getElementById('falta-modal-level').value;
+  const type = document.getElementById('falta-modal-type').value.trim();
+  const description = document.getElementById('falta-modal-description').value.trim();
+
+  if (!agentId || !type || !description) {
+    showToast('⚠️ Completa el tipo y motivo de la falta.');
+    return;
+  }
+
+  const agent = getJefaturaRoster().find(a => a.discordId === agentId);
+  const agentName = agent ? agent.icName : agentId;
+
+  if (faltaId) {
+    // Modo edición
+    await dbUpdateFalta(agentId, faltaId, {
+      level,
+      type,
+      description,
+      commander: currentDiscordUser?.username || 'Jefatura'
+    });
+    addAuditLog('FALTA MODIFICADA', agentName, agentId, `Nivel: ${level.toUpperCase()} // ${type}: ${description}`, currentDiscordUser?.username);
+    showToast(`✅ Falta de ${agentName} actualizada.`);
+  } else {
+    // Modo creación
+    await dbAddFalta(agentId, {
+      level,
+      type,
+      description,
+      commander: currentDiscordUser?.username || 'Jefatura'
+    });
+    addAuditLog('FALTA IMPUESTA', agentName, agentId, `Nivel: ${level.toUpperCase()} // ${type}: ${description}`, currentDiscordUser?.username);
+    showToast(`⚠️ Falta nivel ${level.toUpperCase()} registrada para ${agentName}.`);
+  }
+
+  closeModal('falta-modal');
+  renderJefaturaFaltasTab();
+  if (typeof renderPerfilFaltas === 'function') renderPerfilFaltas();
+  if (typeof renderMiPerfil === 'function') renderMiPerfil();
+};
+
+window.deleteFaltaFromModal = async function() {
+  const agentId = document.getElementById('falta-modal-agent-id').value;
+  const faltaId = document.getElementById('falta-modal-falta-id').value;
+  if (!agentId || !faltaId) return;
+
+  if (!confirm('¿Estás seguro de retirar y anular esta sanción del expediente?')) return;
+
+  await dbRemoveFalta(agentId, faltaId);
+  addAuditLog('FALTA RETIRADA', agentId, '', `Falta ${faltaId} anulada`, currentDiscordUser?.username);
+  closeModal('falta-modal');
+  renderJefaturaFaltasTab();
+  if (typeof renderPerfilFaltas === 'function') renderPerfilFaltas();
+  if (typeof renderMiPerfil === 'function') renderMiPerfil();
+  showToast('🗑️ Falta eliminada del expediente.');
+};
+
+window.confirmDeleteFalta = async function(agentId, faltaId, agentName) {
+  if (!confirm(`¿Deseas retirar y anular la falta aplicada a ${agentName}?`)) return;
+  await dbRemoveFalta(agentId, faltaId);
+  addAuditLog('FALTA RETIRADA', agentName, agentId, `Falta ${faltaId} anulada`, currentDiscordUser?.username);
+  renderJefaturaFaltasTab();
+  if (typeof renderPerfilFaltas === 'function') renderPerfilFaltas();
+  if (typeof renderMiPerfil === 'function') renderMiPerfil();
+  showToast(`🗑️ Falta de ${agentName} retirada.`);
 };
 
 // ============================================================
