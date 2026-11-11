@@ -454,6 +454,8 @@ async function initDiscordAuth() {
           role: liveAgent.icName || rankMeta.label,
           clearance: rankMeta.clearance,
           badge: liveAgent.badge || parsed.badge,
+          division: liveAgent.division || parsed.division || '',
+          subdivisionRole: liveAgent.subdivisionRole || parsed.subdivisionRole || null,
           isAuthorizedDetective: rankMeta.level >= 1,
           isHighCommand: rankMeta.level >= 4,
           rosterAgent: liveAgent
