@@ -1088,9 +1088,6 @@ function rowToReport(row) {
     authorId:       row.author_id || null
   };
 }
-    evidence
-  };
-}
 
 function getCachedReports() {
   return CACHE.reports || [];

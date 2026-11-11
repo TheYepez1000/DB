@@ -4567,3 +4567,741 @@ window.resetRosterToDefault = function() {
   renderMandoGrid();
   renderSubdivisionPrivatePanel();
 };
+
+
+
+
+// ============================================================
+// JEFATURA — NUEVOS TABS: switchJefaturaTab extendido
+// ============================================================
+
+// Extend switchJefaturaTab to handle new tabs
+const _origSwitchJefaturaTab = window.switchJefaturaTab || function(){};
+window.switchJefaturaTab = function(tab) {
+  const allTabs = ['censo','audit','escalafon','subdivisions','solicitudes','mensajes'];
+  allTabs.forEach(t => {
+    const btn = document.getElementById(`tab-btn-jefatura-${t}`);
+    const content = document.getElementById(`tab-content-jefatura-${t}`);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (content) content.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'subdivisions') renderJefaturaSubdivisionsTab();
+  if (tab === 'solicitudes') renderSolicitudesList();
+  if (tab === 'mensajes') { renderJefaturaMensajes(); }
+};
+
+// ============================================================
+// SUBDIVISION MANAGEMENT
+// ============================================================
+
+const SUBDIVISION_META = {
+  'RHD':  { label: 'RHD — Homicidios y Robos',       color: 'red',     icon: '🔴', bg: 'bg-red-900/30',    border: 'border-red-500/40'    },
+  'GND':  { label: 'GND — Narcóticos y Pandillas',    color: 'purple',  icon: '🟣', bg: 'bg-purple-900/30', border: 'border-purple-500/40' },
+  'AIB':  { label: 'AIB — Asuntos Internos',          color: 'amber',   icon: '🟡', bg: 'bg-amber-900/30',  border: 'border-amber-500/40'  },
+  'CSI':  { label: 'CSI — Escena del Crimen',         color: 'cyan',    icon: '🔵', bg: 'bg-cyan-900/30',   border: 'border-cyan-500/40'   },
+  'SWAT': { label: 'SWAT — Operaciones Tácticas',     color: 'emerald', icon: '🟢', bg: 'bg-emerald-900/30',border: 'border-emerald-500/40' },
+};
+
+function renderJefaturaSubdivisionsTab() {
+  const grid = document.getElementById('jef-subdivisions-grid');
+  if (!grid) return;
+  const roster = getJefaturaRoster();
+  grid.innerHTML = Object.entries(SUBDIVISION_META).map(([key, meta]) => {
+    const members = roster.filter(a => {
+      const div = (a.division || '').toUpperCase();
+      return div.includes(key);
+    });
+    const chief = members.find(a => a.subdivisionRole === 'jefe');
+    const memberRows = members.map(a => `
+      <div class="flex items-center justify-between py-1.5 border-b border-slate-800/50 last:border-0">
+        <div class="flex items-center gap-2">
+          <img src="${a.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-6 h-6 rounded-full object-cover" alt="">
+          <div>
+            <span class="text-white text-xs font-bold">${a.icName}</span>
+            ${a.subdivisionRole === 'jefe' ? '<span class="ml-1 px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[9px] font-bold">JEFE</span>' : ''}
+          </div>
+        </div>
+        <span class="text-[10px] font-conthrax text-slate-500">${a.badge}</span>
+      </div>
+    `).join('');
+    return `
+      <div class="glass-panel p-5 rounded-xl ${meta.border} border ${meta.bg} space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">${meta.icon}</span>
+            <div>
+              <h6 class="font-black font-gobold text-white text-sm">${key}</h6>
+              <p class="text-[10px] font-conthrax text-slate-400">${meta.label.split('—')[1].trim()}</p>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-conthrax text-[10px] font-bold">${members.length} efectivos</span>
+        </div>
+        ${chief ? `<p class="text-[10px] font-conthrax text-slate-400">Jefe: <span class="text-blue-300 font-bold">${chief.icName}</span></p>` : '<p class="text-[10px] font-conthrax text-amber-400/70">Sin jefe asignado</p>'}
+        <div class="space-y-0 max-h-40 overflow-y-auto">
+          ${memberRows || '<p class="text-xs font-conthrax text-slate-600 py-2">Sin miembros asignados</p>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Setup agent search autocomplete
+  _setupSubdivAgentSearch();
+}
+
+let _assignSubdivSelectedAgent = null;
+function _setupSubdivAgentSearch() {
+  const inp = document.getElementById('assign-subdiv-agent-search');
+  const results = document.getElementById('assign-subdiv-agent-results');
+  if (!inp || !results) return;
+  inp.oninput = () => {
+    const q = inp.value.toLowerCase().trim();
+    if (!q) { results.classList.add('hidden'); return; }
+    const roster = getJefaturaRoster();
+    const matches = roster.filter(a =>
+      a.icName.toLowerCase().includes(q) ||
+      (a.discordTag||'').toLowerCase().includes(q) ||
+      a.discordId.includes(q)
+    ).slice(0, 5);
+    if (!matches.length) { results.classList.add('hidden'); return; }
+    results.classList.remove('hidden');
+    results.innerHTML = matches.map(a => `
+      <div class="px-3 py-2 hover:bg-slate-800 cursor-pointer border-b border-slate-800 last:border-0 flex items-center gap-2"
+           onclick="window._selectSubdivAgent('${a.discordId}', '${a.icName.replace(/'/g,"\\'")}')">
+        <img src="${a.avatar||'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-6 h-6 rounded-full">
+        <div>
+          <p class="text-white font-bold text-xs">${a.icName}</p>
+          <p class="text-slate-500 text-[10px]">${a.badge} • ${a.discordId}</p>
+        </div>
+      </div>
+    `).join('');
+  };
+}
+
+window._selectSubdivAgent = function(id, name) {
+  _assignSubdivSelectedAgent = id;
+  const inp = document.getElementById('assign-subdiv-agent-search');
+  const results = document.getElementById('assign-subdiv-agent-results');
+  if (inp) inp.value = name;
+  if (results) results.classList.add('hidden');
+};
+
+window.assignSubdivisionToAgent = async function() {
+  if (!hasPermission('manage_roster')) { showToast('⛔ Sin permiso.'); return; }
+  const agentId = _assignSubdivSelectedAgent;
+  const subdiv  = document.getElementById('assign-subdiv-select')?.value;
+  const role    = document.getElementById('assign-subdiv-role')?.value || 'miembro';
+  const statusEl = document.getElementById('assign-subdiv-status');
+
+  if (!agentId) { showToast('⚠️ Selecciona un agente de la lista.'); return; }
+
+  const roster = getJefaturaRoster();
+  const agent = roster.find(a => a.discordId === agentId);
+  if (!agent) { showToast('⚠️ Agente no encontrado.'); return; }
+
+  const divLabel = subdiv ? `${SUBDIVISION_META[subdiv]?.label || subdiv}` : 'Sin Asignar // En Evaluación';
+  agent.division = divLabel;
+  agent.subdivisionRole = subdiv ? role : null;
+
+  saveJefaturaRoster(roster);
+  await dbUpsertAgent(agent);
+  addAuditLog('ASIGNACIÓN SUBDIVISIÓN', agent.icName, agent.discordTag,
+    `Subdivisión: ${subdiv || 'Sin Asignar'} // Cargo: ${role}`, currentDiscordUser?.username || 'Sistema');
+
+  if (statusEl) {
+    statusEl.textContent = `✅ ${agent.icName} asignado/a a ${divLabel} como ${role}`;
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 4000);
+  }
+  renderJefaturaSubdivisionsTab();
+  renderMandoGrid();
+  renderSubdivisionPrivatePanel();
+  updateDiscordAuthUI();
+  showToast(`✅ ${agent.icName} → ${subdiv || 'Sin Asignar'} (${role})`);
+};
+
+window.removeSubdivisionFromAgent = async function() {
+  document.getElementById('assign-subdiv-select').value = '';
+  await window.assignSubdivisionToAgent();
+};
+
+// ============================================================
+// SOLICITUDES (Subdivision Chief → Jefatura)
+// ============================================================
+
+function renderSolicitudesList() {
+  const container = document.getElementById('solicitudes-list');
+  if (!container) return;
+  const all = dbGetSolicitudes().filter(s => s.status === 'pendiente');
+  const badge = document.getElementById('solicitudes-badge');
+  if (badge) {
+    badge.textContent = all.length;
+    badge.classList.toggle('hidden', all.length === 0);
+  }
+  if (!all.length) {
+    container.innerHTML = '<p class="text-slate-500 py-4 text-center">No hay solicitudes pendientes.</p>';
+    return;
+  }
+  container.innerHTML = all.map(s => `
+    <div class="glass-panel p-4 rounded-xl border ${s.type === 'alta' ? 'border-emerald-500/30' : 'border-red-500/30'} space-y-2">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.type === 'alta' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'} uppercase">${s.type === 'alta' ? '📥 Solicitud de Alta' : '📤 Solicitud de Baja'}</span>
+          <span class="text-white font-bold">${s.agentName}</span>
+        </div>
+        <span class="text-[10px] text-slate-500">${new Date(s.created_at).toLocaleDateString('es-ES')}</span>
+      </div>
+      <p class="text-slate-400 text-[11px]">Jefe de <strong class="text-blue-300">${s.subdivision}</strong>: <span class="text-slate-300">${s.chiefName}</span></p>
+      <p class="text-slate-400 text-[11px]">Motivo: <span class="text-white">${s.reason || '—'}</span></p>
+      <div class="flex gap-2 pt-1">
+        <button onclick="approveSolicitud('${s.id}')" class="px-3 py-1.5 rounded bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-300 font-conthrax font-bold text-[10px] uppercase transition-all">✅ Aprobar</button>
+        <button onclick="rejectSolicitud('${s.id}')" class="px-3 py-1.5 rounded bg-red-900/20 hover:bg-red-900/40 border border-red-500/40 text-red-300 font-conthrax font-bold text-[10px] uppercase transition-all">❌ Rechazar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.approveSolicitud = async function(id) {
+  if (!hasPermission('manage_roster')) return;
+  const sol = dbGetSolicitudes().find(s => s.id === id);
+  if (!sol) return;
+
+  if (sol.type === 'alta' && sol.agentData) {
+    const roster = getJefaturaRoster();
+    if (!roster.find(a => a.discordId === sol.agentId)) {
+      roster.push(sol.agentData);
+      saveJefaturaRoster(roster);
+      await dbUpsertAgent(sol.agentData);
+      addAuditLog('ALTA APROBADA', sol.agentName, sol.agentId, `Subdivisión: ${sol.subdivision} — solicitado por ${sol.chiefName}`, currentDiscordUser?.username);
+    }
+  } else if (sol.type === 'baja') {
+    const roster = getJefaturaRoster().filter(a => a.discordId !== sol.agentId);
+    saveJefaturaRoster(roster);
+    await dbDeleteAgent(sol.agentId);
+    addAuditLog('BAJA APROBADA', sol.agentName, sol.agentId, `Subdivisión: ${sol.subdivision} — solicitado por ${sol.chiefName}`, currentDiscordUser?.username);
+  }
+
+  await dbUpdateSolicitudStatus(id, 'aprobada');
+  showToast(`✅ Solicitud aprobada: ${sol.type.toUpperCase()} de ${sol.agentName}`);
+  renderSolicitudesList();
+  renderJefaturaRoster(getJefaturaRoster());
+  renderJefaturaKPIs();
+};
+
+window.rejectSolicitud = async function(id) {
+  const sol = dbGetSolicitudes().find(s => s.id === id);
+  if (!sol) return;
+  await dbUpdateSolicitudStatus(id, 'rechazada');
+  showToast(`❌ Solicitud rechazada: ${sol.type.toUpperCase()} de ${sol.agentName}`);
+  renderSolicitudesList();
+};
+
+// ============================================================
+// JEFATURA MENSAJES
+// ============================================================
+
+let _jefReplyToId = null;
+function renderJefaturaMensajes() {
+  const container = document.getElementById('jefatura-mensajes-list');
+  if (!container) return;
+  const roster = getJefaturaRoster();
+
+  // Group messages by agent thread
+  const agentIds = [...new Set([
+    ...Object.keys(CACHE.messages || {}).map(k => k.split('_').find(id => id !== 'jefatura'))
+  ])].filter(Boolean);
+
+  if (!agentIds.length) {
+    container.innerHTML = '<p class="text-slate-500 py-4 text-center">No hay mensajes de agentes.</p>';
+    return;
+  }
+
+  container.innerHTML = agentIds.map(agentId => {
+    const agent = roster.find(a => a.discordId === agentId);
+    const name = agent ? agent.icName : agentId;
+    const threadKey = [agentId, 'jefatura'].sort().join('_');
+    const msgs = (CACHE.messages[threadKey] || []);
+    const unread = msgs.filter(m => m.to_id === 'jefatura' && !m.read).length;
+    const last = msgs[msgs.length - 1];
+
+    return `
+      <div class="p-3 rounded-xl bg-slate-900/60 border ${unread ? 'border-emerald-500/50' : 'border-slate-800'} cursor-pointer hover:bg-slate-800/60 transition-colors"
+           onclick="openJefaturaMessageThread('${agentId}', '${name.replace(/'/g,"\\'")}')">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <img src="${agent?.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-7 h-7 rounded-full object-cover">
+            <span class="text-white font-bold text-xs">${name}</span>
+            ${unread ? `<span class="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold">${unread}</span>` : ''}
+          </div>
+          <span class="text-[10px] text-slate-500">${last ? new Date(last.created_at).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}) : ''}</span>
+        </div>
+        ${last ? `<p class="text-[11px] text-slate-400 mt-1 truncate">${last.from_id === 'jefatura' ? '→ ' : '← '}${last.content}</p>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Update badge
+  const totalUnread = agentIds.reduce((acc, id) => {
+    const tk = [id, 'jefatura'].sort().join('_');
+    return acc + (CACHE.messages[tk]||[]).filter(m => m.to_id === 'jefatura' && !m.read).length;
+  }, 0);
+  const badge = document.getElementById('mensajes-badge-jef');
+  if (badge) { badge.textContent = totalUnread; badge.classList.toggle('hidden', totalUnread === 0); }
+}
+
+window.openJefaturaMessageThread = function(agentId, agentName) {
+  _jefReplyToId = agentId;
+  const panel = document.getElementById('jef-reply-panel');
+  const toEl = document.getElementById('jef-reply-to');
+  if (panel) panel.classList.remove('hidden');
+  if (toEl) toEl.textContent = agentName;
+
+  // Show thread inline
+  const container = document.getElementById('jefatura-mensajes-list');
+  if (!container) return;
+  const threadKey = [agentId, 'jefatura'].sort().join('_');
+  const msgs = (CACHE.messages[threadKey] || []).sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+  const threadHtml = msgs.map(m => `
+    <div class="p-2.5 rounded-lg ${m.from_id === 'jefatura' ? 'bg-amber-900/20 border border-amber-500/20 self-end ml-8' : 'bg-slate-900 border border-slate-800 mr-8'}">
+      <p class="text-[10px] text-slate-500 mb-0.5">${m.from_id === 'jefatura' ? '👑 Jefatura' : agentName} • ${new Date(m.created_at).toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit'})}</p>
+      <p class="text-white text-xs">${m.content}</p>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <button onclick="renderJefaturaMensajes()" class="text-[10px] text-slate-500 hover:text-white font-conthrax flex items-center gap-1 mb-2">← Volver a todos los mensajes</button>
+    <div class="space-y-2 max-h-64 overflow-y-auto flex flex-col">${threadHtml || '<p class="text-slate-500 text-xs py-2">Sin mensajes aún.</p>'}</div>
+  `;
+  dbMarkMessagesRead(agentId, 'jefatura');
+};
+
+window.sendJefaturaReply = async function() {
+  if (!_jefReplyToId) return;
+  const inp = document.getElementById('jef-reply-input');
+  const content = inp?.value.trim();
+  if (!content) { showToast('⚠️ Escribe un mensaje primero.'); return; }
+  await dbSendMessage('jefatura', _jefReplyToId, content);
+  if (inp) inp.value = '';
+  showToast('✉️ Mensaje enviado.');
+  openJefaturaMessageThread(_jefReplyToId, document.getElementById('jef-reply-to')?.textContent || _jefReplyToId);
+};
+
+// ============================================================
+// MI PERFIL — RENDER & TABS
+// ============================================================
+
+function switchPerfilTab(tab) {
+  const tabs = ['info','faltas','informes','chat'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-btn-perfil-${t}`);
+    const content = document.getElementById(`tab-content-perfil-${t}`);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (content) content.classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'chat') { renderPerfilChat(); dbMarkMessagesRead('jefatura', currentDiscordUser?.id); }
+  if (tab === 'faltas') renderPerfilFaltas();
+  if (tab === 'informes') renderPerfilMisInformes();
+}
+window.switchPerfilTab = switchPerfilTab;
+
+function renderMiPerfil() {
+  const deniedView = document.getElementById('perfil-denied-view');
+  const authView   = document.getElementById('perfil-authorized-view');
+  const navBadge   = document.getElementById('nav-perfil-badge');
+
+  if (!currentDiscordUser) {
+    if (deniedView) deniedView.classList.remove('hidden');
+    if (authView) authView.classList.add('hidden');
+    if (navBadge) navBadge.classList.add('hidden');
+    return;
+  }
+
+  if (deniedView) deniedView.classList.add('hidden');
+  if (authView) authView.classList.remove('hidden');
+  if (navBadge) navBadge.classList.remove('hidden');
+
+  // Get live agent data from roster
+  const roster = getJefaturaRoster();
+  const agent = roster.find(a => a.discordId === currentDiscordUser.id);
+  const rankMeta = RANK_META[currentDiscordUser.rankKey] || RANK_META['det1'];
+  const isChief = agent?.subdivisionRole === 'jefe';
+
+  // Header card
+  const avatarEl = document.getElementById('perfil-avatar');
+  if (avatarEl) avatarEl.src = currentDiscordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+  _setText('perfil-nombre-ic', agent?.icName || currentDiscordUser.username);
+  _setText('perfil-placa', agent?.badge || currentDiscordUser.badge || '#---');
+  _setText('perfil-rango-label', `${rankMeta.icon || '🛡️'} ${rankMeta.label || currentDiscordUser.role}`);
+  _setText('perfil-discord-tag', `@${currentDiscordUser.username}`);
+  _setText('perfil-nivel', `Nv. ${rankMeta.level || '?'}`);
+
+  // Subdivision
+  const subdivText = agent?.division || 'Sin Asignar';
+  _setText('perfil-subdivision', subdivText);
+  _setText('perfil-join-date', agent?.joinDate || '—');
+
+  // Status badge
+  const estadoBadge = document.getElementById('perfil-estado-badge');
+  if (estadoBadge) {
+    estadoBadge.textContent = agent?.status || 'Activo';
+    estadoBadge.className = `px-2 py-0.5 rounded font-conthrax text-xs font-bold ${
+      agent?.status === 'Suspendido' ? 'bg-red-500/20 text-red-300' :
+      agent?.status === 'Expulsado'  ? 'bg-red-900/40 text-red-500' :
+      'bg-emerald-500/20 text-emerald-300'
+    }`;
+  }
+
+  // Chief badge
+  const chiefBadge = document.getElementById('perfil-chief-badge');
+  if (chiefBadge) chiefBadge.classList.toggle('hidden', !isChief);
+  const chiefPanel = document.getElementById('perfil-chief-panel');
+  if (chiefPanel) chiefPanel.classList.toggle('hidden', !isChief);
+
+  // Stats
+  const faltas = agent ? dbGetFaltas(agent.discordId) : [];
+  _setText('perfil-faltas-count', faltas.length);
+
+  const myReports = getConfidentialReports().filter(r => r.authorId === currentDiscordUser.id);
+  _setText('perfil-mis-informes-count', myReports.length);
+
+  // Unread messages
+  const threadKey = [currentDiscordUser.id, 'jefatura'].sort().join('_');
+  const unread = (CACHE.messages?.[threadKey] || []).filter(m => m.to_id === currentDiscordUser.id && !m.read).length;
+  _setText('perfil-mensajes-count', unread);
+  const chatUnread = document.getElementById('perfil-chat-unread');
+  if (chatUnread) { chatUnread.textContent = unread; chatUnread.classList.toggle('hidden', unread === 0); }
+
+  // Expediente info tab
+  _setText('perfil-info-nombre', agent?.icName || '—');
+  _setText('perfil-info-tag', agent?.discordTag || currentDiscordUser.username || '—');
+  _setText('perfil-info-placa', agent?.badge || '—');
+  _setText('perfil-info-rango', rankMeta.label || '—');
+  _setText('perfil-info-subdivision', subdivText);
+  _setText('perfil-info-estado', agent?.status || '—');
+  _setText('perfil-info-notas', agent?.notes || 'Sin notas de Jefatura.');
+
+  // Awards
+  const awardsEl = document.getElementById('perfil-info-awards');
+  if (awardsEl) {
+    const awards = agent?.awards || [];
+    awardsEl.innerHTML = awards.length
+      ? awards.map(a => `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-conthrax text-[10px] font-bold border border-amber-500/30 uppercase">${a}</span>`).join('')
+      : '<span class="text-slate-500 text-xs font-conthrax">Sin condecoraciones</span>';
+  }
+
+  // Chief subdivision members
+  if (isChief && agent?.division) {
+    const subdivKey = Object.keys(SUBDIVISION_META).find(k => agent.division.includes(k)) || '';
+    const members = roster.filter(a => a.discordId !== currentDiscordUser.id && a.division && a.division.includes(subdivKey));
+    const membersEl = document.getElementById('chief-subdivision-members');
+    if (membersEl) {
+      membersEl.innerHTML = members.map(m => `
+        <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
+          <img src="${m.avatar||'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-7 h-7 rounded-full">
+          <div class="flex-1 min-w-0">
+            <p class="text-white text-xs font-bold truncate">${m.icName}</p>
+            <p class="text-slate-500 text-[10px]">${m.badge}</p>
+          </div>
+          <span class="text-[10px] font-conthrax ${m.subdivisionRole==='jefe'?'text-blue-300 font-bold':'text-slate-500'}">${m.subdivisionRole||'miembro'}</span>
+        </div>
+      `).join('') || '<p class="text-slate-500 text-xs font-conthrax col-span-2">Sin otros miembros.</p>';
+    }
+  }
+}
+
+function _setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+// ============================================================
+// PERFIL — FALTAS (SOLO VER)
+// ============================================================
+
+function renderPerfilFaltas() {
+  const container = document.getElementById('perfil-faltas-list');
+  if (!container || !currentDiscordUser) return;
+  const faltas = dbGetFaltas(currentDiscordUser.id);
+  if (!faltas.length) {
+    container.innerHTML = '<p class="text-slate-500 py-4 text-center">Sin faltas o sanciones registradas. ✅</p>';
+    return;
+  }
+  container.innerHTML = faltas.map(f => `
+    <div class="p-3 rounded-xl bg-amber-900/20 border border-amber-500/30">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-amber-300 font-bold text-xs uppercase">${f.type || 'Sanción'}</span>
+        <span class="text-[10px] text-slate-500">${f.date ? new Date(f.date).toLocaleDateString('es-ES') : '—'}</span>
+      </div>
+      <p class="text-white text-xs">${f.description || '—'}</p>
+      <p class="text-slate-500 text-[10px] mt-1">Impuesta por: ${f.commander || 'Jefatura'}</p>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// PERFIL — MIS INFORMES (propios, con edición)
+// ============================================================
+
+function renderPerfilMisInformes() {
+  const container = document.getElementById('perfil-mis-informes-list');
+  if (!container || !currentDiscordUser) return;
+  const all = getConfidentialReports();
+  const mine = all.filter(r => r.authorId === currentDiscordUser.id);
+  if (!mine.length) {
+    container.innerHTML = '<p class="text-slate-500 py-4 text-center">Aún no has redactado ningún informe.</p>';
+    return;
+  }
+  container.innerHTML = mine.map(r => `
+    <div class="glass-panel p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
+          <span class="text-[10px] font-conthrax text-red-400 font-bold">${r.code || 'INF'}</span>
+          <span class="font-bold text-white text-xs truncate">${r.title}</span>
+        </div>
+        <p class="text-slate-400 text-[11px] line-clamp-2">${r.summary || ''}</p>
+        <p class="text-slate-500 text-[10px] mt-1">${r.date || ''}</p>
+      </div>
+      <div class="flex gap-1 shrink-0">
+        <button onclick="openEditOwnReport('${r.id}')" class="px-2 py-1.5 rounded bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 font-conthrax text-[10px] uppercase transition-all flex items-center gap-1">
+          <i data-lucide="pencil" class="w-3 h-3"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+  lucide?.createIcons();
+}
+
+window.openEditOwnReport = function(reportId) {
+  // Check the report belongs to current user
+  const report = getConfidentialReports().find(r => r.id === reportId);
+  if (!report) return;
+  if (report.authorId !== currentDiscordUser?.id && !hasPermission('edit_reports')) {
+    showToast('⛔ Solo puedes editar tus propios informes.');
+    return;
+  }
+  // Reuse existing edit modal
+  openConfidentialReportModal(report);
+};
+
+// ============================================================
+// PERFIL — CHAT CON JEFATURA
+// ============================================================
+
+function renderPerfilChat() {
+  const container = document.getElementById('perfil-chat-messages');
+  if (!container || !currentDiscordUser) return;
+  const threadKey = [currentDiscordUser.id, 'jefatura'].sort().join('_');
+  const msgs = (CACHE.messages?.[threadKey] || []).sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+
+  if (!msgs.length) {
+    container.innerHTML = '<p class="text-slate-500 text-xs py-4 text-center mx-auto">Sin mensajes con Jefatura aún. Escribe tu consulta aquí.</p>';
+    return;
+  }
+  container.innerHTML = msgs.map(m => {
+    const isMine = m.from_id === currentDiscordUser.id;
+    return `
+      <div class="p-2.5 rounded-xl max-w-[80%] ${isMine ? 'self-end bg-cyan-900/30 border border-cyan-500/20 ml-auto' : 'self-start bg-amber-900/20 border border-amber-500/20'}">
+        <p class="text-[10px] text-slate-500 mb-0.5">${isMine ? 'Tú' : '👑 Jefatura'} • ${new Date(m.created_at).toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit'})}</p>
+        <p class="text-white text-xs">${m.content}</p>
+      </div>
+    `;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+window.sendPerfilChatMessage = async function() {
+  if (!currentDiscordUser) { openDiscordAuthModal(); return; }
+  const inp = document.getElementById('perfil-chat-input');
+  const content = inp?.value.trim();
+  if (!content) return;
+
+  await dbSendMessage(currentDiscordUser.id, 'jefatura', content);
+  if (inp) inp.value = '';
+  renderPerfilChat();
+  showToast('✉️ Mensaje enviado a Jefatura.');
+};
+
+// ============================================================
+// JEFATURA — FALTAS (Añadir/Eliminar a agente)
+// ============================================================
+
+window.openAddFaltaModal = function(agentDiscordId) {
+  if (!hasPermission('manage_roster')) { showToast('⛔ Sin permiso.'); return; }
+  const agent = getJefaturaRoster().find(a => a.discordId === agentDiscordId);
+  if (!agent) return;
+
+  // Reutilizamos showConfirmModal-like approach con un prompt
+  const type = prompt(`Tipo de falta para ${agent.icName} (amonestación/suspensión/expulsión):`, 'amonestación');
+  if (!type) return;
+  const desc = prompt('Descripción de la falta/motivo:');
+  if (!desc) return;
+
+  dbAddFalta(agentDiscordId, {
+    type, description: desc,
+    commander: currentDiscordUser?.username || 'Jefatura'
+  }).then(() => {
+    addAuditLog('FALTA REGISTRADA', agent.icName, agent.discordTag, `Tipo: ${type} — ${desc}`, currentDiscordUser?.username);
+    showToast(`⚠️ Falta registrada para ${agent.icName}`);
+  });
+};
+
+// ============================================================
+// SUBDIVISION CHIEF — MODALES SOLICITUD
+// ============================================================
+
+window.openChiefAddAgentModal = function() {
+  if (!currentDiscordUser) return;
+  const agent = getJefaturaRoster().find(a => a.discordId === currentDiscordUser.id);
+  if (!agent || agent.subdivisionRole !== 'jefe') { showToast('⛔ Solo jefes de subdivisión.'); return; }
+
+  const discordId  = prompt('Discord ID del nuevo agente:');
+  if (!discordId) return;
+  const icName     = prompt('Nombre IC del agente:');
+  if (!icName) return;
+  const badge      = prompt('Número de Placa (#XXX):');
+  const reason     = prompt('Motivo de la solicitud de alta:') || '';
+
+  const subdivKey = Object.keys(SUBDIVISION_META).find(k => agent.division.includes(k)) || '';
+  const newAgentData = {
+    discordId, discordTag: '', icName, badge: badge || '#---',
+    rank: 'det1', division: agent.division, subdivisionRole: 'miembro',
+    status: 'Pendiente', awards: [], notes: 'Pendiente de aprobación por Jefatura.',
+    avatar: `https://cdn.discordapp.com/embed/avatars/${Math.floor(Math.random()*6)}.png`,
+    joinDate: new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase()
+  };
+
+  dbSubmitSolicitud({
+    type: 'alta', chiefId: currentDiscordUser.id, chiefName: agent.icName,
+    subdivision: subdivKey || agent.division,
+    agentId: discordId, agentName: icName, agentData: newAgentData, reason
+  }).then(() => showToast('📥 Solicitud de alta enviada a Jefatura para aprobación.'));
+};
+
+window.openChiefRemoveAgentModal = function() {
+  if (!currentDiscordUser) return;
+  const myAgent = getJefaturaRoster().find(a => a.discordId === currentDiscordUser.id);
+  if (!myAgent || myAgent.subdivisionRole !== 'jefe') { showToast('⛔ Solo jefes de subdivisión.'); return; }
+
+  const subdivKey = Object.keys(SUBDIVISION_META).find(k => myAgent.division.includes(k)) || '';
+  const myMembers = getJefaturaRoster().filter(a =>
+    a.discordId !== currentDiscordUser.id && a.division && a.division.includes(subdivKey)
+  );
+  if (!myMembers.length) { showToast('⚠️ No tienes miembros en tu subdivisión.'); return; }
+
+  const names = myMembers.map((a,i) => `${i+1}. ${a.icName} (${a.badge})`).join('\n');
+  const idx = parseInt(prompt(`Miembros de ${subdivKey}:\n${names}\n\nNúmero del agente a dar de baja:`));
+  if (isNaN(idx) || idx < 1 || idx > myMembers.length) return;
+
+  const target = myMembers[idx-1];
+  const reason = prompt(`Motivo de baja de ${target.icName}:`) || '';
+
+  dbSubmitSolicitud({
+    type: 'baja', chiefId: currentDiscordUser.id, chiefName: myAgent.icName,
+    subdivision: subdivKey, agentId: target.discordId, agentName: target.icName,
+    agentData: null, reason
+  }).then(() => showToast('📤 Solicitud de baja enviada a Jefatura para aprobación.'));
+};
+
+window.openAnnouncementModal = function() {
+  if (!currentDiscordUser) return;
+  const agent = getJefaturaRoster().find(a => a.discordId === currentDiscordUser.id);
+  if (!agent || (agent.subdivisionRole !== 'jefe' && !hasPermission('manage_roster'))) {
+    showToast('⛔ Solo jefes o Jefatura pueden crear anuncios.');
+    return;
+  }
+  const title   = prompt('Título del anuncio:');
+  if (!title) return;
+  const content = prompt('Contenido del anuncio:');
+  if (!content) return;
+
+  // Store as a "pinned report" with type=anuncio
+  const subdivKey = Object.keys(SUBDIVISION_META).find(k => (agent.division||'').includes(k)) || 'GENERAL';
+  const announceReport = {
+    id: 'ann_' + Date.now(),
+    code: `ANU-${subdivKey}-${Date.now().toString().slice(-4)}`,
+    title, summary: content,
+    classification: 'ANUNCIO',
+    subdivision: subdivKey,
+    authorId: currentDiscordUser.id,
+    author: agent.icName,
+    date: new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase(),
+    pinned: false,
+    type: 'anuncio'
+  };
+  const reports = getConfidentialReports();
+  reports.unshift(announceReport);
+  saveConfidentialReports(reports);
+  dbUpsertReport(announceReport);
+  showToast(`📢 Anuncio publicado en ${subdivKey}`);
+  renderPerfilMisInformes();
+};
+
+// ============================================================
+// PERMISSIONS EXTENSION: allow owner of report to edit
+// ============================================================
+// Extend hasPermission: 'edit_own_report' always true if logged in
+const _origHasPermission = hasPermission;
+// We shadow it only for specific keys
+function hasPermissionExtended(permKey, context) {
+  if (permKey === 'edit_own_report') {
+    return Boolean(currentDiscordUser); // any logged-in user can edit their own
+  }
+  return _origHasPermission(permKey);
+}
+
+// ============================================================
+// JEFATURA TAB — Falta button in roster cards
+// ============================================================
+// Inject "Añadir Falta" button in agent cards when in jefatura
+const _origRenderJefaturaRoster = window.renderJefaturaRoster;
+window.renderJefaturaRoster = function(roster) {
+  if (_origRenderJefaturaRoster) _origRenderJefaturaRoster(roster);
+  // After rendering, inject falta buttons
+  if (!hasPermission('manage_roster')) return;
+  setTimeout(() => {
+    const cards = document.querySelectorAll('#jefatura-roster-grid .agent-card-actions, #jefatura-roster-grid [data-agent-id]');
+    // We'll add buttons via the existing openAgentEditor flow instead
+  }, 100);
+};
+
+// ============================================================
+// UPDATEUI INTEGRATION: render Mi Perfil on auth change
+// ============================================================
+const _origUpdateDiscordAuthUI = updateDiscordAuthUI;
+// Monkey-patch to also refresh Mi Perfil and load messages
+const __originalUpdateDiscordAuthUI = updateDiscordAuthUI;
+// We add it at the bottom of updateDiscordAuthUI via DOMContentLoaded patch
+
+// ============================================================
+// INIT: Load messages on startup
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load messages from cache/db
+  await dbLoadAllJefaturaMessages();
+  // Render Mi Perfil
+  renderMiPerfil();
+  // Refresh solicitudes badge
+  const sols = dbGetSolicitudes().filter(s => s.status === 'pendiente');
+  const badge = document.getElementById('solicitudes-badge');
+  if (badge) { badge.textContent = sols.length; badge.classList.toggle('hidden', sols.length === 0); }
+}, { once: true });
+
+// Hook into updateDiscordAuthUI to also refresh Mi Perfil
+function _refreshPerfilAndMessages() {
+  renderMiPerfil();
+  renderSolicitudesList();
+  // Refresh unread messages badge
+  const threadKey = currentDiscordUser ? [currentDiscordUser.id, 'jefatura'].sort().join('_') : null;
+  if (threadKey) {
+    const unread = (CACHE.messages?.[threadKey] || []).filter(m => m.to_id === currentDiscordUser?.id && !m.read).length;
+    const badge = document.getElementById('mensajes-badge-jef');
+    if (badge) { badge.textContent = unread; badge.classList.toggle('hidden', unread === 0); }
+  }
+}
+
+// Patch: append to updateDiscordAuthUI
+const __patchedUpdate = updateDiscordAuthUI;
+window.updateDiscordAuthUI = function() {
+  __patchedUpdate();
+  _refreshPerfilAndMessages();
+};
