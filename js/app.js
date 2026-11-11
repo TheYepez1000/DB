@@ -428,6 +428,19 @@ async function initDiscordAuth() {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
+
+      // Invalidate any leftover demo/example sessions (fake IDs)
+      const EXAMPLE_IDS = [
+        "101928374650192831","201928374650192832","404928374650192833",
+        "512928374650192834","522928374650192835","999928374650192899"
+      ];
+      if (EXAMPLE_IDS.includes(parsed.id || parsed.userId)) {
+        localStorage.removeItem("dd_discord_user");
+        localStorage.removeItem("dd_discord_token");
+        updateDiscordAuthUI();
+        return;
+      }
+
       // Re-sync with the LIVE roster in case rank/division changed since last login
       const roster = getJefaturaRoster();
       const liveAgent = roster.find(a => a.discordId === parsed.id);
@@ -3206,69 +3219,17 @@ function getStatusBadge(status) {
 // --- ROSTER STORAGE ---
 const DEFAULT_ROSTER = [
   {
-    discordId:   "101928374650192831",
-    discordTag:  "Cap.Vance#0101",
-    icName:      "Cap. David Vance",
-    badge:       "#101-DIV",
+    discordId:   "760159743616090164",
+    discordTag:  "Fundador#0001",
+    icName:      "Cap. Fundador",
+    badge:       "#001-DIV",
     rank:        "capitan",
     division:    "Mando Supremo // Bureau Executive",
     status:      "Activo",
     awards:      ["valor", "servicio", "merito"],
-    notes:       "Comandante fundador de la Detective Division. 12 años de servicio activo.",
-    avatar:      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
-    joinDate:    "01/ENE/2024"
-  },
-  {
-    discordId:   "201928374650192832",
-    discordTag:  "J_Sterling#0201",
-    icName:      "Tte. James Sterling",
-    badge:       "#201-DIV",
-    rank:        "teniente",
-    division:    "RHD - Robos & Homicidios",
-    status:      "Activo",
-    awards:      ["servicio", "tirador"],
-    notes:       "Supervisor de RHD e incursiones tácticas. Especialista en negociación de rehenes.",
-    avatar:      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80",
-    joinDate:    "15/MAR/2024"
-  },
-  {
-    discordId:   "404928374650192833",
-    discordTag:  "Marcus_Cole#0404",
-    icName:      "Det. III Marcus Cole",
-    badge:       "#404-DIV",
-    rank:        "det3",
-    division:    "GND - Narcóticos & Infiltración",
-    status:      "Activo",
-    awards:      ["valor"],
-    notes:       "Líder de operaciones GND encubiertas. Especialización en infiltración de cárteles.",
-    avatar:      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
-    joinDate:    "20/ABR/2024"
-  },
-  {
-    discordId:   "512928374650192834",
-    discordTag:  "E_Rostova#0512",
-    icName:      "Det. II Elena Rostova",
-    badge:       "#512-DIV",
-    rank:        "det2",
-    division:    "RHD - Robos & Homicidios",
-    status:      "Activo",
-    awards:      ["merito"],
-    notes:       "Especialista en homicidios calificados y peritaje balístico.",
-    avatar:      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-    joinDate:    "05/JUL/2024"
-  },
-  {
-    discordId:   "522928374650192835",
-    discordTag:  "S_Connor#0522",
-    icName:      "Det. I Sarah Connor",
-    badge:       "#522-DIV",
-    rank:        "det1",
-    division:    "CSI - Forense y Balística",
-    status:      "Activo",
-    awards:      [],
-    notes:       "Detective de primera asignación. Excelentes resultados en las evaluaciones CSI.",
-    avatar:      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&q=80",
-    joinDate:    "01/SEP/2024"
+    notes:       "Fundador y Comandante Supremo de la Detective Division.",
+    avatar:      "https://cdn.discordapp.com/embed/avatars/0.png",
+    joinDate:    new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
   }
 ];
 

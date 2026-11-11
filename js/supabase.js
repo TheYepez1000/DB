@@ -120,6 +120,9 @@ async function initSupabase() {
     CACHE.cases     = casesRes.error    ? [] : (casesRes.data   || []);
     CACHE.loaded    = true;
 
+    // ─── LIMPIEZA: borrar agentes de ejemplo, mantener solo el fundador real ───
+    await _purgeExampleAgentsAndSeedFounder();
+
     showDBStatus('online');
     console.log('[DB] Supabase cargado — rangos:', CACHE.ranks.length,
       '| agentes:', CACHE.agents.length,
@@ -1469,5 +1472,64 @@ async function dbDeleteWanted(wantedId) {
     if (error) console.warn('[DB] delete wanted error:', error);
   } catch (e) {
     console.warn('[DB] delete wanted exception:', e);
+  }
+}
+
+
+// ─── PURGA DE AGENTES DE EJEMPLO Y SIEMBRA DEL FUNDADOR ─────────────────────
+// IDs de ejemplo que siempre deben borrarse si existen en la BD
+const _EXAMPLE_AGENT_IDS = [
+  "101928374650192831",
+  "201928374650192832",
+  "404928374650192833",
+  "512928374650192834",
+  "522928374650192835",
+  "999928374650192899"
+];
+
+const FOUNDER_DISCORD_ID = "760159743616090164";
+
+const _FOUNDER_ROW = {
+  discord_id:  FOUNDER_DISCORD_ID,
+  discord_tag: "Fundador",
+  ic_name:     "Cap. Fundador",
+  badge:       "#001-DIV",
+  rank:        "capitan",
+  division:    "Mando Supremo // Bureau Executive",
+  status:      "Activo",
+  awards:      JSON.stringify(["valor", "servicio", "merito"]),
+  notes:       "Fundador y Comandante Supremo de la Detective Division.",
+  avatar:      "https://cdn.discordapp.com/embed/avatars/0.png",
+  join_date:   new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
+};
+
+async function _purgeExampleAgentsAndSeedFounder() {
+  // 1. Limpiar del caché en memoria todos los agentes de ejemplo
+  CACHE.agents = CACHE.agents.filter(r => !_EXAMPLE_AGENT_IDS.includes(r.discord_id));
+
+  // 2. Asegurarse de que el fundador está en el caché
+  const founderInCache = CACHE.agents.find(r => r.discord_id === FOUNDER_DISCORD_ID);
+  if (!founderInCache) {
+    CACHE.agents.unshift({ ..._FOUNDER_ROW });
+  }
+
+  // 3. También limpiar del localStorage (evitar que el fallback cargue datos viejos)
+  localStorage.removeItem('dd_jefatura_roster');
+
+  if (!db) return;
+
+  try {
+    // 4. Borrar agentes de ejemplo en Supabase (si existen)
+    if (_EXAMPLE_AGENT_IDS.length > 0) {
+      await db.from('agents').delete().in('discord_id', _EXAMPLE_AGENT_IDS);
+    }
+
+    // 5. Upsert del fundador (garantiza que siempre existe con rango correcto)
+    const { error } = await db.from('agents').upsert(_FOUNDER_ROW, { onConflict: 'discord_id' });
+    if (error) console.warn('[DB] founder seed error:', error);
+    else console.log('[DB] ✅ Fundador sembrado correctamente:', FOUNDER_DISCORD_ID);
+
+  } catch (e) {
+    console.warn('[DB] _purgeExampleAgentsAndSeedFounder error:', e);
   }
 }
