@@ -322,7 +322,7 @@ function saveCasesList(list) {
 // --- APP CONTROLLER ---
 document.addEventListener("DOMContentLoaded", async () => {
   await initSupabase();
-  initDiscordAuth();
+  await initDiscordAuth();  // await so roster is ready before matching OAuth user
   initClock();
   renderCases(getActiveCasesList());
   renderMostWanted(getActiveWantedList());
@@ -419,14 +419,34 @@ const BOT_PROFILES = {
 };
 
 async function initDiscordAuth() {
-  // Check if returning from Discord OAuth2 redirect
+  // 1) Check if returning from Discord OAuth2 implicit-flow redirect
   const hasToken = await checkDiscordOAuthCallback();
   if (hasToken) return;
 
+  // 2) Restore session from localStorage
   const saved = localStorage.getItem("dd_discord_user");
   if (saved) {
     try {
-      currentDiscordUser = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Re-sync with the LIVE roster in case rank/division changed since last login
+      const roster = getJefaturaRoster();
+      const liveAgent = roster.find(a => a.discordId === parsed.id);
+      if (liveAgent) {
+        const rankMeta = RANK_META[liveAgent.rank] || RANK_META["det1"];
+        currentDiscordUser = {
+          ...parsed,
+          rankKey: liveAgent.rank,
+          rankLevel: rankMeta.level,
+          role: liveAgent.icName || rankMeta.label,
+          clearance: rankMeta.clearance,
+          badge: liveAgent.badge || parsed.badge,
+          isAuthorizedDetective: rankMeta.level >= 1,
+          isHighCommand: rankMeta.level >= 4,
+          rosterAgent: liveAgent
+        };
+      } else {
+        currentDiscordUser = parsed;
+      }
       isDetectiveAuth = Boolean(currentDiscordUser && hasPermission('view_reports'));
     } catch (e) {
       currentDiscordUser = null;
@@ -439,6 +459,7 @@ async function initDiscordAuth() {
 async function checkDiscordOAuthCallback() {
   let token = null;
 
+  // Implicit flow puts access_token in the URL hash
   if (window.location.hash && window.location.hash.includes("access_token")) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     token = hashParams.get("access_token");
@@ -448,12 +469,19 @@ async function checkDiscordOAuthCallback() {
   }
 
   if (token) {
-    localStorage.setItem("dd_discord_token", token);
+    // Clear token from URL immediately so back-nav doesn't re-auth
     try {
-      window.history.replaceState({}, document.title, window.location.pathname + "#informes");
+      window.history.replaceState({}, document.title, window.location.pathname);
     } catch (e) {}
 
+    localStorage.setItem("dd_discord_token", token);
     await fetchDiscordUserProfile(token);
+
+    // After profile loaded, scroll to informes section
+    setTimeout(() => {
+      const el = document.getElementById("informes");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }, 400);
     return true;
   }
   return false;
@@ -555,7 +583,15 @@ async function fetchDiscordUserProfile(token) {
     updateDiscordAuthUI();
     renderCases(getActiveCasesList());
     audioEngine.playAlertSound();
-    showToast(`✅ Verificado con Discord OAuth2: ¡Bienvenido ${displayName}!`);
+
+    // Welcome toast — show rank badge and division if assigned
+    const rankMeta2 = RANK_META[currentDiscordUser.rankKey] || {};
+    const divStr = currentDiscordUser.rosterAgent?.division || "";
+    const divBadge = divStr && !divStr.includes("Sin Asignar") ? ` • ${divStr.split(" ")[0]}` : "";
+    showToast(`✅ ¡Bienvenido ${displayName}! ${rankMeta2.icon || "🔰"} ${rankMeta2.label || "Aspirante"}${divBadge} — Sesión verificada con Discord OAuth2.`);
+
+    // Show "Mi División" panel in Jefatura if applicable
+    renderAgentDivisionPanel();
   } catch (err) {
     console.warn("OAuth verification error:", err);
     localStorage.removeItem("dd_discord_token");
@@ -713,7 +749,295 @@ function updateDiscordAuthUI() {
 
   // Refrescar Apartado de Subdivisión Activa
   renderSubdivisionPane(currentActiveSubdivision);
+
+  // Panel "Mi División" para el agente autenticado
+  renderAgentDivisionPanel();
 }
+
+// --- HELPER: map division string → subdivision ID ---
+function getSubdivisionIdFromDivision(divisionStr) {
+  const d = (divisionStr || '').toUpperCase();
+  if (d.includes('RHD') || d.includes('HOMICIDIO') || d.includes('ROBO')) return 'rhd';
+  if (d.includes('GND') || d.includes('NARC') || d.includes('PANDILLA')) return 'gnd';
+  if (d.includes('CSI') || d.includes('FORENSE') || d.includes('BALÍST')) return 'csi';
+  if (d.includes('CID') || d.includes('CIBER') || d.includes('FRAUDE')) return 'cid';
+  if (d.includes('IAD') || d.includes('INTERNO') || d.includes('ASUNTO')) return 'iad';
+  if (d.includes('CCD') || d.includes('FRÍO') || d.includes('DESAPAR') || d.includes('FRIO')) return 'ccd';
+  return null;
+}
+
+// --- PANEL "MI DIVISIÓN" — visible en Jefatura cuando el agente logueado tiene subdivisión ---
+function renderAgentDivisionPanel() {
+  const container = document.getElementById('agent-division-panel');
+  if (!container) return;
+
+  // Only show if logged in and has an approved rank (not aspirante)
+  if (!currentDiscordUser || currentDiscordUser.rankKey === 'aspirante' || !hasPermission('view_reports')) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  const agent = currentDiscordUser.rosterAgent || {};
+  const divisionStr = agent.division || currentDiscordUser.role || '';
+  const subdivId = getSubdivisionIdFromDivision(divisionStr);
+
+  if (!subdivId) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  const subdiv = SUBDIVISIONS_DATA[subdivId] || {};
+
+  // Filter cases & reports for this subdivision
+  const allCases = typeof getActiveCasesList === 'function' ? getActiveCasesList() : [];
+  const myCases = allCases.filter(c => {
+    const div = (c.division || '').toLowerCase();
+    const cat = (c.category || '').toLowerCase();
+    if (subdivId === 'rhd') return div.includes('rhd') || cat.includes('homicide') || cat.includes('robbery');
+    if (subdivId === 'gnd') return div.includes('gnd') || cat.includes('narcotics');
+    if (subdivId === 'csi') return div.includes('csi') || div.includes('forense');
+    if (subdivId === 'cid') return div.includes('cid') || cat.includes('fraud') || div.includes('ciber');
+    if (subdivId === 'iad') return div.includes('iad') || cat.includes('internal');
+    if (subdivId === 'ccd') return div.includes('ccd') || cat.includes('missing');
+    return false;
+  });
+
+  const allReports = typeof getActiveConfidentialReports === 'function' ? getActiveConfidentialReports() : [];
+  const myReports = hasPermission('view_reports')
+    ? allReports.filter(r => {
+        const rt = (r.title || '').toLowerCase() + (r.summary || '').toLowerCase();
+        return rt.includes(subdivId) || rt.includes(subdiv.code?.toLowerCase() || '') ||
+               (r.author === currentDiscordUser.username);
+      })
+    : [];
+
+  // Teammates in same subdivision
+  const roster = typeof getCachedRoster === 'function' ? getCachedRoster().map(rowToAgent) : [];
+  const teammates = roster.filter(a => {
+    const d = (a.division || '').toLowerCase();
+    return d.includes(subdiv.code?.toLowerCase() || '') && a.discordId !== currentDiscordUser.id;
+  });
+
+  // Personal notes from localStorage
+  const notesKey = `dd_div_notes_${currentDiscordUser.id}_${subdivId}`;
+  const savedNotes = localStorage.getItem(notesKey) || '';
+
+  const badgeColorMap = {
+    rhd: 'red', gnd: 'amber', csi: 'blue', cid: 'emerald', iad: 'purple', ccd: 'cyan'
+  };
+  const bc = badgeColorMap[subdivId] || 'amber';
+  const borderColor = `border-${bc}-500/40`;
+  const textColor = `text-${bc}-400`;
+  const bgColor = `bg-${bc}-500/10`;
+
+  container.innerHTML = `
+    <!-- Panel Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-7 pb-6 border-b border-slate-800">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <img src="${currentDiscordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"
+            class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-500/60 shadow-lg shadow-amber-900/40" alt="Avatar">
+          <span class="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-950 flex items-center justify-center">
+            <i data-lucide="shield-check" class="w-3 h-3 text-white"></i>
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-conthrax text-[10px] font-bold">
+              ${RANK_META[currentDiscordUser.rankKey]?.icon || '🔰'} ${(RANK_META[currentDiscordUser.rankKey]?.label || currentDiscordUser.role || 'Detective').toUpperCase()}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono text-[10px]">
+              ${currentDiscordUser.badge || '#---'}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-conthrax text-[9px] font-bold">
+              ● SESIÓN ACTIVA
+            </span>
+          </div>
+          <h3 class="text-xl font-black font-gobold text-white tracking-wide">${currentDiscordUser.username}</h3>
+          <p class="text-xs font-conthrax text-slate-400 mt-0.5">${agent.discordTag || currentDiscordUser.tag || ''}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <div class="px-3.5 py-2 rounded-xl bg-slate-950/80 border ${borderColor} text-right">
+          <span class="text-[9px] font-conthrax text-slate-400 block">MI SUBDIVISIÓN:</span>
+          <span class="text-xs font-conthrax ${textColor} font-bold">${subdiv.code} — ${subdiv.name}</span>
+        </div>
+        <div class="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-right">
+          <span class="text-[9px] font-conthrax text-slate-400 block">AUTORIZACIÓN:</span>
+          <span class="text-xs font-conthrax text-emerald-400 font-bold">${currentDiscordUser.clearance || 'CLASIFICADO'}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-7">
+      <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center">
+        <p class="text-2xl font-black font-gobold ${textColor}">${myCases.length}</p>
+        <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Casos en mi División</p>
+      </div>
+      <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center">
+        <p class="text-2xl font-black font-gobold text-red-400">${myReports.length}</p>
+        <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Informes Clasificados</p>
+      </div>
+      <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center">
+        <p class="text-2xl font-black font-gobold text-blue-400">${teammates.length}</p>
+        <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Compañeros Activos</p>
+      </div>
+      <div class="glass-panel p-4 rounded-xl border border-slate-800 text-center">
+        <p class="text-2xl font-black font-gobold text-purple-400">${myCases.filter(c => c.statusType === 'active').length}</p>
+        <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Expedientes Abiertos</p>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-7">
+
+      <!-- Col 1-2: Cases & Reports -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Division Cases -->
+        <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+          <div class="flex items-center gap-2 mb-4 text-amber-400 font-conthrax text-xs font-bold">
+            <i data-lucide="folder-search" class="w-4 h-4"></i>
+            <span>EXPEDIENTES DE ${subdiv.code} (${myCases.length})</span>
+          </div>
+          ${myCases.length > 0 ? `
+            <div class="space-y-2 max-h-56 overflow-y-auto custom-scroll pr-1">
+              ${myCases.map(c => `
+                <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-amber-500/30 transition-colors">
+                  <div class="overflow-hidden">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                      <span class="text-[9px] font-mono font-bold text-amber-400">${c.id}</span>
+                      <span class="text-[9px] px-1 py-0.5 rounded ${c.statusType === 'active' ? 'bg-amber-500/20 text-amber-300' : c.statusType === 'warrant' ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300'} font-mono">${c.status}</span>
+                    </div>
+                    <p class="text-xs font-bold text-white truncate font-conthrax">${c.title}</p>
+                  </div>
+                  <button onclick="openCaseModal('${c.id}')"
+                    class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black font-conthrax text-[10px] font-bold transition-colors shrink-0 border border-amber-500/30">
+                    Ver
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center font-conthrax text-xs text-slate-500">
+              <i data-lucide="folder" class="w-6 h-6 mx-auto mb-2 opacity-30"></i>
+              Sin expedientes activos asignados a ${subdiv.code}.
+            </div>
+          `}
+        </div>
+
+        <!-- Division Reports (if permission) -->
+        ${hasPermission('view_reports') ? `
+        <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+          <div class="flex items-center gap-2 mb-4 text-red-400 font-conthrax text-xs font-bold">
+            <i data-lucide="file-lock-2" class="w-4 h-4"></i>
+            <span>INFORMES CLASIFICADOS (${myReports.length})</span>
+          </div>
+          ${myReports.length > 0 ? `
+            <div class="space-y-2 max-h-48 overflow-y-auto custom-scroll pr-1">
+              ${myReports.map(r => `
+                <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-red-500/30 transition-colors">
+                  <div class="overflow-hidden">
+                    <span class="text-[9px] font-mono text-red-400 font-bold">${r.code || 'INF-CONF'}</span>
+                    <p class="text-xs font-bold text-white truncate font-conthrax">${r.title}</p>
+                    <span class="text-[10px] text-slate-500 font-mono">Por: ${r.author || '—'}</span>
+                  </div>
+                  <button onclick="viewConfidentialReport('${r.id}')"
+                    class="px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white font-conthrax text-[10px] font-bold transition-colors shrink-0 border border-red-500/30">
+                    Ver
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center font-conthrax text-xs text-slate-500">
+              <i data-lucide="file-x" class="w-6 h-6 mx-auto mb-2 opacity-30"></i>
+              Sin informes clasificados relacionados con ${subdiv.code}.
+            </div>
+          `}
+        </div>
+        ` : ''}
+
+      </div>
+
+      <!-- Col 3: Teammates + SOP -->
+      <div class="space-y-6">
+
+        <!-- Teammates -->
+        <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+          <div class="flex items-center gap-2 mb-4 text-blue-400 font-conthrax text-xs font-bold">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>COMPAÑEROS EN ${subdiv.code}</span>
+          </div>
+          ${teammates.length > 0 ? `
+            <div class="space-y-2 max-h-48 overflow-y-auto custom-scroll">
+              ${teammates.map(t => `
+                <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/50 border border-slate-800">
+                  <img src="${t.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"
+                    class="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0">
+                  <div class="overflow-hidden">
+                    <span class="font-bold text-white text-xs block truncate font-conthrax">${t.icName}</span>
+                    <span class="text-[10px] font-mono text-amber-400">${t.badge || '#---'}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <p class="text-xs font-conthrax text-slate-500 text-center py-4">Sin otros agentes asignados a esta subdivisión.</p>
+          `}
+        </div>
+
+        <!-- Division SOP (compact) -->
+        <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+          <div class="flex items-center gap-2 mb-3 text-emerald-400 font-conthrax text-xs font-bold">
+            <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+            <span>SOP RÁPIDO // ${subdiv.code}</span>
+          </div>
+          <ul class="space-y-1.5">
+            ${(subdiv.sopSteps || []).map((step, i) => `
+              <li class="flex items-start gap-2 font-conthrax text-[10px] text-slate-300">
+                <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-[9px] border border-emerald-500/30">0${i+1}</span>
+                <span class="leading-relaxed">${step}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Personal Bitácora / Notes -->
+    <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 text-purple-400 font-conthrax text-xs font-bold">
+          <i data-lucide="notebook-pen" class="w-4 h-4"></i>
+          <span>BITÁCORA PERSONAL // SOLO VISIBLE PARA TI</span>
+        </div>
+        <button onclick="saveAgentDivisionNotes('${notesKey}')"
+          class="px-3 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-600 text-purple-400 hover:text-white font-conthrax text-[10px] font-bold transition-colors border border-purple-500/30 flex items-center gap-1">
+          <i data-lucide="save" class="w-3 h-3"></i> Guardar
+        </button>
+      </div>
+      <textarea id="agent-division-notes-area" rows="3"
+        placeholder="Notas personales, observaciones de turno, pistas pendientes de verificar..."
+        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors custom-scroll resize-none"
+      >${savedNotes}</textarea>
+    </div>
+  `;
+
+  lucide.createIcons();
+}
+
+window.saveAgentDivisionNotes = function(notesKey) {
+  const area = document.getElementById('agent-division-notes-area');
+  if (!area) return;
+  localStorage.setItem(notesKey, area.value);
+  audioEngine.playKeyClick();
+  showToast('📝 Bitácora personal guardada localmente.');
+};
 
 window.openDiscordAuthModal = function() {
   audioEngine.playRadioBeep();
@@ -3023,6 +3347,7 @@ function updateJefaturaUI() {
     renderJefaturaRoster(getJefaturaRoster());
     renderAuditLogs();
     renderDynamicRanks();
+    renderAgentDivisionPanel();
   } else {
     deniedView.classList.remove("hidden");
     authorizedView.classList.add("hidden");
@@ -3032,6 +3357,8 @@ function updateJefaturaUI() {
     if (claimBtn) {
       claimBtn.style.display = currentDiscordUser ? "flex" : "none";
     }
+    // Still show Mi División panel even without high-command access
+    renderAgentDivisionPanel();
   }
 }
 
