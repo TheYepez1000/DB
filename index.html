@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 
 <head>
@@ -60,7 +60,7 @@
     }
   </style>
 
-  <!-- App Wrapper (Inspirado en SAPD Portal La Nación) -->
+  <!-- App Wrapper (Inspirado en SAPD Portal La NaciÃ³n) -->
   <div class="app-container">
 
     <!-- Mobile Sidebar Backdrop -->
@@ -79,19 +79,19 @@
               <i data-lucide="shield" class="w-5 h-5 text-amber-400"></i>
             </div>
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span class="text-amber-400 text-[10px] font-black">★</span>
+              <span class="text-amber-400 text-[10px] font-black">â˜…</span>
             </div>
           </div>
           <div class="brand-info">
             <h1 class="text-lg font-black tracking-wide text-white font-gobold leading-none">
               D.D. BUREAU
             </h1>
-            <span class="text-[10px] font-conthrax text-amber-400 tracking-wider">Nación Los Santos</span>
+            <span class="text-[10px] font-conthrax text-amber-400 tracking-wider">NaciÃ³n Los Santos</span>
           </div>
         </a>
 
         <button class="sidebar-dock-toggle" id="sidebar-dock-toggle" onclick="toggleSidebarDock()"
-          title="Acoplar / Desacoplar menú lateral">
+          title="Acoplar / Desacoplar menÃº lateral">
           <i data-lucide="chevron-left" class="w-4 h-4" id="sidebar-dock-icon"></i>
         </button>
       </div>
@@ -100,7 +100,7 @@
       <a href="#inicio" class="sidebar-alert-indicator">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="alert-full-text font-conthrax text-xs text-emerald-400 font-bold">DIVISIÓN // ACTIVA</span>
+          <span class="alert-full-text font-conthrax text-xs text-emerald-400 font-bold">DIVISIÃ“N // ACTIVA</span>
         </div>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-500 alert-full-text"></i>
         <span class="sidebar-tooltip">Central Operativa: Detective Division</span>
@@ -109,7 +109,7 @@
       <!-- Navigation Links -->
       <nav class="sidebar-nav">
 
-        <div class="nav-section-title">Navegación Principal</div>
+        <div class="nav-section-title">NavegaciÃ³n Principal</div>
 
         <a class="nav-link active" href="#inicio">
           <span class="nav-index">01</span>
@@ -123,15 +123,15 @@
           <i data-lucide="folder-open" class="w-4 h-4 shrink-0"></i>
           <span class="nav-label">Expedientes</span>
           <span class="nav-badge-pill">14 Casos</span>
-          <span class="sidebar-tooltip">Expedientes de Investigación</span>
+          <span class="sidebar-tooltip">Expedientes de InvestigaciÃ³n</span>
         </a>
 
         <a class="nav-link" href="#buscados">
           <span class="nav-index">03</span>
           <i data-lucide="crosshair" class="w-4 h-4 shrink-0 text-red-400"></i>
-          <span class="nav-label">Más Buscados</span>
+          <span class="nav-label">MÃ¡s Buscados</span>
           <span class="nav-badge-pill text-red-400 border-red-500/30">TOP 4</span>
-          <span class="sidebar-tooltip">Fugitivos Más Buscados</span>
+          <span class="sidebar-tooltip">Fugitivos MÃ¡s Buscados</span>
         </a>
 
         <a class="nav-link" href="#denuncias">
@@ -139,7 +139,7 @@
           <i data-lucide="shield-alert" class="w-4 h-4 shrink-0 text-amber-400"></i>
           <span class="nav-label">Denuncias</span>
           <span class="nav-badge-pill text-amber-400 border-amber-500/30">Cifrado</span>
-          <span class="sidebar-tooltip">Canal de Denuncias Anónimas</span>
+          <span class="sidebar-tooltip">Canal de Denuncias AnÃ³nimas</span>
         </a>
 
         <div class="nav-section-title">Operaciones & Inteligencia</div>
@@ -155,9 +155,9 @@
         <a class="nav-link" href="#unidades" id="nav-link-unidades">
           <span class="nav-index">06</span>
           <i data-lucide="shield-half" class="w-4 h-4 shrink-0 text-blue-400"></i>
-          <span class="nav-label">Mi Subdivisión</span>
+          <span class="nav-label">Mi SubdivisiÃ³n</span>
           <span class="nav-badge-pill hidden text-blue-400 border-blue-500/30" id="nav-subdiv-badge">Privado</span>
-          <span class="sidebar-tooltip">Panel Privado de Subdivisión</span>
+          <span class="sidebar-tooltip">Panel Privado de SubdivisiÃ³n</span>
         </a>
 
         <a class="nav-link" href="#mando">
@@ -165,7 +165,7 @@
           <i data-lucide="award" class="w-4 h-4 shrink-0 text-amber-400"></i>
           <span class="nav-label">Cadena de Mando</span>
           <span class="nav-badge-pill">Oficiales</span>
-          <span class="sidebar-tooltip">Jerarquía y Oficiales al Mando</span>
+          <span class="sidebar-tooltip">JerarquÃ­a y Oficiales al Mando</span>
         </a>
 
         <a class="nav-link" href="#convocatoria">
@@ -176,14 +176,22 @@
           <span class="sidebar-tooltip">Convocatoria & Requisitos</span>
         </a>
 
-        <div class="nav-section-title">Comando & Gestión</div>
+        <div class="nav-section-title">Comando & GestiÃ³n</div>
 
         <a class="nav-link" href="#jefatura">
           <span class="nav-index">09</span>
           <i data-lucide="crown" class="w-4 h-4 shrink-0 text-amber-400"></i>
           <span class="nav-label">Jefatura</span>
           <span class="nav-badge-pill text-amber-400 border-amber-500/30">Mando</span>
-          <span class="sidebar-tooltip">Panel de Jefatura & Gestión de Personal</span>
+          <span class="sidebar-tooltip">Panel de Jefatura & GestiÃ³n de Personal</span>
+        </a>
+
+        <a class="nav-link" href="#mi-perfil" id="nav-link-perfil">
+          <span class="nav-index">10</span>
+          <i data-lucide="user-circle" class="w-4 h-4 shrink-0 text-cyan-400"></i>
+          <span class="nav-label">Mi Perfil</span>
+          <span class="nav-badge-pill hidden text-cyan-400 border-cyan-500/30" id="nav-perfil-badge">Sesion</span>
+          <span class="sidebar-tooltip">Mi Perfil de Agente</span>
         </a>
 
       </nav>
@@ -235,14 +243,14 @@
         <div class="flex items-center gap-3">
           <button id="sidebar-mobile-toggle" onclick="toggleSidebarMobile()"
             class="lg:hidden p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
-            title="Abrir Menú">
+            title="Abrir MenÃº">
             <i data-lucide="menu" class="w-5 h-5"></i>
           </button>
 
           <div class="hidden sm:flex items-center gap-2 font-conthrax text-xs">
             <span class="text-amber-400 font-bold">DETECTIVE DIVISION</span>
             <span class="text-slate-600">//</span>
-            <span class="text-slate-400">PORTAL OFICIAL DE INVESTIGACIÓN CRIMINAL</span>
+            <span class="text-slate-400">PORTAL OFICIAL DE INVESTIGACIÃ“N CRIMINAL</span>
           </div>
         </div>
 
@@ -254,8 +262,8 @@
           </span>
           <div class="overflow-hidden whitespace-nowrap w-full">
             <div class="inline-block animate-[marquee_25s_linear_infinite] text-slate-300">
-              [10-99] Dante Moretti buscado en Rockford Hills &nbsp;•&nbsp; [10-15] 4 detenidos por atraco Fleeca
-              &nbsp;•&nbsp; [10-8] Redadas GND activas en muelles.
+              [10-99] Dante Moretti buscado en Rockford Hills &nbsp;â€¢&nbsp; [10-15] 4 detenidos por atraco Fleeca
+              &nbsp;â€¢&nbsp; [10-8] Redadas GND activas en muelles.
             </div>
           </div>
         </div>
@@ -290,7 +298,7 @@
             </div>
             <button onclick="logoutDiscordAuth()"
               class="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-700/50 text-red-300 transition-colors"
-              title="Cerrar Sesión de Discord">
+              title="Cerrar SesiÃ³n de Discord">
               <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -334,17 +342,17 @@
               <div
                 class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-900 border border-amber-500/40 text-amber-400 font-conthrax text-xs">
                 <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                <span>DEPARTAMENTO DE POLICÍA // BUFETE DE DETECTIVES</span>
+                <span>DEPARTAMENTO DE POLICÃA // BUFETE DE DETECTIVES</span>
               </div>
 
               <h1
                 class="text-4xl sm:text-5xl lg:text-6xl font-black font-gobold tracking-wide text-white leading-tight">
-                INVESTIGACIÓN CRIMINAL & <span class="gold-gradient-text">DELITOS MAYORES</span>
+                INVESTIGACIÃ“N CRIMINAL & <span class="gold-gradient-text">DELITOS MAYORES</span>
               </h1>
 
               <p class="text-base sm:text-lg text-slate-400 font-light max-w-2xl leading-relaxed">
-                Especialistas de élite encargados de esclarecer homicidios, desarticular cárteles del narcotráfico,
-                fraudes financieros y crimen organizado en toda la jurisdicción metropolitana.
+                Especialistas de Ã©lite encargados de esclarecer homicidios, desarticular cÃ¡rteles del narcotrÃ¡fico,
+                fraudes financieros y crimen organizado en toda la jurisdicciÃ³n metropolitana.
               </p>
 
               <!-- Badges / Status row -->
@@ -355,7 +363,7 @@
                 </a>
                 <a href="#denuncias"
                   class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-conthrax font-bold text-xs uppercase tracking-widest rounded-lg transition-all flex items-center gap-2">
-                  <i data-lucide="shield-alert" class="w-4 h-4 text-red-400"></i> Pista Anónima Segura
+                  <i data-lucide="shield-alert" class="w-4 h-4 text-red-400"></i> Pista AnÃ³nima Segura
                 </a>
               </div>
 
@@ -402,7 +410,7 @@
                   <div class="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-5">
                     <div class="flex items-center gap-2 font-conthrax text-xs text-amber-400 font-bold">
                       <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-                      <span>ESTADO: OPERATIVO // DIVISIÓN ACTIVA</span>
+                      <span>ESTADO: OPERATIVO // DIVISIÃ“N ACTIVA</span>
                     </div>
                     <span class="stamp-classified text-[10px]">OFICIAL RP</span>
                   </div>
@@ -432,15 +440,15 @@
                   <!-- Quick Dossier Metadata -->
                   <div class="space-y-2.5 pt-4 border-t border-slate-800 text-xs font-conthrax">
                     <div class="flex justify-between text-slate-300 bg-slate-950/60 p-2 rounded">
-                      <span class="text-slate-500">JURISDICCIÓN:</span>
+                      <span class="text-slate-500">JURISDICCIÃ“N:</span>
                       <span class="font-bold text-white">METROPOLITANA & CONDADO</span>
                     </div>
                     <div class="flex justify-between text-slate-300 bg-slate-950/60 p-2 rounded">
                       <span class="text-slate-500">COMANDANTE EN JEFE:</span>
-                      <span class="font-bold text-amber-400">CAPITÁN DAVID VANCE (#101)</span>
+                      <span class="font-bold text-amber-400">CAPITÃN DAVID VANCE (#101)</span>
                     </div>
                     <div class="flex justify-between text-slate-300 bg-slate-950/60 p-2 rounded">
-                      <span class="text-slate-500">CANAL DE RADIO TÁCTICO:</span>
+                      <span class="text-slate-500">CANAL DE RADIO TÃCTICO:</span>
                       <span class="font-bold text-emerald-400">105.40 MHz ENCRIPTADO</span>
                     </div>
                   </div>
@@ -458,7 +466,7 @@
         </div>
       </section>
 
-      <!-- CASE FILES SECTION (TABLÓN DE EXPEDIENTES - PRIVADO PARA RANGOS) -->
+      <!-- CASE FILES SECTION (TABLÃ“N DE EXPEDIENTES - PRIVADO PARA RANGOS) -->
       <section id="casos" class="py-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -469,7 +477,7 @@
               <i data-lucide="folder-lock" class="w-3.5 h-3.5 text-amber-400"></i>
               <span>ARCHIVO JUDICIAL // CONFIDENCIALIDAD POLICIAL</span>
             </div>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Expedientes de Investigación Policial</h2>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Expedientes de InvestigaciÃ³n Policial</h2>
             <p class="text-slate-400 text-xs sm:text-sm font-conthrax mt-2">
               Sumarios forenses, actas de allanamiento e indicios procesales reservados exclusivamente a oficiales con rango activo en la Detective Division.
             </p>
@@ -489,7 +497,7 @@
             <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Acceso Restringido a Detectives</h3>
 
             <p class="text-slate-300 text-xs sm:text-sm font-conthrax max-w-xl mx-auto mb-6 leading-relaxed">
-              Los expedientes criminales contienen testimonios protegidos, análisis balísticos y órdenes judiciales en curso. Por normativa del Departamento, el acceso está reservado exclusivamente a personal policial con rango oficial verificado.
+              Los expedientes criminales contienen testimonios protegidos, anÃ¡lisis balÃ­sticos y Ã³rdenes judiciales en curso. Por normativa del Departamento, el acceso estÃ¡ reservado exclusivamente a personal policial con rango oficial verificado.
             </p>
 
             <!-- OAuth2 Login CTA -->
@@ -521,7 +529,7 @@
             </div>
 
             <span class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-conthrax text-[11px] font-bold mb-3 border border-amber-500/40">
-              CUENTA EN EVALUACIÓN // ASPIRANTE
+              CUENTA EN EVALUACIÃ“N // ASPIRANTE
             </span>
 
             <h3 class="text-2xl font-black font-gobold text-white mb-2">Expedientes Bloqueados Temporalmente</h3>
@@ -531,7 +539,7 @@
 
             <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px] font-conthrax text-slate-400 max-w-md mx-auto flex items-center justify-between">
               <span>ESTADO DE CREDENCIAL:</span>
-              <span class="text-amber-400 font-bold">PENDIENTE ASIGNACIÓN</span>
+              <span class="text-amber-400 font-bold">PENDIENTE ASIGNACIÃ“N</span>
             </div>
           </div>
 
@@ -543,7 +551,7 @@
                   <span class="stamp-active text-xs">REGISTRO DE SUMARIOS</span>
                   <span class="text-xs font-conthrax text-emerald-400 font-bold">ACCESO CONCEDIDO POR RANGO</span>
                 </div>
-                <h3 class="text-2xl sm:text-3xl font-black font-gobold tracking-wide text-white">Expedientes de Investigación Abiertos</h3>
+                <h3 class="text-2xl sm:text-3xl font-black font-gobold tracking-wide text-white">Expedientes de InvestigaciÃ³n Abiertos</h3>
                 <p class="text-slate-400 text-sm mt-1 font-light">Seleccione un caso para consultar el sumario forense, pruebas recabadas y sospechosos.</p>
               </div>
 
@@ -575,7 +583,7 @@
               </button>
               <button data-category="narcotics"
                 class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-                Narcóticos & Armas
+                NarcÃ³ticos & Armas
               </button>
               <button data-category="robbery"
                 class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
@@ -607,12 +615,12 @@
           <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <div class="flex items-center gap-2 mb-2">
-                <span class="stamp-warrant text-xs">ÓRDENES DE CAPTURA JUDICIALES</span>
+                <span class="stamp-warrant text-xs">Ã“RDENES DE CAPTURA JUDICIALES</span>
                 <span class="text-xs font-conthrax text-red-400 font-bold">ALERTA METROPOLITANA</span>
               </div>
-              <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Los Más Buscados de la Ciudad</h2>
+              <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Los MÃ¡s Buscados de la Ciudad</h2>
               <p class="text-slate-400 text-xs sm:text-sm mt-1 font-conthrax">
-                Individuos de extrema peligrosidad clasificados por niveles de amenaza. Si posee información certera, presente una denuncia anónima.
+                Individuos de extrema peligrosidad clasificados por niveles de amenaza. Si posee informaciÃ³n certera, presente una denuncia anÃ³nima.
               </p>
             </div>
 
@@ -634,11 +642,11 @@
             </button>
             <button onclick="filterWantedByLevel('pinned')" id="wanted-filter-pinned"
               class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-amber-300 hover:bg-slate-700 uppercase transition-colors border border-amber-500/30 flex items-center gap-1.5">
-              <span>📌 Destacados / Fijados</span>
+              <span>ðŸ“Œ Destacados / Fijados</span>
             </button>
             <button onclick="filterWantedByLevel(5)" id="wanted-filter-5"
               class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-red-400 hover:bg-slate-700 uppercase transition-colors border border-red-500/30">
-              Nivel 5 // Máxima Prioridad
+              Nivel 5 // MÃ¡xima Prioridad
             </button>
             <button onclick="filterWantedByLevel(4)" id="wanted-filter-4"
               class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-orange-400 hover:bg-slate-700 uppercase transition-colors border border-orange-500/30">
@@ -662,7 +670,7 @@
         </div>
       </section>
 
-      <!-- ANONYMOUS CRIME TIP SECTION (DENUNCIAS ANÓNIMAS) -->
+      <!-- ANONYMOUS CRIME TIP SECTION (DENUNCIAS ANÃ“NIMAS) -->
       <section id="denuncias" class="py-20 relative bg-slate-950 border-t border-slate-800">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -670,10 +678,10 @@
             <span class="text-xs font-conthrax font-bold text-red-500 uppercase tracking-widest block mb-2">CANAL DE
               INTELIGENCIA CIUDADANA</span>
             <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Presentar Pista o Denuncia
-              Anónima</h2>
+              AnÃ³nima</h2>
             <p class="text-slate-400 text-xs sm:text-sm mt-3 font-mono">
-              Su cooperación es vital para la resolución de casos complejos. Las denuncias remitidas a través de este
-              portal están cifradas. No se registran direcciones IP ni identidades.
+              Su cooperaciÃ³n es vital para la resoluciÃ³n de casos complejos. Las denuncias remitidas a travÃ©s de este
+              portal estÃ¡n cifradas. No se registran direcciones IP ni identidades.
             </p>
           </div>
 
@@ -688,12 +696,12 @@
                   <select id="tip-category"
                     class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
                     <option value="homicidio">Homicidio / Atentado con arma</option>
-                    <option value="narcotrafico">Narcotráfico / Venta de Estupefacientes</option>
-                    <option value="armas">Tráfico / Posesión de Armamento Pesado</option>
+                    <option value="narcotrafico">NarcotrÃ¡fico / Venta de Estupefacientes</option>
+                    <option value="armas">TrÃ¡fico / PosesiÃ³n de Armamento Pesado</option>
                     <option value="fugitivo">Avistamiento de Fugitivo Buscado</option>
-                    <option value="robo">Robo a Banco / Joyería / Negocio</option>
+                    <option value="robo">Robo a Banco / JoyerÃ­a / Negocio</option>
                     <option value="secuestro">Secuestro / Persona Desaparecida</option>
-                    <option value="corrupcion">Corrupción Policial / Asuntos Internos</option>
+                    <option value="corrupcion">CorrupciÃ³n Policial / Asuntos Internos</option>
                     <option value="otro">Otro Delito Grave</option>
                   </select>
                 </div>
@@ -705,36 +713,36 @@
                   <select id="tip-priority"
                     class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
                     <option value="urgente">Urgente // En curso o sospechoso armado en el lugar</option>
-                    <option value="alta" selected>Prioridad Alta // Avistamiento reciente (Últimas horas)</option>
-                    <option value="informativa">Informativa // Datos históricos o investigación</option>
+                    <option value="alta" selected>Prioridad Alta // Avistamiento reciente (Ãšltimas horas)</option>
+                    <option value="informativa">Informativa // Datos histÃ³ricos o investigaciÃ³n</option>
                   </select>
                 </div>
               </div>
 
               <!-- Location -->
               <div>
-                <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Ubicación / Barrio /
+                <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">UbicaciÃ³n / Barrio /
                   Coordenadas RP:</label>
                 <input type="text" id="tip-location" required
-                  placeholder="Ej: Callejón detrás del taller de Strawberry, frente a gasolinera..."
+                  placeholder="Ej: CallejÃ³n detrÃ¡s del taller de Strawberry, frente a gasolinera..."
                   class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
               </div>
 
               <!-- Description -->
               <div>
                 <label class="block text-xs font-mono text-amber-400 font-bold uppercase mb-2">Detalles, Rasgos de los
-                  Sujetos y Vehículos:</label>
+                  Sujetos y VehÃ­culos:</label>
                 <textarea id="tip-description" rows="4" required
-                  placeholder="Describa vestimenta, matrículas de vehículos, armas observadas o cualquier información relevante..."
+                  placeholder="Describa vestimenta, matrÃ­culas de vehÃ­culos, armas observadas o cualquier informaciÃ³n relevante..."
                   class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs font-mono text-white focus:outline-none focus:border-amber-500"></textarea>
               </div>
 
               <!-- Contact (Optional) -->
               <div>
-                <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Medio de Contacto Anónimo / Discord
+                <label class="block text-xs font-mono text-slate-400 uppercase mb-1">Medio de Contacto AnÃ³nimo / Discord
                   RP (Opcional):</label>
                 <input type="text" id="tip-contact"
-                  placeholder="Deje en blanco si desea anonimato absoluto, o ingrese su Tag/Teléfono IC para cobrar recompensa..."
+                  placeholder="Deje en blanco si desea anonimato absoluto, o ingrese su Tag/TelÃ©fono IC para cobrar recompensa..."
                   class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
               </div>
 
@@ -743,8 +751,8 @@
                 class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-400 flex items-start gap-3">
                 <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5"></i>
                 <p>
-                  El perjurio y las falsas alarmas malintencionadas están tipificadas en el Código Penal. Al enviar este
-                  reporte, un analista de la división procesará los indicios remitidos.
+                  El perjurio y las falsas alarmas malintencionadas estÃ¡n tipificadas en el CÃ³digo Penal. Al enviar este
+                  reporte, un analista de la divisiÃ³n procesarÃ¡ los indicios remitidos.
                 </p>
               </div>
 
@@ -773,8 +781,8 @@
             <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Informes Policiales &
               Normativa Operativa</h2>
             <p class="text-slate-400 text-xs sm:text-sm font-conthrax mt-2">
-              Intranet confidencial del Bureau. Requiere verificación mediante el <span
-                class="text-[#5865F2] font-bold">Bot de Discord</span> con roles activos de la división.
+              Intranet confidencial del Bureau. Requiere verificaciÃ³n mediante el <span
+                class="text-[#5865F2] font-bold">Bot de Discord</span> con roles activos de la divisiÃ³n.
             </p>
           </div>
 
@@ -788,14 +796,14 @@
               <i data-lucide="lock" class="w-10 h-10 animate-bounce"></i>
             </div>
 
-            <span class="stamp-classified text-xs mb-3 inline-block">ÁREA RESTRINGIDA A CIVILES</span>
+            <span class="stamp-classified text-xs mb-3 inline-block">ÃREA RESTRINGIDA A CIVILES</span>
             <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Acceso Bloqueado por
               Seguridad</h3>
 
             <p class="text-slate-300 text-xs sm:text-sm font-conthrax max-w-xl mx-auto mb-6 leading-relaxed">
-              Los informes de investigación confidenciales, minutas de escuchas telefónicas, actas de allanamiento y la
-              <strong class="text-amber-400">Normativa Interna y Código Deontológico</strong> están cifrados. Para
-              acceder, debes iniciar sesión con una cuenta de Discord verificada que ostente roles de la división.
+              Los informes de investigaciÃ³n confidenciales, minutas de escuchas telefÃ³nicas, actas de allanamiento y la
+              <strong class="text-amber-400">Normativa Interna y CÃ³digo DeontolÃ³gico</strong> estÃ¡n cifrados. Para
+              acceder, debes iniciar sesiÃ³n con una cuenta de Discord verificada que ostente roles de la divisiÃ³n.
             </p>
 
             <!-- Discord Bot Verification Requirement Cards -->
@@ -808,17 +816,17 @@
               <p class="text-[11px] font-conthrax text-slate-400 mb-2.5">Roles autorizados en el servidor oficial de
                 Discord:</p>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-conthrax text-[10px]">
-                <span class="p-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">★ Capitán /
+                <span class="p-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">â˜… CapitÃ¡n /
                   Mando</span>
-                <span class="p-1.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300">★ Teniente
+                <span class="p-1.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300">â˜… Teniente
                   Supervisor</span>
-                <span class="p-1.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300">★ Detective III
+                <span class="p-1.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300">â˜… Detective III
                   (GND)</span>
-                <span class="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">★ Detective
+                <span class="p-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">â˜… Detective
                   II (RHD)</span>
-                <span class="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-300">★ Detective I</span>
-                <span class="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-400">★ Det. en
-                  Prácticas</span>
+                <span class="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-300">â˜… Detective I</span>
+                <span class="p-1.5 rounded bg-slate-800 border border-slate-700 text-slate-400">â˜… Det. en
+                  PrÃ¡cticas</span>
               </div>
             </div>
 
@@ -828,7 +836,7 @@
               <i data-lucide="shield-alert" class="w-6 h-6 text-red-400 shrink-0 mt-0.5"></i>
               <div>
                 <span class="font-bold block text-red-300">DENEGADO POR DETECTIVEBOT</span>
-                <span id="informes-civil-denied-text">Tu cuenta de Discord no posee ningún rol policial en el servidor.
+                <span id="informes-civil-denied-text">Tu cuenta de Discord no posee ningÃºn rol policial en el servidor.
                   Acceso denegado a los informes internos y a la normativa reservada.</span>
               </div>
             </div>
@@ -865,7 +873,7 @@
 
             <span
               class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-conthrax text-[11px] font-bold border border-amber-500/40 inline-flex items-center gap-1.5 mb-3">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span> RANGO POR DEFECTO // EN ESPERA DE ASIGNACIÓN
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> RANGO POR DEFECTO // EN ESPERA DE ASIGNACIÃ“N
             </span>
 
             <h3 id="pending-agent-name" class="text-2xl font-black font-gobold text-white tracking-wide mb-1">Aspirante
@@ -876,16 +884,16 @@
               class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-left font-mono text-xs text-slate-300 space-y-2 mb-6">
               <div class="flex items-center gap-2 text-amber-400 font-conthrax font-bold text-xs">
                 <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                <span>ACCESO A INFORMES BLOQUEADO HASTA VALIDACIÓN</span>
+                <span>ACCESO A INFORMES BLOQUEADO HASTA VALIDACIÃ“N</span>
               </div>
               <p class="leading-relaxed text-slate-400 text-[11px]">
-                Has iniciado sesión a través de <strong>Discord OAuth2</strong>. Por protocolo de seguridad de la
+                Has iniciado sesiÃ³n a travÃ©s de <strong>Discord OAuth2</strong>. Por protocolo de seguridad de la
                 Detective Division, a todo nuevo usuario se le concede por defecto el rol de <strong>Aspirante Sin
                   Acceso</strong>.
               </p>
               <p class="leading-relaxed text-slate-400 text-[11px]">
-                El <strong>Mando de la División (Capitán o Teniente)</strong> debe asignarte tu rango oficial (Detective
-                I, II o III) y número de placa desde el <strong>Apartado de Jefatura</strong> para habilitar tus
+                El <strong>Mando de la DivisiÃ³n (CapitÃ¡n o Teniente)</strong> debe asignarte tu rango oficial (Detective
+                I, II o III) y nÃºmero de placa desde el <strong>Apartado de Jefatura</strong> para habilitar tus
                 credenciales operativas.
               </p>
             </div>
@@ -899,7 +907,7 @@
               <button onclick="logoutDiscordAuth()"
                 class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 uppercase transition-all flex items-center justify-center gap-1.5">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
-                <span>Cerrar Sesión</span>
+                <span>Cerrar SesiÃ³n</span>
               </button>
             </div>
           </div>
@@ -932,7 +940,7 @@
                   <p class="text-[11px] font-conthrax text-slate-400 mt-0.5 flex items-center gap-2">
                     <span class="text-emerald-400 flex items-center gap-1"><i data-lucide="shield-check"
                         class="w-3.5 h-3.5"></i> Verificado por Discord OAuth2</span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span id="ribbon-clearance-text" class="text-amber-400 font-bold">NIVEL DE ACCESO: 3 (ALTO
                       SECRETO)</span>
                   </p>
@@ -947,7 +955,7 @@
                 </button>
                 <button onclick="logoutDiscordAuth()"
                   class="px-3.5 py-2.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-700/50 font-conthrax text-xs uppercase transition-colors flex items-center gap-1"
-                  title="Cerrar Sesión de Detective">
+                  title="Cerrar SesiÃ³n de Detective">
                   <i data-lucide="log-out" class="w-4 h-4"></i>
                   <span class="hidden sm:inline">Desconectar</span>
                 </button>
@@ -962,7 +970,7 @@
               </button>
               <button id="tab-btn-normativa" onclick="switchInformesTab('normativa')" class="informes-tab-btn">
                 <i data-lucide="scale" class="w-4 h-4 text-amber-400"></i>
-                <span>Normativa Interna & Código RP</span>
+                <span>Normativa Interna & CÃ³digo RP</span>
               </button>
               <button id="tab-btn-pistas" onclick="switchInformesTab('pistas')" class="informes-tab-btn">
                 <i data-lucide="inbox" class="w-4 h-4 text-red-400"></i>
@@ -1005,121 +1013,121 @@
                     <span
                       class="text-[10px] font-conthrax text-amber-400 uppercase tracking-widest block font-bold">MANUAL
                       OFICIAL DE PROCEDIMIENTO</span>
-                    <h3 class="text-2xl font-black font-gobold text-white tracking-wide">Código Deontológico & Normativa
-                      de Investigación</h3>
+                    <h3 class="text-2xl font-black font-gobold text-white tracking-wide">CÃ³digo DeontolÃ³gico & Normativa
+                      de InvestigaciÃ³n</h3>
                   </div>
                   <span
                     class="px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-conthrax text-xs font-bold">
-                    VERSIÓN RP 2026.4 // OBLIGATORIA
+                    VERSIÃ“N RP 2026.4 // OBLIGATORIA
                   </span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 font-conthrax">
 
-                  <!-- Capítulo 1 -->
+                  <!-- CapÃ­tulo 1 -->
                   <div class="normativa-card p-5 border-l-4 border-l-red-500">
-                    <span class="text-[10px] text-red-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO I //
-                      DEONTOLOGÍA POLICIAL</span>
+                    <span class="text-[10px] text-red-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO I //
+                      DEONTOLOGÃA POLICIAL</span>
                     <h4 class="text-lg font-black font-gobold text-white mb-2">Deber de Reserva y Secreto Profesional
                     </h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
-                      <li><strong>Art. 1.1 Confidencialidad Absoluta:</strong> Ningún oficial podrá divulgar sumarios,
-                        identidades de confidentes ni detalles de operativos. La filtración conlleva expulsión inmediata
-                        de la división y causa penal por revelación de secretos oficiales.</li>
-                      <li><strong>Art. 1.2 Imparcialidad Procesal:</strong> Los detectives están obligados a recabar
+                      <li><strong>Art. 1.1 Confidencialidad Absoluta:</strong> NingÃºn oficial podrÃ¡ divulgar sumarios,
+                        identidades de confidentes ni detalles de operativos. La filtraciÃ³n conlleva expulsiÃ³n inmediata
+                        de la divisiÃ³n y causa penal por revelaciÃ³n de secretos oficiales.</li>
+                      <li><strong>Art. 1.2 Imparcialidad Procesal:</strong> Los detectives estÃ¡n obligados a recabar
                         pruebas tanto inculpatorias como exculpatorias para garantizar la objetividad en el juicio penal
                         de rol.</li>
                       <li><strong>Art. 1.3 Porte de Credenciales:</strong> Todo detective debe portar siempre su placa y
-                        carnet reglamentario, identificándose verbalmente ante detenidos o testigos al tomar
+                        carnet reglamentario, identificÃ¡ndose verbalmente ante detenidos o testigos al tomar
                         declaraciones formales.</li>
                     </ul>
                   </div>
 
-                  <!-- Capítulo 2 -->
+                  <!-- CapÃ­tulo 2 -->
                   <div class="normativa-card p-5 border-l-4 border-l-blue-500">
-                    <span class="text-[10px] text-blue-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO II //
+                    <span class="text-[10px] text-blue-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO II //
                       CADENA DE CUSTODIA (CSI)</span>
-                    <h4 class="text-lg font-black font-gobold text-white mb-2">Preservación de Evidencias Forenses</h4>
+                    <h4 class="text-lg font-black font-gobold text-white mb-2">PreservaciÃ³n de Evidencias Forenses</h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
                       <li><strong>Art. 2.1 Precinto de la Escena:</strong> Es obligatorio acordonar la escena con cinta
-                        policial perimetral antes de cualquier inspección ocular, evitando la contaminación por parte de
+                        policial perimetral antes de cualquier inspecciÃ³n ocular, evitando la contaminaciÃ³n por parte de
                         patrulleros o civiles.</li>
-                      <li><strong>Art. 2.2 Fijación Fotográfica y Balística:</strong> Los casquillos, huellas dactilares
-                        y manchas biológicas deben fotografiar con marcadores numéricos antes de ser recogidos con
+                      <li><strong>Art. 2.2 FijaciÃ³n FotogrÃ¡fica y BalÃ­stica:</strong> Los casquillos, huellas dactilares
+                        y manchas biolÃ³gicas deben fotografiar con marcadores numÃ©ricos antes de ser recogidos con
                         pinzas de peritaje.</li>
-                      <li><strong>Art. 2.3 Libro de Custodia:</strong> Toda arma o sustancia confiscada se registrará en
-                        el depósito de evidencias con código identificativo único y firma del perito receptor.</li>
+                      <li><strong>Art. 2.3 Libro de Custodia:</strong> Toda arma o sustancia confiscada se registrarÃ¡ en
+                        el depÃ³sito de evidencias con cÃ³digo identificativo Ãºnico y firma del perito receptor.</li>
                     </ul>
                   </div>
 
-                  <!-- Capítulo 3 -->
+                  <!-- CapÃ­tulo 3 -->
                   <div class="normativa-card p-5 border-l-4 border-l-amber-500">
-                    <span class="text-[10px] text-amber-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO III
+                    <span class="text-[10px] text-amber-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO III
                       // OPERACIONES ENCUBIERTAS (GND)</span>
-                    <h4 class="text-lg font-black font-gobold text-white mb-2">Infiltración y Tráfico Ilegal</h4>
+                    <h4 class="text-lg font-black font-gobold text-white mb-2">InfiltraciÃ³n y TrÃ¡fico Ilegal</h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
-                      <li><strong>Art. 3.1 Autorización de Mando:</strong> Toda infiltración en bandas criminales debe
-                        estar aprobada por escrito por un Teniente o Capitán de división con expediente de identidad
+                      <li><strong>Art. 3.1 AutorizaciÃ³n de Mando:</strong> Toda infiltraciÃ³n en bandas criminales debe
+                        estar aprobada por escrito por un Teniente o CapitÃ¡n de divisiÃ³n con expediente de identidad
                         ficticia.</li>
-                      <li><strong>Art. 3.2 Prohibición de Instigación (Entrapment):</strong> El agente encubierto nunca
-                        podrá incitar a un sujeto a cometer un delito que este no estuviera predispuesto a ejecutar
+                      <li><strong>Art. 3.2 ProhibiciÃ³n de InstigaciÃ³n (Entrapment):</strong> El agente encubierto nunca
+                        podrÃ¡ incitar a un sujeto a cometer un delito que este no estuviera predispuesto a ejecutar
                         voluntariamente.</li>
-                      <li><strong>Art. 3.3 Clave de Extracción:</strong> El oficial en infiltración dispondrá de señal
-                        satelital pasiva y clave radial ("Código Red") para asalto de rescate inmediato en caso de
+                      <li><strong>Art. 3.3 Clave de ExtracciÃ³n:</strong> El oficial en infiltraciÃ³n dispondrÃ¡ de seÃ±al
+                        satelital pasiva y clave radial ("CÃ³digo Red") para asalto de rescate inmediato en caso de
                         peligro de muerte.</li>
                     </ul>
                   </div>
 
-                  <!-- Capítulo 4 -->
+                  <!-- CapÃ­tulo 4 -->
                   <div class="normativa-card p-5 border-l-4 border-l-purple-500">
-                    <span class="text-[10px] text-purple-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO IV
-                      // ÓRDENES JUDICIALES (WARRANTS)</span>
-                    <h4 class="text-lg font-black font-gobold text-white mb-2">Allanamiento y Escuchas Telefónicas</h4>
+                    <span class="text-[10px] text-purple-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO IV
+                      // Ã“RDENES JUDICIALES (WARRANTS)</span>
+                    <h4 class="text-lg font-black font-gobold text-white mb-2">Allanamiento y Escuchas TelefÃ³nicas</h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
                       <li><strong>Art. 4.1 Causa Probable:</strong> Ninguna orden de captura o registro domiciliario
-                        será válida sin al menos dos indicios corroborados (fotografía, transacción grabada, peritaje de
-                        balística o geolocalización).</li>
-                      <li><strong>Art. 4.2 Autorización Judicial de Rol:</strong> Toda intervención telefónica debe ser
+                        serÃ¡ vÃ¡lida sin al menos dos indicios corroborados (fotografÃ­a, transacciÃ³n grabada, peritaje de
+                        balÃ­stica o geolocalizaciÃ³n).</li>
+                      <li><strong>Art. 4.2 AutorizaciÃ³n Judicial de Rol:</strong> Toda intervenciÃ³n telefÃ³nica debe ser
                         remitida y firmada por un Juez o Fiscal en activo de la comunidad antes de iniciar la escucha.
                       </li>
-                      <li><strong>Art. 4.3 Plazo de Ejecución:</strong> Las órdenes judiciales tienen una vigencia
-                        máxima de 48 horas en rol. Cumplido el plazo, se debe solicitar prórroga formal.</li>
+                      <li><strong>Art. 4.3 Plazo de EjecuciÃ³n:</strong> Las Ã³rdenes judiciales tienen una vigencia
+                        mÃ¡xima de 48 horas en rol. Cumplido el plazo, se debe solicitar prÃ³rroga formal.</li>
                     </ul>
                   </div>
 
-                  <!-- Capítulo 5 -->
+                  <!-- CapÃ­tulo 5 -->
                   <div class="normativa-card p-5 border-l-4 border-l-emerald-500">
-                    <span class="text-[10px] text-emerald-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO V
+                    <span class="text-[10px] text-emerald-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO V
                       // USO DE FUERZA E INCURSIONES</span>
-                    <h4 class="text-lg font-black font-gobold text-white mb-2">Intervenciones Tácticas & Asalto</h4>
+                    <h4 class="text-lg font-black font-gobold text-white mb-2">Intervenciones TÃ¡cticas & Asalto</h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
-                      <li><strong>Art. 5.1 Requerimiento de Aviso:</strong> Al ejecutar un allanamiento se advertirá en
-                        voz alta ("¡LSPD Detectives, orden judicial de registro!"), salvo concesión judicial expresa de
-                        entrada táctica sin previo aviso (No-Knock).</li>
-                      <li><strong>Art. 5.2 Apoyo Táctico SWAT:</strong> Si se confirma la presencia de armamento pesado
-                        o francotiradores, los detectives cederán la vanguardia táctica al equipo SWAT/Metropolitan.
+                      <li><strong>Art. 5.1 Requerimiento de Aviso:</strong> Al ejecutar un allanamiento se advertirÃ¡ en
+                        voz alta ("Â¡LSPD Detectives, orden judicial de registro!"), salvo concesiÃ³n judicial expresa de
+                        entrada tÃ¡ctica sin previo aviso (No-Knock).</li>
+                      <li><strong>Art. 5.2 Apoyo TÃ¡ctico SWAT:</strong> Si se confirma la presencia de armamento pesado
+                        o francotiradores, los detectives cederÃ¡n la vanguardia tÃ¡ctica al equipo SWAT/Metropolitan.
                       </li>
-                      <li><strong>Art. 5.3 Atención Médica:</strong> Tras neutralizar la escena, se brindará asistencia
-                        médica inmediata a sospechosos y agentes heridos antes del traslado a celdas.</li>
+                      <li><strong>Art. 5.3 AtenciÃ³n MÃ©dica:</strong> Tras neutralizar la escena, se brindarÃ¡ asistencia
+                        mÃ©dica inmediata a sospechosos y agentes heridos antes del traslado a celdas.</li>
                     </ul>
                   </div>
 
-                  <!-- Capítulo 6 -->
+                  <!-- CapÃ­tulo 6 -->
                   <div class="normativa-card p-5 border-l-4 border-l-cyan-500">
-                    <span class="text-[10px] text-cyan-400 font-bold tracking-wider uppercase block mb-1">CAPÍTULO VI //
+                    <span class="text-[10px] text-cyan-400 font-bold tracking-wider uppercase block mb-1">CAPÃTULO VI //
                       RANGOS Y ATRIBUCIONES</span>
-                    <h4 class="text-lg font-black font-gobold text-white mb-2">Jerarquía y Toma de Decisiones</h4>
+                    <h4 class="text-lg font-black font-gobold text-white mb-2">JerarquÃ­a y Toma de Decisiones</h4>
                     <ul class="text-xs text-slate-300 space-y-2 font-mono list-disc list-inside leading-relaxed">
-                      <li><strong>Detective en Prácticas:</strong> Asistencia en escena, toma de notas y acompañamiento.
+                      <li><strong>Detective en PrÃ¡cticas:</strong> Asistencia en escena, toma de notas y acompaÃ±amiento.
                         No lidera casos ni autoriza diligencias judiciales.</li>
-                      <li><strong>Detective I:</strong> Redacción de informes estándar, interrogatorios ordinarios y
-                        participación en registros autorizados.</li>
-                      <li><strong>Detective II:</strong> Especialización en rama técnica (RHD, CSI, CID), gestión de
-                        confidentes e investigación de homicidios calificados.</li>
-                      <li><strong>Detective III:</strong> Asignación y supervisión de casos graves, diseño de planes
-                        operativos encubiertos y coordinación de redadas.</li>
-                      <li><strong>Teniente / Capitán:</strong> Mando de la división, autorización de solicitudes de
-                        allanamiento, auditorías de integridad y enlace directo con la Jefatura.</li>
+                      <li><strong>Detective I:</strong> RedacciÃ³n de informes estÃ¡ndar, interrogatorios ordinarios y
+                        participaciÃ³n en registros autorizados.</li>
+                      <li><strong>Detective II:</strong> EspecializaciÃ³n en rama tÃ©cnica (RHD, CSI, CID), gestiÃ³n de
+                        confidentes e investigaciÃ³n de homicidios calificados.</li>
+                      <li><strong>Detective III:</strong> AsignaciÃ³n y supervisiÃ³n de casos graves, diseÃ±o de planes
+                        operativos encubiertos y coordinaciÃ³n de redadas.</li>
+                      <li><strong>Teniente / CapitÃ¡n:</strong> Mando de la divisiÃ³n, autorizaciÃ³n de solicitudes de
+                        allanamiento, auditorÃ­as de integridad y enlace directo con la Jefatura.</li>
                     </ul>
                   </div>
 
@@ -1135,7 +1143,7 @@
                   <div>
                     <span class="text-[10px] font-conthrax text-red-400 uppercase tracking-widest block font-bold">CANAL
                       DE INTELIGENCIA POPULAR</span>
-                    <h3 class="text-xl font-black font-gobold text-white tracking-wide">Bandeja de Denuncias Anónimas
+                    <h3 class="text-xl font-black font-gobold text-white tracking-wide">Bandeja de Denuncias AnÃ³nimas
                       Entrantes</h3>
                   </div>
                   <span
@@ -1155,8 +1163,8 @@
         </div>
       </section>
 
-      <!-- SPECIALIZED UNITS / APARTADOS DE CADA SUBDIVISIÓN DE LA DB -->
-      <!-- SUBDIVISIÓN PRIVADA // PANEL PERSONAL DEL AGENTE -->
+      <!-- SPECIALIZED UNITS / APARTADOS DE CADA SUBDIVISIÃ“N DE LA DB -->
+      <!-- SUBDIVISIÃ“N PRIVADA // PANEL PERSONAL DEL AGENTE -->
       <section id="unidades" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -1166,13 +1174,13 @@
               <i data-lucide="shield-half" class="w-3.5 h-3.5"></i>
               <span>06 // APARTADO OPERATIVO PRIVADO</span>
             </div>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Mi Subdivisión</h2>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Mi SubdivisiÃ³n</h2>
             <p class="text-slate-400 text-xs sm:text-sm mt-2 font-light">
-              Panel de acceso restringido. Solo visible para agentes asignados a una subdivisión por Jefatura.
+              Panel de acceso restringido. Solo visible para agentes asignados a una subdivisiÃ³n por Jefatura.
             </p>
           </div>
 
-          <!-- STATE A: NO SESIÓN / SIN SUBDIVISIÓN ASIGNADA -->
+          <!-- STATE A: NO SESIÃ“N / SIN SUBDIVISIÃ“N ASIGNADA -->
           <div id="subdivision-denied-view" class="glass-panel rounded-2xl p-8 sm:p-12 border border-slate-800 text-center max-w-2xl mx-auto relative overflow-hidden shadow-2xl">
             <div class="security-scanline"></div>
 
@@ -1181,10 +1189,10 @@
             </div>
 
             <span class="stamp-classified text-xs mb-3 inline-block">ACCESO RESTRINGIDO // SOLO PERSONAL ASIGNADO</span>
-            <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Panel Privado de Subdivisión</h3>
+            <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Panel Privado de SubdivisiÃ³n</h3>
 
             <p class="text-slate-300 text-xs sm:text-sm font-conthrax max-w-xl mx-auto mb-6 leading-relaxed" id="subdivision-denied-msg">
-              Este apartado es de acceso privado. Para verlo debes haber iniciado sesión con Discord y tener una subdivisión asignada por Jefatura en el censo oficial.
+              Este apartado es de acceso privado. Para verlo debes haber iniciado sesiÃ³n con Discord y tener una subdivisiÃ³n asignada por Jefatura en el censo oficial.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -1200,7 +1208,7 @@
             </div>
           </div>
 
-          <!-- STATE B: AUTHORIZED — MI SUBDIVISIÓN PERSONAL -->
+          <!-- STATE B: AUTHORIZED â€” MI SUBDIVISIÃ“N PERSONAL -->
           <div id="subdivision-authorized-view" class="hidden">
             <!-- Injected by renderSubdivisionPrivatePanel() in app.js -->
           </div>
@@ -1208,17 +1216,17 @@
         </div>
       </section>
 
-      <!-- RANKS & PERSONNEL (CADENA DE MANDO RP - DINÁMICO DESDE BD) -->
+      <!-- RANKS & PERSONNEL (CADENA DE MANDO RP - DINÃMICO DESDE BD) -->
       <section id="mando" class="py-20 relative bg-slate-950/60 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div class="text-center max-w-2xl mx-auto mb-14">
-            <span class="text-xs font-conthrax font-bold text-amber-400 uppercase tracking-widest block mb-2">JERARQUÍA
+            <span class="text-xs font-conthrax font-bold text-amber-400 uppercase tracking-widest block mb-2">JERARQUÃA
               DEL BUREAU</span>
             <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Cadena de Mando y Oficiales
             </h2>
             <p class="text-slate-400 text-xs sm:text-sm font-light mt-2">
-              Estructura de mando operativo responsable de la supervisión de casos y la asignación de detectives a
+              Estructura de mando operativo responsable de la supervisiÃ³n de casos y la asignaciÃ³n de detectives a
               escenas de alto perfil.
             </p>
           </div>
@@ -1241,38 +1249,38 @@
 
               <div class="lg:col-span-8 space-y-4">
                 <span class="stamp-active text-xs">CONVOCATORIA INTERNA ABIERTA</span>
-                <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">¿Deseas dar el salto a
-                  la División de Detectives?</h2>
+                <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Â¿Deseas dar el salto a
+                  la DivisiÃ³n de Detectives?</h2>
                 <p class="text-slate-300 text-xs sm:text-sm font-light leading-relaxed">
-                  Buscamos agentes de patrulla comprometidos, con capacidad analítica para resolver casos complejos y
+                  Buscamos agentes de patrulla comprometidos, con capacidad analÃ­tica para resolver casos complejos y
                   manejo de rol interpretativo de alta calidad.
                 </p>
 
                 <div class="space-y-2 pt-2 text-xs font-conthrax text-slate-300">
                   <div class="flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                    <span>Rango mínimo requerido: <strong>Oficial II</strong> o superior sin sanciones recientes.</span>
+                    <span>Rango mÃ­nimo requerido: <strong>Oficial II</strong> o superior sin sanciones recientes.</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                    <span>Aprobación del examen teórico de Procedimiento Penal e Informes Forenses.</span>
+                    <span>AprobaciÃ³n del examen teÃ³rico de Procedimiento Penal e Informes Forenses.</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
-                    <span>Superación de la prueba práctica de inspección ocular en escena del crimen.</span>
+                    <span>SuperaciÃ³n de la prueba prÃ¡ctica de inspecciÃ³n ocular en escena del crimen.</span>
                   </div>
                 </div>
               </div>
 
               <div class="lg:col-span-4 flex flex-col gap-3 font-conthrax">
                 <a href="#denuncias"
-                  onclick="alert('Consulte con la Jefatura de la División a través de los canales internos del servidor de Roleplay para remitir su expediente.'); return false;"
+                  onclick="alert('Consulte con la Jefatura de la DivisiÃ³n a travÃ©s de los canales internos del servidor de Roleplay para remitir su expediente.'); return false;"
                   class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-widest text-center rounded-lg transition-colors shadow-lg shadow-amber-500/20">
                   Postular al Bureau
                 </a>
                 <a href="https://discord.com" target="_blank"
                   class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs uppercase tracking-wider text-center rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i> Discord de la Facción
+                  <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i> Discord de la FacciÃ³n
                 </a>
               </div>
 
@@ -1283,7 +1291,7 @@
         </div>
       </section>
 
-      <!-- JEFATURA DE DIVISIÓN // HIGH COMMAND MANAGEMENT HUB -->
+      <!-- JEFATURA DE DIVISIÃ“N // HIGH COMMAND MANAGEMENT HUB -->
       <section id="jefatura" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -1294,16 +1302,16 @@
               <i data-lucide="crown" class="w-3.5 h-3.5"></i>
               <span>09 // COMANDO SUPREMO & ASUNTOS ADMINISTRATIVOS</span>
             </div>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Jefatura de la División de
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Jefatura de la DivisiÃ³n de
               Detectives</h2>
             <p class="text-slate-400 text-xs sm:text-sm mt-2 font-light">
-              Administración centralizada de personal policial: censo oficial de agentes, aprobación de aspirantes,
-              promociones, reasignación de divisiones y régimen sancionador.
+              AdministraciÃ³n centralizada de personal policial: censo oficial de agentes, aprobaciÃ³n de aspirantes,
+              promociones, reasignaciÃ³n de divisiones y rÃ©gimen sancionador.
             </p>
           </div>
 
           <!-- STATE A: DENIED VIEW (NOT LOGGED IN OR NOT HIGH COMMAND) -->
-          <!-- PANEL: MI DIVISIÓN — Visible para cualquier agente autenticado con subdivisión asignada -->
+          <!-- PANEL: MI DIVISIÃ“N â€” Visible para cualquier agente autenticado con subdivisiÃ³n asignada -->
           <div id="agent-division-panel" class="hidden mb-10 glass-panel rounded-2xl p-6 sm:p-8 border border-amber-500/30 shadow-2xl">
             <!-- Injected by renderAgentDivisionPanel() in app.js -->
           </div>
@@ -1326,16 +1334,16 @@
             <h3 class="text-2xl font-black font-gobold text-white tracking-wide mb-2">Despacho de la Jefatura Bloqueado
             </h3>
             <p class="text-xs text-slate-400 font-mono leading-relaxed mb-6 max-w-lg mx-auto">
-              Este centro de mando está reservado con carácter exclusivo para el <strong>Capitán de la División</strong>
+              Este centro de mando estÃ¡ reservado con carÃ¡cter exclusivo para el <strong>CapitÃ¡n de la DivisiÃ³n</strong>
               y los <strong>Tenientes Supervisores</strong>. Desde este panel se configuran los permisos de los
-              detectives y se gestiona la jerarquía del servidor.
+              detectives y se gestiona la jerarquÃ­a del servidor.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3 font-conthrax text-xs">
               <button onclick="authenticateWithBotRole('capitan')"
                 class="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-bold uppercase transition-all shadow-lg flex items-center justify-center gap-2">
                 <i data-lucide="crown" class="w-4 h-4"></i>
-                <span>Acceder como Capitán Vance (Demo Mando)</span>
+                <span>Acceder como CapitÃ¡n Vance (Demo Mando)</span>
               </button>
               <button onclick="claimHighCommandForCurrentAccount()" id="jefatura-claim-mando-btn"
                 class="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-300 uppercase transition-all flex items-center justify-center gap-2">
@@ -1372,8 +1380,8 @@
                   </div>
                   <p class="text-[11px] font-conthrax text-slate-400 mt-0.5 flex items-center gap-2">
                     <span class="text-emerald-400 flex items-center gap-1"><i data-lucide="shield-check"
-                        class="w-3.5 h-3.5"></i> Sesión de Jefatura Habilitada</span>
-                    <span>•</span>
+                        class="w-3.5 h-3.5"></i> SesiÃ³n de Jefatura Habilitada</span>
+                    <span>â€¢</span>
                     <span class="text-amber-400 font-bold">NIVEL 5 // CONTROL TOTAL DEL CENSO</span>
                   </p>
                 </div>
@@ -1383,7 +1391,7 @@
                 <button onclick="openAddAgentModal()"
                   class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-bold uppercase transition-all shadow-md flex items-center gap-1.5">
                   <i data-lucide="user-plus" class="w-4 h-4"></i>
-                  <span>+ Añadir Agente</span>
+                  <span>+ AÃ±adir Agente</span>
                 </button>
                 <button onclick="exportRosterToClipboard()"
                   class="px-3.5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-bold uppercase transition-colors flex items-center gap-1.5"
@@ -1425,7 +1433,7 @@
                   <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                 </div>
                 <p id="kpi-pending-aspirants" class="text-2xl font-black text-amber-400 font-gobold">0</p>
-                <p class="text-[10px] text-amber-400/80 font-conthrax mt-0.5">Requieren asignación de rango</p>
+                <p class="text-[10px] text-amber-400/80 font-conthrax mt-0.5">Requieren asignaciÃ³n de rango</p>
               </div>
 
               <div class="glass-panel p-4 rounded-xl border border-red-500/30">
@@ -1446,15 +1454,27 @@
               </button>
               <button id="tab-btn-jefatura-audit" onclick="switchJefaturaTab('audit')" class="jefatura-tab-btn">
                 <i data-lucide="clipboard-list" class="w-4 h-4 text-amber-400"></i>
-                <span>Registro de Auditoría (Audit Log)</span>
+                <span>Registro de AuditorÃ­a (Audit Log)</span>
               </button>
               <button id="tab-btn-jefatura-escalafon" onclick="switchJefaturaTab('escalafon')" class="jefatura-tab-btn">
                 <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
-                <span>Jerarquía & Escalafón</span>
+                <span>JerarquÃ­a & EscalafÃ³n</span>
+              </button>
+              <button id="tab-btn-jefatura-subdivisions" onclick="switchJefaturaTab('subdivisions')" class="jefatura-tab-btn">
+                <i data-lucide="shield-half" class="w-4 h-4 text-blue-400"></i>
+                <span>Gestión Subdivisiones</span>
+              </button>
+              <button id="tab-btn-jefatura-solicitudes" onclick="switchJefaturaTab('solicitudes')" class="jefatura-tab-btn">
+                <i data-lucide="inbox" class="w-4 h-4 text-amber-400"></i>
+                <span>Solicitudes <span id="solicitudes-badge" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold">0</span></span>
+              </button>
+              <button id="tab-btn-jefatura-mensajes" onclick="switchJefaturaTab('mensajes')" class="jefatura-tab-btn">
+                <i data-lucide="message-square" class="w-4 h-4 text-emerald-400"></i>
+                <span>Mensajes <span id="mensajes-badge-jef" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold">0</span></span>
               </button>
             </div>
 
-            <!-- TAB CONTENT 1: CENSO DE PERSONAL & GESTIÓN DE ROLES -->
+            <!-- TAB CONTENT 1: CENSO DE PERSONAL & GESTIÃ“N DE ROLES -->
             <div id="tab-content-jefatura-censo" class="space-y-6">
 
               <!-- Filters & Realtime Search Bar -->
@@ -1469,7 +1489,7 @@
                   <button onclick="filterJefaturaRoster('all')"
                     class="jef-filter-btn px-3 py-1.5 rounded bg-amber-500 text-black font-bold uppercase">Todos</button>
                   <button onclick="filterJefaturaRoster('pending')"
-                    class="jef-filter-btn px-3 py-1.5 rounded bg-slate-800 text-amber-300 hover:bg-slate-700 uppercase">⚡
+                    class="jef-filter-btn px-3 py-1.5 rounded bg-slate-800 text-amber-300 hover:bg-slate-700 uppercase">âš¡
                     Pendientes (<span id="filter-pending-count">0</span>)</button>
                   <button onclick="filterJefaturaRoster('active')"
                     class="jef-filter-btn px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase">Activos</button>
@@ -1487,7 +1507,7 @@
 
             </div>
 
-            <!-- TAB CONTENT 2: REGISTRO DE AUDITORÍA (AUDIT LOGS) -->
+            <!-- TAB CONTENT 2: REGISTRO DE AUDITORÃA (AUDIT LOGS) -->
             <div id="tab-content-jefatura-audit" class="hidden space-y-4">
               <div class="glass-panel p-6 rounded-2xl border border-slate-800">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
@@ -1509,7 +1529,7 @@
               </div>
             </div>
 
-            <!-- TAB CONTENT 3: ESCALAFÓN POLICIAL & MATRIZ DE PERMISOS -->
+            <!-- TAB CONTENT 3: ESCALAFÃ“N POLICIAL & MATRIZ DE PERMISOS -->
             <div id="tab-content-jefatura-escalafon" class="hidden space-y-6">
               <div
                 class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-5 rounded-xl border border-slate-800">
@@ -1518,10 +1538,10 @@
                     <span
                       class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-conthrax text-[10px] font-bold">CONTROL
                       DE PRIVILEGIOS</span>
-                    <span class="text-xs text-slate-400 font-mono">MATRIZ DINÁMICA DE ACCESOS</span>
+                    <span class="text-xs text-slate-400 font-mono">MATRIZ DINÃMICA DE ACCESOS</span>
                   </div>
-                  <h3 class="text-xl sm:text-2xl font-black font-gobold text-white">Escalafón & Matriz de Permisos</h3>
-                  <p class="text-xs text-slate-400 font-mono mt-1">Crea nuevos rangos, modifica su jerarquía y asigna
+                  <h3 class="text-xl sm:text-2xl font-black font-gobold text-white">EscalafÃ³n & Matriz de Permisos</h3>
+                  <p class="text-xs text-slate-400 font-mono mt-1">Crea nuevos rangos, modifica su jerarquÃ­a y asigna
                     permisos granulares (ver, redactar, editar, eliminar) para cada nivel policial.</p>
                 </div>
                 <button id="jefatura-create-rank-btn" onclick="openRankEditor()"
@@ -1536,8 +1556,283 @@
               </div>
             </div>
 
+
+            <!-- TAB CONTENT 4: GESTION DE SUBDIVISIONES -->
+            <div id="tab-content-jefatura-subdivisions" class="hidden space-y-6">
+              <div class="glass-panel p-6 rounded-2xl border border-blue-500/30">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-5">
+                  <div>
+                    <h4 class="text-base font-black font-gobold text-white tracking-wide">Gestión de Subdivisiones</h4>
+                    <p class="text-xs font-conthrax text-slate-400">Asigna agentes a subdivisiones y designa jefes de unidad.</p>
+                  </div>
+                </div>
+                <!-- Subdivision panels grid -->
+                <div id="jef-subdivisions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <!-- Injected by renderJefaturaSubdivisionsTab() -->
+                </div>
+              </div>
+              <!-- Assign subdivision modal trigger -->
+              <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                <h5 class="text-sm font-black font-gobold text-white mb-4">Asignar Agente a Subdivisión</h5>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[10px] font-conthrax text-slate-400 uppercase mb-1">Agente (Discord ID o Nombre)</label>
+                    <input id="assign-subdiv-agent-search" type="text" placeholder="Buscar agente..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-conthrax text-white focus:outline-none focus:border-blue-500">
+                    <div id="assign-subdiv-agent-results" class="hidden mt-1 bg-slate-900 border border-slate-700 rounded-lg max-h-32 overflow-y-auto text-xs font-conthrax"></div>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-conthrax text-slate-400 uppercase mb-1">Subdivisión</label>
+                    <select id="assign-subdiv-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-conthrax text-white focus:outline-none focus:border-blue-500">
+                      <option value="">-- Sin Asignar --</option>
+                      <option value="RHD">RHD — Homicidios y Robos</option>
+                      <option value="GND">GND — Narcóticos y Pandillas</option>
+                      <option value="AIB">AIB — Asuntos Internos</option>
+                      <option value="CSI">CSI — Escena del Crimen</option>
+                      <option value="SWAT">SWAT — Operaciones Tácticas</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-conthrax text-slate-400 uppercase mb-1">Cargo en Subdivisión</label>
+                    <select id="assign-subdiv-role" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-conthrax text-white focus:outline-none focus:border-blue-500">
+                      <option value="miembro">Miembro</option>
+                      <option value="jefe">Jefe de Subdivisión</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <button onclick="assignSubdivisionToAgent()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    Asignar
+                  </button>
+                  <button onclick="removeSubdivisionFromAgent()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-red-950 border border-slate-700 hover:border-red-500 text-slate-300 hover:text-red-300 font-conthrax font-bold text-xs uppercase transition-colors flex items-center gap-1.5">
+                    <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+                    Retirar de Subdivisión
+                  </button>
+                </div>
+                <p id="assign-subdiv-status" class="hidden mt-2 text-xs font-conthrax text-emerald-400"></p>
+              </div>
+            </div>
+
+            <!-- TAB CONTENT 5: SOLICITUDES DE SUBDIVISION CHIEFS -->
+            <div id="tab-content-jefatura-solicitudes" class="hidden space-y-4">
+              <div class="glass-panel p-6 rounded-2xl border border-amber-500/30">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                  <div>
+                    <h4 class="text-base font-black font-gobold text-white tracking-wide">Solicitudes Pendientes de Jefes de Subdivisión</h4>
+                    <p class="text-xs font-conthrax text-slate-400">Altas y bajas solicitadas por jefes de subdivisión en espera de aprobación de Jefatura.</p>
+                  </div>
+                </div>
+                <div id="solicitudes-list" class="space-y-3 font-conthrax text-xs">
+                  <!-- Injected by renderSolicitudesList() -->
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB CONTENT 6: MENSAJES CON AGENTES -->
+            <div id="tab-content-jefatura-mensajes" class="hidden space-y-4">
+              <div class="glass-panel p-6 rounded-2xl border border-emerald-500/30">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+                  <h4 class="text-base font-black font-gobold text-white tracking-wide">Bandeja de Mensajes — Agentes</h4>
+                </div>
+                <div id="jefatura-mensajes-list" class="space-y-2 max-h-[420px] overflow-y-auto pr-1 font-conthrax text-xs">
+                  <!-- Injected by renderJefaturaMensajes() -->
+                </div>
+                <!-- Reply panel -->
+                <div id="jef-reply-panel" class="hidden mt-4 pt-4 border-t border-slate-800">
+                  <p class="text-[10px] text-slate-400 uppercase mb-2">Respondiendo a: <span id="jef-reply-to" class="text-emerald-400 font-bold"></span></p>
+                  <div class="flex gap-2">
+                    <input id="jef-reply-input" type="text" placeholder="Escribe tu respuesta..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-conthrax text-white focus:outline-none focus:border-emerald-500">
+                    <button onclick="sendJefaturaReply()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-1.5">
+                      <i data-lucide="send" class="w-3.5 h-3.5"></i> Enviar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
+        </div>
+      </section>
+
+      <!-- MI PERFIL DE AGENTE -->
+      <section id="mi-perfil" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <!-- Header -->
+          <div class="mb-10 text-center">
+            <span class="stamp-classified text-xs mb-4 inline-block">REGISTRO PERSONAL // ACCESO AUTORIZADO</span>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold text-white tracking-wide mb-2">Mi Perfil de Agente</h2>
+            <p class="text-slate-400 font-conthrax text-sm">Panel personal con tu información en la División, subdivisión asignada y comunicaciones.</p>
+          </div>
+
+          <!-- NOT LOGGED IN STATE -->
+          <div id="perfil-denied-view" class="text-center py-16 glass-panel rounded-2xl border border-slate-800">
+            <i data-lucide="user-x" class="w-12 h-12 text-slate-600 mx-auto mb-4"></i>
+            <p class="font-gobold text-white text-xl mb-2">Sesión no iniciada</p>
+            <p class="text-slate-400 font-conthrax text-sm mb-6">Debes iniciar sesión con Discord para ver tu perfil.</p>
+            <button onclick="openDiscordAuthModal()" class="px-6 py-3 rounded-lg bg-[#5865F2] hover:bg-[#4752c4] text-white font-conthrax font-bold text-sm uppercase transition-all shadow-lg flex items-center gap-2 mx-auto">
+              <i data-lucide="log-in" class="w-4 h-4"></i> Iniciar Sesión con Discord
+            </button>
+          </div>
+
+          <!-- LOGGED IN STATE -->
+          <div id="perfil-authorized-view" class="hidden space-y-6">
+
+            <!-- Profile Card -->
+            <div class="glass-panel rounded-2xl p-6 border border-cyan-500/30 flex flex-col md:flex-row items-center md:items-start gap-6">
+              <div class="relative shrink-0">
+                <img id="perfil-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar" class="w-24 h-24 rounded-2xl object-cover border-2 border-cyan-400 shadow-xl">
+                <span class="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-emerald-400 border-2 border-black"></span>
+              </div>
+              <div class="flex-1 text-center md:text-left">
+                <div class="flex flex-wrap items-center gap-2 justify-center md:justify-start mb-1">
+                  <h3 id="perfil-nombre-ic" class="text-xl font-black font-gobold text-white">—</h3>
+                  <span id="perfil-placa" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-conthrax text-xs font-bold border border-cyan-500/30">#---</span>
+                  <span id="perfil-estado-badge" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-conthrax text-xs font-bold">ACTIVO</span>
+                </div>
+                <p id="perfil-rango-label" class="text-cyan-400 font-conthrax text-sm font-bold mb-1">— Rango —</p>
+                <p id="perfil-discord-tag" class="text-slate-400 font-mono text-xs">@usuario</p>
+                <div class="flex flex-wrap gap-3 mt-3 justify-center md:justify-start">
+                  <div class="flex items-center gap-1.5 text-xs font-conthrax text-slate-400">
+                    <i data-lucide="shield-half" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <span>Subdivisión: <span id="perfil-subdivision" class="text-blue-300 font-bold">Sin Asignar</span></span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-xs font-conthrax text-slate-400">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>Alta: <span id="perfil-join-date" class="text-amber-300">—</span></span>
+                  </div>
+                </div>
+              </div>
+              <!-- Subdivision Chief badge -->
+              <div id="perfil-chief-badge" class="hidden px-3 py-2 rounded-xl bg-blue-900/40 border border-blue-500/40 text-center shrink-0">
+                <i data-lucide="star" class="w-5 h-5 text-blue-400 mx-auto mb-1"></i>
+                <p class="text-blue-300 font-conthrax text-[10px] font-bold uppercase">Jefe de Subdivisión</p>
+              </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
+              <div class="glass-panel p-4 rounded-xl border border-slate-800">
+                <p class="text-[10px] font-conthrax text-slate-500 uppercase mb-1">Nivel de Rango</p>
+                <p id="perfil-nivel" class="text-2xl font-black text-cyan-400 font-gobold">—</p>
+              </div>
+              <div class="glass-panel p-4 rounded-xl border border-slate-800">
+                <p class="text-[10px] font-conthrax text-slate-500 uppercase mb-1">Mis Informes</p>
+                <p id="perfil-mis-informes-count" class="text-2xl font-black text-white font-gobold">0</p>
+              </div>
+              <div class="glass-panel p-4 rounded-xl border border-amber-500/30">
+                <p class="text-[10px] font-conthrax text-slate-500 uppercase mb-1">Faltas Activas</p>
+                <p id="perfil-faltas-count" class="text-2xl font-black text-amber-400 font-gobold">0</p>
+              </div>
+              <div class="glass-panel p-4 rounded-xl border border-slate-800">
+                <p class="text-[10px] font-conthrax text-slate-500 uppercase mb-1">Mensajes No Leídos</p>
+                <p id="perfil-mensajes-count" class="text-2xl font-black text-emerald-400 font-gobold">0</p>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-800 gap-1 overflow-x-auto">
+              <button id="tab-btn-perfil-info" onclick="switchPerfilTab('info')" class="jefatura-tab-btn active">
+                <i data-lucide="user" class="w-4 h-4"></i><span>Expediente Personal</span>
+              </button>
+              <button id="tab-btn-perfil-faltas" onclick="switchPerfilTab('faltas')" class="jefatura-tab-btn">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i><span>Faltas &amp; Sanciones</span>
+              </button>
+              <button id="tab-btn-perfil-informes" onclick="switchPerfilTab('informes')" class="jefatura-tab-btn">
+                <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i><span>Mis Informes</span>
+              </button>
+              <button id="tab-btn-perfil-chat" onclick="switchPerfilTab('chat')" class="jefatura-tab-btn">
+                <i data-lucide="message-square" class="w-4 h-4 text-emerald-400"></i>
+                <span>Chat con Jefatura <span id="perfil-chat-unread" class="hidden ml-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-bold">0</span></span>
+              </button>
+            </div>
+
+            <!-- Tab: Expediente Personal -->
+            <div id="tab-content-perfil-info" class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-conthrax text-sm">
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Nombre IC</span><p id="perfil-info-nombre" class="text-white font-bold">—</p></div>
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Discord Tag</span><p id="perfil-info-tag" class="text-white font-mono">—</p></div>
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Placa</span><p id="perfil-info-placa" class="text-cyan-300 font-bold">—</p></div>
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Rango</span><p id="perfil-info-rango" class="text-amber-300 font-bold">—</p></div>
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Subdivisión Asignada</span><p id="perfil-info-subdivision" class="text-blue-300 font-bold">Sin Asignar</p></div>
+                <div><span class="text-slate-500 text-xs uppercase block mb-0.5">Estado</span><p id="perfil-info-estado" class="text-emerald-300 font-bold">—</p></div>
+              </div>
+              <div>
+                <span class="text-slate-500 text-xs uppercase block mb-1">Notas de Jefatura</span>
+                <p id="perfil-info-notas" class="text-slate-300 font-mono text-xs bg-slate-900 rounded-lg p-3 border border-slate-800">Sin notas.</p>
+              </div>
+              <div>
+                <span class="text-slate-500 text-xs uppercase block mb-1">Condecoraciones</span>
+                <div id="perfil-info-awards" class="flex flex-wrap gap-2"></div>
+              </div>
+            </div>
+
+            <!-- Tab: Faltas & Sanciones -->
+            <div id="tab-content-perfil-faltas" class="hidden glass-panel p-6 rounded-2xl border border-amber-500/20 space-y-3">
+              <div class="flex items-center justify-between mb-2">
+                <h5 class="font-black font-gobold text-white text-base">Historial de Faltas y Sanciones</h5>
+                <span class="text-[10px] font-conthrax text-slate-500">Solo visible para ti y Jefatura</span>
+              </div>
+              <div id="perfil-faltas-list" class="space-y-2 font-conthrax text-xs">
+                <!-- Injected by renderPerfilFaltas() -->
+              </div>
+            </div>
+
+            <!-- Tab: Mis Informes -->
+            <div id="tab-content-perfil-informes" class="hidden space-y-4">
+              <div class="flex items-center justify-between">
+                <h5 class="font-black font-gobold text-white text-base">Mis Informes Redactados</h5>
+                <button onclick="openConfidentialReportModal()" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-1.5">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Nuevo Informe
+                </button>
+              </div>
+              <div id="perfil-mis-informes-list" class="space-y-3 font-conthrax text-xs">
+                <!-- Injected by renderPerfilMisInformes() -->
+              </div>
+            </div>
+
+            <!-- Tab: Chat con Jefatura -->
+            <div id="tab-content-perfil-chat" class="hidden glass-panel p-6 rounded-2xl border border-emerald-500/20">
+              <h5 class="font-black font-gobold text-white text-base mb-4">Canal Privado — Jefatura</h5>
+              <div id="perfil-chat-messages" class="space-y-2 max-h-[400px] overflow-y-auto pr-1 font-conthrax text-xs mb-4 flex flex-col">
+                <!-- Injected by renderPerfilChat() -->
+              </div>
+              <div class="flex gap-2 pt-3 border-t border-slate-800">
+                <input id="perfil-chat-input" type="text" placeholder="Escribe tu mensaje a Jefatura..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-conthrax text-white focus:outline-none focus:border-emerald-500">
+                <button onclick="sendPerfilChatMessage()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-1.5">
+                  <i data-lucide="send" class="w-3.5 h-3.5"></i> Enviar
+                </button>
+              </div>
+            </div>
+
+            <!-- Subdivision Chief Panel: extra actions -->
+            <div id="perfil-chief-panel" class="hidden glass-panel p-6 rounded-2xl border border-blue-500/30 space-y-4">
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="star" class="w-5 h-5 text-blue-400"></i>
+                <h5 class="font-black font-gobold text-white text-base">Panel Jefe de Subdivisión</h5>
+              </div>
+              <p class="text-xs font-conthrax text-slate-400">Como jefe de subdivisión puedes solicitar altas y bajas de agentes en tu unidad. Jefatura las aprobará o rechazará.</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button onclick="openChiefAddAgentModal()" class="px-4 py-2.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-blue-300 font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-2">
+                  <i data-lucide="user-plus" class="w-4 h-4"></i> Solicitar Alta de Agente
+                </button>
+                <button onclick="openChiefRemoveAgentModal()" class="px-4 py-2.5 rounded-lg bg-red-900/20 hover:bg-red-900/40 border border-red-500/40 text-red-300 font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-2">
+                  <i data-lucide="user-minus" class="w-4 h-4"></i> Solicitar Baja de Agente
+                </button>
+                <button onclick="switchPerfilTab('chat')" class="px-4 py-2.5 rounded-lg bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-500/40 text-emerald-300 font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-2">
+                  <i data-lucide="message-square" class="w-4 h-4"></i> Contactar Jefatura
+                </button>
+                <button onclick="openAnnouncementModal()" class="px-4 py-2.5 rounded-lg bg-amber-900/20 hover:bg-amber-900/40 border border-amber-500/40 text-amber-300 font-conthrax font-bold text-xs uppercase transition-all flex items-center gap-2">
+                  <i data-lucide="megaphone" class="w-4 h-4"></i> Crear Anuncio en Subdivisión
+                </button>
+              </div>
+              <div>
+                <h6 class="text-[10px] font-conthrax text-slate-500 uppercase mb-2">Miembros de mi Subdivisión</h6>
+                <div id="chief-subdivision-members" class="grid grid-cols-1 md:grid-cols-2 gap-2 font-conthrax text-xs"></div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -1549,20 +1844,20 @@
             <div class="flex items-center gap-3">
               <div
                 class="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold">
-                ★
+                â˜…
               </div>
               <div>
                 <p class="text-white font-gobold text-sm tracking-wider font-bold">DETECTIVE DIVISION // ROLEPLAY
                   POLICIAL</p>
-                <p class="text-[11px] text-slate-500 font-conthrax">Servicio de Investigación Criminal Metropolitano</p>
+                <p class="text-[11px] text-slate-500 font-conthrax">Servicio de InvestigaciÃ³n Criminal Metropolitano</p>
               </div>
             </div>
 
             <div class="text-center md:text-right">
-              <p class="text-slate-400">© 2026 Bureau de Investigaciones. Todos los derechos reservados.</p>
+              <p class="text-slate-400">Â© 2026 Bureau de Investigaciones. Todos los derechos reservados.</p>
               <p class="text-[10px] text-slate-600 mt-1">
-                AVISO LEGAL: Esta plataforma es una herramienta temática y de ficción exclusiva para servidores de
-                Roleplay (GTA V RP / FiveM / RedM). No guarda relación con cuerpos policiales de la vida real.
+                AVISO LEGAL: Esta plataforma es una herramienta temÃ¡tica y de ficciÃ³n exclusiva para servidores de
+                Roleplay (GTA V RP / FiveM / RedM). No guarda relaciÃ³n con cuerpos policiales de la vida real.
               </p>
             </div>
 
@@ -1626,7 +1921,7 @@
             <div class="flex items-center gap-2">
               <h3 class="text-base sm:text-lg font-black font-gobold text-white tracking-wide">Discord OAuth2</h3>
               <span class="discord-bot-pill">OAUTH2</span>
-              <span class="text-[10px] text-emerald-400 font-conthrax font-bold flex items-center gap-0.5">✓
+              <span class="text-[10px] text-emerald-400 font-conthrax font-bold flex items-center gap-0.5">âœ“
                 OFICIAL</span>
             </div>
             <p class="text-[11px] font-conthrax text-slate-400">Client ID: 1271954022139691038</p>
@@ -1644,11 +1939,11 @@
         <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
           <div class="flex items-center gap-2 text-amber-400 font-bold">
             <i data-lucide="shield-check" class="w-4 h-4 text-[#5865F2]"></i>
-            <span>Verificación Oficial sin Contraseñas</span>
+            <span>VerificaciÃ³n Oficial sin ContraseÃ±as</span>
           </div>
           <p class="text-slate-400 font-mono text-[11px] leading-relaxed">
-            Inicia sesión de forma segura y directa a través del portal de <strong>Discord OAuth2</strong>. No necesitas
-            ingresar ningún PIN ni contraseña: tu identidad y avatar se sincronizan automáticamente con tu cuenta de
+            Inicia sesiÃ³n de forma segura y directa a travÃ©s del portal de <strong>Discord OAuth2</strong>. No necesitas
+            ingresar ningÃºn PIN ni contraseÃ±a: tu identidad y avatar se sincronizan automÃ¡ticamente con tu cuenta de
             Discord.
           </p>
         </div>
@@ -1665,75 +1960,9 @@
           </button>
 
           <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Redirección: detectivedivision.vercel.app</span>
+            <span>RedirecciÃ³n: detectivedivision.vercel.app</span>
             <span class="text-emerald-400 flex items-center gap-1"><span
                 class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> OAuth2 Listo</span>
-          </div>
-        </div>
-
-        <div class="relative flex py-1 items-center">
-          <div class="flex-grow border-t border-slate-800"></div>
-          <span class="flex-shrink mx-3 text-slate-500 font-conthrax text-[10px] uppercase">O probar perfiles de
-            jerarquía policial</span>
-          <div class="flex-grow border-t border-slate-800"></div>
-        </div>
-
-        <!-- Testing / Demo Role Selectors (No Password Needed) -->
-        <div>
-          <label class="block text-slate-400 font-conthrax text-[10px] uppercase mb-2">
-            Perfiles de prueba en rol (Acceso directo sin clave):
-          </label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left font-conthrax text-xs">
-
-            <button type="button" onclick="authenticateWithBotRole('capitan')"
-              class="p-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition-all flex items-center justify-between group">
-              <div>
-                <span class="font-bold block text-white group-hover:text-amber-400">Cap. David Vance (#101)</span>
-                <span class="text-[9px] text-amber-400/80">Rol: [Mando Policial] • Nivel 5</span>
-              </div>
-              <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
-            </button>
-
-            <button type="button" onclick="authenticateWithBotRole('teniente')"
-              class="p-2.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 transition-all flex items-center justify-between group">
-              <div>
-                <span class="font-bold block text-white group-hover:text-blue-400">Tte. James Sterling (#201)</span>
-                <span class="text-[9px] text-blue-400/80">Rol: [Teniente RHD] • Nivel 4</span>
-              </div>
-              <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
-            </button>
-
-            <button type="button" onclick="authenticateWithBotRole('det3')"
-              class="p-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 transition-all flex items-center justify-between group">
-              <div>
-                <span class="font-bold block text-white group-hover:text-purple-400">Det. III Marcus Cole (#404)</span>
-                <span class="text-[9px] text-purple-400/80">Rol: [Detective III GND] • Nivel 3</span>
-              </div>
-              <i data-lucide="shield-check" class="w-4 h-4 text-purple-400"></i>
-            </button>
-
-            <button type="button" onclick="authenticateWithBotRole('det1')"
-              class="p-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 transition-all flex items-center justify-between group">
-              <div>
-                <span class="font-bold block text-white group-hover:text-emerald-400">Det. I Sarah Connor (#522)</span>
-                <span class="text-[9px] text-emerald-400/80">Rol: [Detective I] • Nivel 2</span>
-              </div>
-              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-            </button>
-
-          </div>
-
-          <!-- Civil Demo Option (Testing No-Rank Rejection) -->
-          <div class="mt-2">
-            <button type="button" onclick="authenticateWithBotRole('civil')"
-              class="w-full p-2.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-300 transition-all flex items-center justify-between font-conthrax text-xs group">
-              <div class="text-left">
-                <span class="font-bold block text-white group-hover:text-red-300">Usuario Civil / Sin Rango
-                  Policial</span>
-                <span class="text-[9px] text-red-400/80">Rol: [Ciudadano] • Comprobar cómo se bloquea el acceso</span>
-              </div>
-              <span class="px-2 py-0.5 rounded bg-red-900/60 text-red-300 text-[10px] font-bold">Probar Rechazo</span>
-            </button>
           </div>
         </div>
 
@@ -1758,7 +1987,7 @@
           <div>
             <span id="view-conf-code" class="text-xs font-conthrax text-red-400 font-bold block">INF-CONF-2026-01</span>
             <h3 id="view-conf-title" class="text-base sm:text-xl font-black font-gobold text-white tracking-wide">Minuta
-              de Intervención Telefónica</h3>
+              de IntervenciÃ³n TelefÃ³nica</h3>
           </div>
         </div>
         <button onclick="closeModal('confidential-report-modal')"
@@ -1859,7 +2088,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Título de la Diligencia *</label>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">TÃ­tulo de la Diligencia *</label>
             <input type="text" id="new-conf-title" required placeholder="Ej: Minuta de Vigilancia en Muelle 4"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
           </div>
@@ -1869,8 +2098,8 @@
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
               <option value="vigilancia">Escuchas & Vigilancia</option>
               <option value="allanamiento">Acta de Allanamiento / Registro</option>
-              <option value="decomiso">Acta de Decomiso Balístico / Sustancias</option>
-              <option value="interrogatorio">Acta de Declaración de Sospechoso</option>
+              <option value="decomiso">Acta de Decomiso BalÃ­stico / Sustancias</option>
+              <option value="interrogatorio">Acta de DeclaraciÃ³n de Sospechoso</option>
               <option value="otro">Otro Informe de Inteligencia</option>
             </select>
           </div>
@@ -1885,10 +2114,10 @@
 
         <div>
           <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">
-            Evidencias / Anexos <span class="text-slate-500 normal-case font-normal">(Una por línea)</span>
+            Evidencias / Anexos <span class="text-slate-500 normal-case font-normal">(Una por lÃ­nea)</span>
           </label>
           <textarea id="new-conf-evidence" rows="3"
-            placeholder="Grabación de llamada con orden judicial #441&#10;Fotografía de matrícula y sospechoso en la escena&#10;Arma decomisada remitida a laboratorio balístico CSI"
+            placeholder="GrabaciÃ³n de llamada con orden judicial #441&#10;FotografÃ­a de matrÃ­cula y sospechoso en la escena&#10;Arma decomisada remitida a laboratorio balÃ­stico CSI"
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-xs focus:outline-none focus:border-red-500"></textarea>
         </div>
 
@@ -1926,8 +2155,8 @@
           <div>
             <h3 id="editor-modal-title" class="text-base sm:text-xl font-black font-gobold text-white tracking-wide">
               MODIFICAR EXPEDIENTE POLICIAL</h3>
-            <p class="text-[10px] sm:text-[11px] font-conthrax text-amber-400">Panel de Redacción & Archivo de la
-              División de Detectives</p>
+            <p class="text-[10px] sm:text-[11px] font-conthrax text-amber-400">Panel de RedacciÃ³n & Archivo de la
+              DivisiÃ³n de Detectives</p>
           </div>
         </div>
         <button onclick="closeReportEditor()" class="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -1942,16 +2171,16 @@
         <!-- Row 1: ID & Title -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Código de
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">CÃ³digo de
               Expediente</label>
             <input type="text" id="edit-case-id" readonly
               class="w-full bg-slate-950/80 border border-slate-700/60 rounded-lg px-3 py-2 text-amber-400 font-conthrax text-xs focus:outline-none cursor-not-allowed">
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Título / Denominación
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">TÃ­tulo / DenominaciÃ³n
               del Caso *</label>
             <input type="text" id="edit-case-title" required
-              placeholder="Ej: Asalto al Banco Fleeca: Operación Red Velvet"
+              placeholder="Ej: Asalto al Banco Fleeca: OperaciÃ³n Red Velvet"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
           </div>
         </div>
@@ -1959,18 +2188,18 @@
         <!-- Row 2: Division, Category, Status Type -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">División a
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">DivisiÃ³n a
               Cargo</label>
             <input type="text" id="edit-case-division" placeholder="RHD - Robos & Homicidios"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
           </div>
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Categoría de
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">CategorÃ­a de
               Filtro</label>
             <select id="edit-case-category"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
               <option value="homicide">Homicidios (RHD)</option>
-              <option value="narcotics">Narcóticos & Armas (GND)</option>
+              <option value="narcotics">NarcÃ³ticos & Armas (GND)</option>
               <option value="robbery">Robos Agravados</option>
               <option value="missing">Desapariciones / Secuestros</option>
               <option value="internal">Asuntos Internos (IAD)</option>
@@ -1981,9 +2210,9 @@
               (Badge)</label>
             <select id="edit-case-statustype"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
-              <option value="active">Activo (Ámbar)</option>
+              <option value="active">Activo (Ãmbar)</option>
               <option value="warrant">Orden de Captura (Rojo)</option>
-              <option value="trial">En Juicio / Audiencia (Púrpura)</option>
+              <option value="trial">En Juicio / Audiencia (PÃºrpura)</option>
               <option value="solved">Resuelto / Sentenciado (Verde)</option>
             </select>
           </div>
@@ -1994,13 +2223,13 @@
           <div>
             <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Texto de
               Estado</label>
-            <input type="text" id="edit-case-status" placeholder="BAJO INVESTIGACIÓN / PRÓFUGO"
+            <input type="text" id="edit-case-status" placeholder="BAJO INVESTIGACIÃ“N / PRÃ“FUGO"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
           </div>
           <div>
             <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Nivel de
               Prioridad</label>
-            <input type="text" id="edit-case-priority" placeholder="CÓDIGO 3 (ALTA) / MÁXIMA PRIORIDAD"
+            <input type="text" id="edit-case-priority" placeholder="CÃ“DIGO 3 (ALTA) / MÃXIMA PRIORIDAD"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
           </div>
           <div>
@@ -2020,7 +2249,7 @@
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
           </div>
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Ubicación / Escena
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">UbicaciÃ³n / Escena
               RP</label>
             <input type="text" id="edit-case-location" placeholder="Los Santos International / Rockford Hills"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
@@ -2029,7 +2258,7 @@
 
         <!-- Row 5: Photo URL -->
         <div>
-          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">URL Fotografía Escena /
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">URL FotografÃ­a Escena /
             Sospechoso</label>
           <input type="url" id="edit-case-image" placeholder="https://images.unsplash.com/photo-..."
             class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors">
@@ -2040,28 +2269,28 @@
           <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Sumario / Resumen de
             Hechos *</label>
           <textarea id="edit-case-summary" rows="3" required
-            placeholder="Detalle cronológico de los sucesos, pesquisas realizadas y hallazgos preliminares..."
+            placeholder="Detalle cronolÃ³gico de los sucesos, pesquisas realizadas y hallazgos preliminares..."
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"></textarea>
         </div>
 
         <!-- Row 7: Evidence list (one per line) -->
         <div>
           <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">
-            Indicios / Pruebas Forenses <span class="text-slate-500 normal-case font-normal">(Una por línea)</span>
+            Indicios / Pruebas Forenses <span class="text-slate-500 normal-case font-normal">(Una por lÃ­nea)</span>
           </label>
           <textarea id="edit-case-evidence" rows="3"
-            placeholder="Casquillos 9mm percutados encontrados junto a la entrada&#10;Grabación de cámara de seguridad con matrícula del vehículo&#10;Huellas dactilares levantadas por perito CSI"
+            placeholder="Casquillos 9mm percutados encontrados junto a la entrada&#10;GrabaciÃ³n de cÃ¡mara de seguridad con matrÃ­cula del vehÃ­culo&#10;Huellas dactilares levantadas por perito CSI"
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"></textarea>
         </div>
 
         <!-- Row 8: Suspects list (one per line: Name | Role | Status) -->
         <div>
           <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">
-            Sospechosos & Personas de Interés <span class="text-slate-500 normal-case font-normal">(Formato: Nombre |
+            Sospechosos & Personas de InterÃ©s <span class="text-slate-500 normal-case font-normal">(Formato: Nombre |
               Rol | Estado)</span>
           </label>
           <textarea id="edit-case-suspects" rows="3"
-            placeholder="Viktor 'El Capitán' Kozlov | Coordinador de envío | Prófugo&#10;Sujeto Desconocido con pasamontañas | Conductor del vehículo de fuga | En Búsqueda"
+            placeholder="Viktor 'El CapitÃ¡n' Kozlov | Coordinador de envÃ­o | PrÃ³fugo&#10;Sujeto Desconocido con pasamontaÃ±as | Conductor del vehÃ­culo de fuga | En BÃºsqueda"
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500 transition-colors"></textarea>
         </div>
 
@@ -2136,7 +2365,7 @@
 
           <!-- Placa -->
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Número de Placa
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">NÃºmero de Placa
               (#Badge)</label>
             <input type="text" id="edit-agent-badge" required placeholder="ej: #404-DIV"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
@@ -2147,11 +2376,11 @@
           <!-- Rango Policial -->
           <div>
             <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Rango en la
-              División</label>
+              DivisiÃ³n</label>
             <select id="edit-agent-rank"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
-              <option value="capitan">Capitán de División (Nivel 5 // Mando Supremo)</option>
-              <option value="teniente">Teniente de División (Nivel 4 // Submando)</option>
+              <option value="capitan">CapitÃ¡n de DivisiÃ³n (Nivel 5 // Mando Supremo)</option>
+              <option value="teniente">Teniente de DivisiÃ³n (Nivel 4 // Submando)</option>
               <option value="sgt">Sargento de Detectives (Nivel 3.5 // Supervisor)</option>
               <option value="det3">Detective III (Nivel 3 // Especialista)</option>
               <option value="det2">Detective II (Nivel 2 // Operativo)</option>
@@ -2160,19 +2389,19 @@
             </select>
           </div>
 
-          <!-- División -->
+          <!-- DivisiÃ³n -->
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">División
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">DivisiÃ³n
               Especializada</label>
             <select id="edit-agent-division"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
               <option value="Mando Supremo // Bureau Executive">Mando Supremo // Bureau Executive</option>
               <option value="RHD - Robos & Homicidios">RHD - Robos & Homicidios</option>
-              <option value="GND - Narcóticos & Infiltración">GND - Narcóticos & Infiltración</option>
-              <option value="CSI - Forense y Balística">CSI - Forense y Balística</option>
+              <option value="GND - NarcÃ³ticos & InfiltraciÃ³n">GND - NarcÃ³ticos & InfiltraciÃ³n</option>
+              <option value="CSI - Forense y BalÃ­stica">CSI - Forense y BalÃ­stica</option>
               <option value="CID - Ciberdelincuencia & Fraude">CID - Ciberdelincuencia & Fraude</option>
               <option value="IAD - Asuntos Internos & Disciplina">IAD - Asuntos Internos & Disciplina</option>
-              <option value="Sin Asignar // En Evaluación">Sin Asignar // En Evaluación</option>
+              <option value="Sin Asignar // En EvaluaciÃ³n">Sin Asignar // En EvaluaciÃ³n</option>
             </select>
           </div>
         </div>
@@ -2185,7 +2414,7 @@
             <select id="edit-agent-status"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
               <option value="Activo">Activo (Habilitado con Credenciales)</option>
-              <option value="Pendiente">Pendiente (En espera de Asignación)</option>
+              <option value="Pendiente">Pendiente (En espera de AsignaciÃ³n)</option>
               <option value="Suspendido">Suspendido (Inhabilitado Temporalmente)</option>
               <option value="Expulsado">Expulsado (Baja Definitiva del Cuerpo)</option>
             </select>
@@ -2219,12 +2448,12 @@
             <label
               class="flex items-center gap-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-emerald-500/40 cursor-pointer">
               <input type="checkbox" id="award-tirador" class="rounded border-slate-700 text-emerald-500 focus:ring-0">
-              <span class="text-emerald-300 text-[11px]">Distintivo de Tirador Táctico</span>
+              <span class="text-emerald-300 text-[11px]">Distintivo de Tirador TÃ¡ctico</span>
             </label>
             <label
               class="flex items-center gap-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-purple-500/40 cursor-pointer">
               <input type="checkbox" id="award-merito" class="rounded border-slate-700 text-purple-500 focus:ring-0">
-              <span class="text-purple-300 text-[11px]">Estrella al Mérito de División</span>
+              <span class="text-purple-300 text-[11px]">Estrella al MÃ©rito de DivisiÃ³n</span>
             </label>
           </div>
         </div>
@@ -2235,7 +2464,7 @@
             Expediente Interno & Anotaciones Disciplinarias
           </label>
           <textarea id="edit-agent-notes" rows="3"
-            placeholder="Anotaciones de desempeño, sanciones de Asuntos Internos, cursos aprobados..."
+            placeholder="Anotaciones de desempeÃ±o, sanciones de Asuntos Internos, cursos aprobados..."
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-mono text-xs focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
         </div>
 
@@ -2281,7 +2510,7 @@
           <div>
             <h3 class="text-base sm:text-xl font-black font-gobold text-white tracking-wide">Incorporar Agente al Censo
             </h3>
-            <p class="text-xs font-conthrax text-slate-400">Pre-registro de detective o vinculación por Discord ID</p>
+            <p class="text-xs font-conthrax text-slate-400">Pre-registro de detective o vinculaciÃ³n por Discord ID</p>
           </div>
         </div>
         <button onclick="closeModal('add-agent-modal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -2292,7 +2521,7 @@
       <form id="add-agent-form" onsubmit="saveNewAgent(event)" class="p-5 sm:p-6 space-y-4 font-mono text-xs">
         <div>
           <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Discord User ID
-            (Numérico)</label>
+            (NumÃ©rico)</label>
           <input type="text" id="new-agent-discord-id" required placeholder="ej: 1271954022139691038"
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-amber-500">
           <span class="text-[10px] text-slate-500 font-mono mt-1 block">ID de Discord obtenido con clic derecho en
@@ -2317,7 +2546,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">Número de Placa
+            <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">NÃºmero de Placa
               (#Badge)</label>
             <input type="text" id="new-agent-badge" required placeholder="ej: #302-DIV"
               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
@@ -2331,23 +2560,23 @@
               <option value="det2">Detective II (Nivel 2 // Operativo)</option>
               <option value="det3">Detective III (Nivel 3 // Especialista)</option>
               <option value="sgt">Sargento de Detectives (Nivel 3.5)</option>
-              <option value="teniente">Teniente de División (Nivel 4 // Mando)</option>
+              <option value="teniente">Teniente de DivisiÃ³n (Nivel 4 // Mando)</option>
               <option value="aspirante">Aspirante (Nivel 0 // Sin Acceso)</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">División
+          <label class="block text-slate-300 font-conthrax text-[10px] uppercase mb-1 font-bold">DivisiÃ³n
             Especializada</label>
           <select id="new-agent-division"
             class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-conthrax text-xs focus:outline-none focus:border-amber-500">
             <option value="RHD - Robos & Homicidios">RHD - Robos & Homicidios</option>
-            <option value="GND - Narcóticos & Infiltración">GND - Narcóticos & Infiltración</option>
-            <option value="CSI - Forense y Balística">CSI - Forense y Balística</option>
+            <option value="GND - NarcÃ³ticos & InfiltraciÃ³n">GND - NarcÃ³ticos & InfiltraciÃ³n</option>
+            <option value="CSI - Forense y BalÃ­stica">CSI - Forense y BalÃ­stica</option>
             <option value="CID - Ciberdelincuencia & Fraude">CID - Ciberdelincuencia & Fraude</option>
             <option value="IAD - Asuntos Internos & Disciplina">IAD - Asuntos Internos & Disciplina</option>
-            <option value="Sin Asignar // En Evaluación">Sin Asignar // En Evaluación</option>
+            <option value="Sin Asignar // En EvaluaciÃ³n">Sin Asignar // En EvaluaciÃ³n</option>
           </select>
         </div>
 
@@ -2366,7 +2595,7 @@
     </div>
   </div>
 
-  <!-- MODAL: GESTIÓN DE RANGO & MATRIZ DE PERMISOS -->
+  <!-- MODAL: GESTIÃ“N DE RANGO & MATRIZ DE PERMISOS -->
   <div id="rank-editor-modal"
     class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
     <div
@@ -2379,7 +2608,7 @@
           <div
             class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 text-xl"
             id="rank-editor-header-icon">
-            👑
+            ðŸ‘‘
           </div>
           <div>
             <div class="flex items-center gap-2">
@@ -2411,7 +2640,7 @@
         <div
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-slate-950/70 p-4 rounded-xl border border-slate-800">
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Identificador Único (Slug)
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Identificador Ãšnico (Slug)
               *</label>
             <input type="text" id="rank-edit-id" required placeholder="Ej: inspector_jefe"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500 font-mono">
@@ -2425,14 +2654,14 @@
           </div>
 
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel Jerárquico (0 a 5) *</label>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel JerÃ¡rquico (0 a 5) *</label>
             <input type="number" id="rank-edit-level" step="0.1" min="0" max="5" required placeholder="3.5"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-400 font-bold text-xs focus:outline-none focus:border-amber-500 font-mono">
           </div>
 
           <div>
             <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Icono / Emoji</label>
-            <input type="text" id="rank-edit-icon" maxlength="4" placeholder="👑 o ⭐ o 🛡️"
+            <input type="text" id="rank-edit-icon" maxlength="4" placeholder="ðŸ‘‘ o â­ o ðŸ›¡ï¸"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500 text-center text-base">
           </div>
 
@@ -2440,10 +2669,10 @@
             <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Estilo de Placa Visual</label>
             <select id="rank-edit-badgeclass"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-amber-500">
-              <option value="rank-badge-capitan">Oro Ámbar (Mando Supremo)</option>
+              <option value="rank-badge-capitan">Oro Ãmbar (Mando Supremo)</option>
               <option value="rank-badge-teniente">Azul (Submando)</option>
-              <option value="rank-badge-sgt">Cian (Supervisión)</option>
-              <option value="rank-badge-det3">Púrpura (Especialista)</option>
+              <option value="rank-badge-sgt">Cian (SupervisiÃ³n)</option>
+              <option value="rank-badge-det3">PÃºrpura (Especialista)</option>
               <option value="rank-badge-det2">Esmeralda (Operativo)</option>
               <option value="rank-badge-det1">Pizarra (Junior)</option>
               <option value="rank-badge-aspirante">Rojo (Restringido / Aspirante)</option>
@@ -2451,7 +2680,7 @@
           </div>
 
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Texto de Acreditación</label>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Texto de AcreditaciÃ³n</label>
             <input type="text" id="rank-edit-clearance" placeholder="NIVEL 3 // ALTO SECRETO"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-xs focus:outline-none focus:border-amber-500">
           </div>
@@ -2573,7 +2802,7 @@
             </label>
           </div>
 
-          <!-- Category 3: Denuncias Anónimas -->
+          <!-- Category 3: Denuncias AnÃ³nimas -->
           <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
             <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs pb-1 border-b border-slate-800">
               <i data-lucide="radio" class="w-4 h-4"></i>
@@ -2584,7 +2813,7 @@
               <input type="checkbox" id="perm-view_tips"
                 class="mt-0.5 rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0">
               <div>
-                <span class="text-slate-200 font-semibold block">Ver Buzón de Pistas</span>
+                <span class="text-slate-200 font-semibold block">Ver BuzÃ³n de Pistas</span>
                 <span class="text-[10px] text-slate-500 font-mono block">Leer pistas recibidas de ciudadanos</span>
               </div>
             </label>
@@ -2599,11 +2828,11 @@
             </label>
           </div>
 
-          <!-- Category 4: Jefatura de División -->
+          <!-- Category 4: Jefatura de DivisiÃ³n -->
           <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2.5">
             <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs pb-1 border-b border-slate-800">
               <i data-lucide="shield" class="w-4 h-4"></i>
-              <span>Mando & Jefatura de División</span>
+              <span>Mando & Jefatura de DivisiÃ³n</span>
             </div>
 
             <label class="flex items-start gap-2.5 cursor-pointer hover:text-white transition-colors">
@@ -2648,7 +2877,7 @@
               <input type="checkbox" id="perm-manage_audit"
                 class="mt-0.5 rounded border-slate-700 bg-slate-950 text-slate-300 focus:ring-0">
               <div>
-                <span class="text-slate-200 font-semibold block">Historial de Auditoría</span>
+                <span class="text-slate-200 font-semibold block">Historial de AuditorÃ­a</span>
                 <span class="text-[10px] text-slate-500 font-mono block">Consultar y limpiar logs de decisiones</span>
               </div>
             </label>
@@ -2681,7 +2910,7 @@
     </div>
   </div>
 
-  <!-- MODAL: GESTIÓN DE FUGITIVOS MÁS BUSCADOS (CREAR / EDITAR / FIJAR / NIVELES) -->
+  <!-- MODAL: GESTIÃ“N DE FUGITIVOS MÃS BUSCADOS (CREAR / EDITAR / FIJAR / NIVELES) -->
   <div id="wanted-editor-modal"
     class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
     <div
@@ -2702,7 +2931,7 @@
                 ORDEN DE CAPTURA
               </span>
             </div>
-            <p class="text-[10px] font-conthrax text-slate-400">Registro público de personas buscadas por la Detective Division</p>
+            <p class="text-[10px] font-conthrax text-slate-400">Registro pÃºblico de personas buscadas por la Detective Division</p>
           </div>
         </div>
         <button onclick="closeModal('wanted-editor-modal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
@@ -2730,14 +2959,14 @@
           </div>
 
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel de Búsqueda / Amenaza *</label>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel de BÃºsqueda / Amenaza *</label>
             <select id="wanted-edit-level" onchange="updateWantedLevelPreview()"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
-              <option value="5">Nivel 5 // Máxima Prioridad (Disparar a la vista)</option>
+              <option value="5">Nivel 5 // MÃ¡xima Prioridad (Disparar a la vista)</option>
               <option value="4">Nivel 4 // Extremo Peligro (Armas pesadas)</option>
               <option value="3" selected>Nivel 3 // Alto Riesgo (Prioridad)</option>
               <option value="2">Nivel 2 // Riesgo de Fuga Inminente</option>
-              <option value="1">Nivel 1 // Búsqueda Ordinaria / Comparecencia</option>
+              <option value="1">Nivel 1 // BÃºsqueda Ordinaria / Comparecencia</option>
             </select>
           </div>
 
@@ -2758,7 +2987,7 @@
           </div>
 
           <div>
-            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Última Ubicación Conocida</label>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Ãšltima UbicaciÃ³n Conocida</label>
             <input type="text" id="wanted-edit-lastseen" placeholder="Ej: Centro Financiero / Vinewood"
               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-red-500">
           </div>
@@ -2769,8 +2998,8 @@
           <div class="flex items-center gap-2.5">
             <i data-lucide="pin" class="w-4 h-4 text-amber-400"></i>
             <div>
-              <span class="text-white font-bold block text-xs">Fijar al Inicio del Tablón</span>
-              <span class="text-[10px] text-slate-400 block font-mono">Aparecerá en los primeros puestos destacados con insignia dorada</span>
+              <span class="text-white font-bold block text-xs">Fijar al Inicio del TablÃ³n</span>
+              <span class="text-[10px] text-slate-400 block font-mono">AparecerÃ¡ en los primeros puestos destacados con insignia dorada</span>
             </div>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
@@ -2781,7 +3010,7 @@
 
         <!-- Photo URL -->
         <div>
-          <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Fotografía / Retrato Robot (URL)</label>
+          <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">FotografÃ­a / Retrato Robot (URL)</label>
           <input type="url" id="wanted-edit-photo" placeholder="https://..."
             class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500 font-mono">
         </div>
@@ -2789,14 +3018,14 @@
         <!-- Charges -->
         <div>
           <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Cargos Judiciales Imputados *</label>
-          <textarea id="wanted-edit-charges" required rows="2" placeholder="Homicidio, Posesión Ilícita de Armamento..."
+          <textarea id="wanted-edit-charges" required rows="2" placeholder="Homicidio, PosesiÃ³n IlÃ­cita de Armamento..."
             class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500 custom-scroll font-mono"></textarea>
         </div>
 
         <!-- Intelligence Notes -->
         <div>
           <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Notas de Inteligencia & Modus Operandi</label>
-          <textarea id="wanted-edit-notes" rows="2" placeholder="Información sobre posibles escoltas, peligrosidad, armamento habitual..."
+          <textarea id="wanted-edit-notes" rows="2" placeholder="InformaciÃ³n sobre posibles escoltas, peligrosidad, armamento habitual..."
             class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-xs focus:outline-none focus:border-red-500 custom-scroll"></textarea>
         </div>
 

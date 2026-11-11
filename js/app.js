@@ -3115,14 +3115,17 @@ window.deleteConfidentialReport = function() {
 window.saveNewConfidentialReport = function(event) {
   if (event) event.preventDefault();
   const editId = document.getElementById("edit-conf-id")?.value.trim();
+  const reports = getActiveConfidentialReports();
+  const existingReport = editId ? reports.find(r => r.id === editId) : null;
 
   if (editId) {
-    if (!hasPermission('edit_reports')) {
-      showToast("⛔ No ostentas permiso para modificar informes clasificados.");
+    const isOwner = Boolean(currentDiscordUser && existingReport && (existingReport.authorId === currentDiscordUser.id || existingReport.author_id === currentDiscordUser.id));
+    if (!hasPermission('edit_reports') && !isOwner) {
+      showToast("⛔ No ostentas permiso para modificar informes clasificados de otros agentes.");
       return;
     }
   } else {
-    if (!hasPermission('create_reports')) {
+    if (!hasPermission('create_reports') && !currentDiscordUser) {
       showToast("⛔ No ostentas permiso para redactar informes clasificados.");
       return;
     }
@@ -3139,7 +3142,6 @@ window.saveNewConfidentialReport = function(event) {
   }
 
   const evidence = evidenceRaw ? evidenceRaw.split("\n").map(l => l.trim()).filter(Boolean) : [];
-  const reports = getActiveConfidentialReports();
 
   if (editId) {
     const existingIdx = reports.findIndex(r => r.id === editId);
@@ -3165,6 +3167,7 @@ window.saveNewConfidentialReport = function(event) {
       statusType: "active",
       clearance: currentDiscordUser ? currentDiscordUser.clearance : "NIVEL 2 (CONFIDENCIAL)",
       leadDetective: currentDiscordUser ? `${currentDiscordUser.username} (${currentDiscordUser.badge})` : "Det. Asignado",
+      authorId: currentDiscordUser ? currentDiscordUser.id : null,
       date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
       summary,
       evidence
@@ -3179,6 +3182,7 @@ window.saveNewConfidentialReport = function(event) {
   audioEngine.playAlertSound();
   closeModal("new-confidential-report-modal");
   renderConfidentialReports(getActiveConfidentialReports());
+  if (typeof renderPerfilMisInformes === 'function') renderPerfilMisInformes();
 };
 
 function renderAuthorizedTipsInbox() {

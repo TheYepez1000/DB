@@ -894,17 +894,19 @@ function agentToRow(agent) {
     }
   }
   return {
-    discord_id:  String(agent.discordId || '').trim(),
-    discord_tag: agent.discordTag || '',
-    ic_name:     agent.icName || '',
-    badge:       agent.badge || '',
-    rank:        agent.rank || 'aspirante',
-    division:    agent.division || 'Sin Asignar // En Evaluación',
-    status:      ['Activo','Pendiente','Suspendido','Expulsado'].includes(agent.status) ? agent.status : 'Activo',
-    awards:      awardsArr,
-    notes:       agent.notes || '',
-    avatar:      agent.avatar || '',
-    join_date:   agent.joinDate || ''
+    discord_id:       String(agent.discordId || '').trim(),
+    discord_tag:      agent.discordTag || '',
+    ic_name:          agent.icName || '',
+    badge:            agent.badge || '',
+    rank:             agent.rank || 'aspirante',
+    division:         agent.division || 'Sin Asignar // En Evaluación',
+    status:           ['Activo','Pendiente','Suspendido','Expulsado'].includes(agent.status) ? agent.status : 'Activo',
+    awards:           awardsArr,
+    notes:            agent.notes || '',
+    avatar:           agent.avatar || '',
+    join_date:        agent.joinDate || '',
+    subdivision_role: agent.subdivisionRole || null,
+    faltas:           typeof agent.faltas === 'string' ? agent.faltas : JSON.stringify(agent.faltas || [])
   };
 }
 
@@ -912,18 +914,22 @@ function agentToRow(agent) {
 function rowToAgent(row) {
   let awards = [];
   try { awards = Array.isArray(row.awards) ? row.awards : JSON.parse(row.awards || '[]'); } catch(e) {}
+  let faltas = [];
+  try { faltas = typeof row.faltas === 'string' ? JSON.parse(row.faltas || '[]') : (row.faltas || []); } catch(e) {}
   return {
-    discordId:  row.discord_id,
-    discordTag: row.discord_tag || '',
-    icName:     row.ic_name || '',
-    badge:      row.badge || '',
-    rank:       row.rank || 'aspirante',
-    division:   row.division || '',
-    status:     row.status || 'Pendiente',
+    discordId:       row.discord_id,
+    discordTag:      row.discord_tag || '',
+    icName:          row.ic_name || '',
+    badge:           row.badge || '',
+    rank:            row.rank || 'aspirante',
+    division:        row.division || '',
+    status:          row.status || 'Pendiente',
     awards,
-    notes:      row.notes || '',
-    avatar:     row.avatar || '',
-    joinDate:   row.join_date || ''
+    notes:           row.notes || '',
+    avatar:          row.avatar || '',
+    joinDate:        row.join_date || '',
+    subdivisionRole: row.subdivision_role || row.subdivisionRole || null,
+    faltas
   };
 }
 
@@ -1060,7 +1066,8 @@ function reportToRow(report) {
     lead_detective:  report.leadDetective || '',
     report_date:     report.date || '',
     summary:         report.summary || '',
-    evidence:        JSON.stringify(report.evidence || [])
+    evidence:        JSON.stringify(report.evidence || []),
+    author_id:       report.authorId || report.author_id || null
   };
 }
 
@@ -1077,6 +1084,10 @@ function rowToReport(row) {
     leadDetective:  row.lead_detective || '',
     date:           row.report_date || '',
     summary:        row.summary || '',
+    evidence,
+    authorId:       row.author_id || null
+  };
+}
     evidence
   };
 }
@@ -1548,4 +1559,254 @@ async function _purgeExampleAgentsAndSeedFounder() {
   } catch (e) {
     console.warn('[DB] _purgeExampleAgentsAndSeedFounder error:', e);
   }
+}
+
+
+
+// ============================================================
+// MENSAJES / CHAT JEFATURA ↔ AGENTES
+// ============================================================
+
+// Cache for messages (key: agentDiscordId, value: [])
+if (!CACHE.messages) CACHE.messages = {};
+if (!CACHE.solicitudes) CACHE.solicitudes = [];
+
+/**
+ * Send a message from currentUser to 'jefatura' or from jefatura to an agentId
+ * @param {string} fromId
+ * @param {string} toId - 'jefatura' or a discordId
+ * @param {string} content
+ */
+async function dbSendMessage(fromId, toId, content) {
+  const msg = {
+    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    from_id: fromId,
+    to_id: toId,
+    content,
+    created_at: new Date().toISOString(),
+    read: false
+  };
+
+  // Update local cache
+  const threadKey = [fromId, toId].sort().join('_');
+  if (!CACHE.messages[threadKey]) CACHE.messages[threadKey] = [];
+  CACHE.messages[threadKey].push(msg);
+
+  if (!db) {
+    // Store in localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('dd_messages') || '{}');
+      if (!stored[threadKey]) stored[threadKey] = [];
+      stored[threadKey].push(msg);
+      localStorage.setItem('dd_messages', JSON.stringify(stored));
+    } catch(e) {}
+    return msg;
+  }
+  try {
+    const { error } = await db.from('messages').insert({
+      id: msg.id,
+      from_id: msg.from_id,
+      to_id: msg.to_id,
+      content: msg.content,
+      read: false
+    });
+    if (error) console.warn('[DB] insert message error:', error);
+  } catch(e) {
+    console.warn('[DB] send message exception:', e);
+  }
+  return msg;
+}
+
+/**
+ * Get messages for a thread (sorted ascending)
+ */
+function dbGetMessages(idA, idB) {
+  const threadKey = [idA, idB].sort().join('_');
+  // Try cache first
+  if (CACHE.messages[threadKey] && CACHE.messages[threadKey].length > 0) {
+    return [...CACHE.messages[threadKey]].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  }
+  // localStorage fallback
+  try {
+    const stored = JSON.parse(localStorage.getItem('dd_messages') || '{}');
+    return (stored[threadKey] || []).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  } catch(e) { return []; }
+}
+
+/**
+ * Load all messages involving jefatura from DB
+ */
+async function dbLoadAllJefaturaMessages() {
+  if (!db) {
+    try {
+      const stored = JSON.parse(localStorage.getItem('dd_messages') || '{}');
+      CACHE.messages = stored;
+    } catch(e) {}
+    return;
+  }
+  try {
+    const { data, error } = await db.from('messages')
+      .select('*')
+      .or('to_id.eq.jefatura,from_id.eq.jefatura')
+      .order('created_at', { ascending: true });
+    if (error) { console.warn('[DB] load messages error:', error); return; }
+    // Reorganize by threadKey
+    CACHE.messages = {};
+    (data || []).forEach(msg => {
+      const threadKey = [msg.from_id, msg.to_id].sort().join('_');
+      if (!CACHE.messages[threadKey]) CACHE.messages[threadKey] = [];
+      CACHE.messages[threadKey].push(msg);
+    });
+  } catch(e) { console.warn('[DB] load messages exception:', e); }
+}
+
+/**
+ * Load messages for a specific agent
+ */
+async function dbLoadAgentMessages(agentId) {
+  const threadKey = [agentId, 'jefatura'].sort().join('_');
+  if (!db) {
+    try {
+      const stored = JSON.parse(localStorage.getItem('dd_messages') || '{}');
+      CACHE.messages[threadKey] = stored[threadKey] || [];
+    } catch(e) {}
+    return;
+  }
+  try {
+    const { data, error } = await db.from('messages')
+      .select('*')
+      .or(`and(from_id.eq.${agentId},to_id.eq.jefatura),and(from_id.eq.jefatura,to_id.eq.${agentId})`)
+      .order('created_at', { ascending: true });
+    if (error) { console.warn('[DB] load agent messages error:', error); return; }
+    CACHE.messages[threadKey] = data || [];
+  } catch(e) { console.warn('[DB] load agent messages exception:', e); }
+}
+
+/**
+ * Mark messages in a thread as read
+ */
+async function dbMarkMessagesRead(fromId, toId) {
+  const threadKey = [fromId, toId].sort().join('_');
+  if (CACHE.messages[threadKey]) {
+    CACHE.messages[threadKey].forEach(m => { if (m.to_id === toId) m.read = true; });
+  }
+  if (!db) return;
+  try {
+    await db.from('messages').update({ read: true }).eq('from_id', fromId).eq('to_id', toId).eq('read', false);
+  } catch(e) {}
+}
+
+// ============================================================
+// FALTAS / SANCIONES
+// ============================================================
+
+/**
+ * Add a falta (sanction) to an agent. Stored in agents.faltas JSON column.
+ * falta: { id, type, description, date, commander }
+ */
+async function dbAddFalta(agentDiscordId, falta) {
+  const roster = getCachedRoster();
+  const agentRow = roster.find(r => r.discord_id === agentDiscordId);
+  if (!agentRow) return;
+
+  let faltas = [];
+  try { faltas = JSON.parse(agentRow.faltas || '[]'); } catch(e) {}
+  falta.id = 'falta_' + Date.now();
+  falta.date = new Date().toISOString();
+  faltas.push(falta);
+  agentRow.faltas = JSON.stringify(faltas);
+
+  if (!db) {
+    localStorage.setItem('dd_jefatura_roster', JSON.stringify(roster.map(rowToAgent)));
+    return;
+  }
+  try {
+    const { error } = await db.from('agents').update({ faltas: agentRow.faltas }).eq('discord_id', agentDiscordId);
+    if (error) console.warn('[DB] add falta error:', error);
+  } catch(e) { console.warn('[DB] add falta exception:', e); }
+}
+
+/**
+ * Remove a falta from an agent by falta.id
+ */
+async function dbRemoveFalta(agentDiscordId, faltaId) {
+  const roster = getCachedRoster();
+  const agentRow = roster.find(r => r.discord_id === agentDiscordId);
+  if (!agentRow) return;
+  let faltas = [];
+  try { faltas = JSON.parse(agentRow.faltas || '[]'); } catch(e) {}
+  faltas = faltas.filter(f => f.id !== faltaId);
+  agentRow.faltas = JSON.stringify(faltas);
+  if (!db) return;
+  try {
+    await db.from('agents').update({ faltas: agentRow.faltas }).eq('discord_id', agentDiscordId);
+  } catch(e) {}
+}
+
+/**
+ * Get faltas for an agent
+ */
+function dbGetFaltas(agentDiscordId) {
+  const roster = getCachedRoster();
+  const agentRow = roster.find(r => r.discord_id === agentDiscordId);
+  if (!agentRow) return [];
+  try { return JSON.parse(agentRow.faltas || '[]'); } catch(e) { return []; }
+}
+
+// ============================================================
+// SOLICITUDES (Subdivision Chief requests)
+// ============================================================
+
+/**
+ * Submit a solicitud (add/remove agent request from subdivision chief)
+ * solicitud: { id, type: 'alta'|'baja', chiefId, chiefName, subdivision, agentId, agentName, agentData, reason, status: 'pendiente', created_at }
+ */
+async function dbSubmitSolicitud(solicitud) {
+  solicitud.id = 'sol_' + Date.now();
+  solicitud.created_at = new Date().toISOString();
+  solicitud.status = 'pendiente';
+
+  CACHE.solicitudes.push(solicitud);
+  try {
+    const stored = JSON.parse(localStorage.getItem('dd_solicitudes') || '[]');
+    stored.push(solicitud);
+    localStorage.setItem('dd_solicitudes', JSON.stringify(stored));
+  } catch(e) {}
+
+  if (!db) return solicitud;
+  try {
+    const { error } = await db.from('solicitudes').insert({
+      id: solicitud.id,
+      type: solicitud.type,
+      chief_id: solicitud.chiefId,
+      chief_name: solicitud.chiefName,
+      subdivision: solicitud.subdivision,
+      agent_id: solicitud.agentId,
+      agent_name: solicitud.agentName,
+      agent_data: JSON.stringify(solicitud.agentData || {}),
+      reason: solicitud.reason,
+      status: 'pendiente'
+    });
+    if (error) console.warn('[DB] insert solicitud error:', error);
+  } catch(e) { console.warn('[DB] solicitud exception:', e); }
+  return solicitud;
+}
+
+function dbGetSolicitudes() {
+  if (CACHE.solicitudes.length > 0) return [...CACHE.solicitudes];
+  try {
+    return JSON.parse(localStorage.getItem('dd_solicitudes') || '[]');
+  } catch(e) { return []; }
+}
+
+async function dbUpdateSolicitudStatus(solicitudId, status) {
+  CACHE.solicitudes = CACHE.solicitudes.map(s => s.id === solicitudId ? { ...s, status } : s);
+  try {
+    const stored = JSON.parse(localStorage.getItem('dd_solicitudes') || '[]').map(s => s.id === solicitudId ? { ...s, status } : s);
+    localStorage.setItem('dd_solicitudes', JSON.stringify(stored));
+  } catch(e) {}
+  if (!db) return;
+  try {
+    await db.from('solicitudes').update({ status }).eq('id', solicitudId);
+  } catch(e) {}
 }
