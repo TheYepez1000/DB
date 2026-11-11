@@ -2146,6 +2146,299 @@ const SUBDIVISIONS_DATA = {
 
 let currentActiveSubdivision = 'rhd';
 
+// ─── SECCIÓN "MI SUBDIVISIÓN" PRIVADA ────────────────────────────────────────
+// Renderiza el panel privado de subdivisión en la sección #unidades
+function renderSubdivisionPrivatePanel() {
+  const deniedView = document.getElementById('subdivision-denied-view');
+  const authorizedView = document.getElementById('subdivision-authorized-view');
+  const deniedMsg = document.getElementById('subdivision-denied-msg');
+  const navBadge = document.getElementById('nav-subdiv-badge');
+
+  if (!deniedView || !authorizedView) return;
+
+  // Determinar si el usuario tiene subdivisión asignada
+  if (!currentDiscordUser || currentDiscordUser.rankKey === 'aspirante' || !hasPermission('view_reports')) {
+    // No logueado o sin rango
+    deniedView.classList.remove('hidden');
+    authorizedView.classList.add('hidden');
+    if (navBadge) navBadge.classList.add('hidden');
+    if (deniedMsg && !currentDiscordUser) {
+      deniedMsg.textContent = 'Este apartado es de acceso privado. Inicia sesión con Discord y espera a que Jefatura te asigne una subdivisión.';
+    } else if (deniedMsg && currentDiscordUser?.rankKey === 'aspirante') {
+      deniedMsg.textContent = `Hola ${currentDiscordUser.username}. Tu cuenta está en proceso de evaluación como Aspirante. Jefatura te asignará una subdivisión cuando apruebes el período de prueba.`;
+    }
+    return;
+  }
+
+  const agent = currentDiscordUser.rosterAgent || {};
+  const divisionStr = agent.division || currentDiscordUser.role || '';
+  const subdivId = getSubdivisionIdFromDivision(divisionStr);
+
+  if (!subdivId) {
+    // Logueado pero sin subdivisión asignada
+    deniedView.classList.remove('hidden');
+    authorizedView.classList.add('hidden');
+    if (navBadge) navBadge.classList.add('hidden');
+    if (deniedMsg) {
+      deniedMsg.textContent = `Hola ${currentDiscordUser.username}. Tienes rango activo pero aún no se te ha asignado ninguna subdivisión. Contacta con Jefatura para que te asignen una rama operativa.`;
+    }
+    return;
+  }
+
+  // Tiene subdivisión — mostrar panel privado
+  deniedView.classList.add('hidden');
+  authorizedView.classList.remove('hidden');
+
+  // Badge en nav
+  if (navBadge) {
+    navBadge.classList.remove('hidden');
+    const subdiv = SUBDIVISIONS_DATA[subdivId] || {};
+    navBadge.textContent = subdiv.code || subdivId.toUpperCase();
+  }
+
+  // Reusar renderAgentDivisionPanel pero inyectando en authorized-view
+  const subdiv = SUBDIVISIONS_DATA[subdivId] || {};
+  const allCases = typeof getActiveCasesList === 'function' ? getActiveCasesList() : [];
+  const myCases = allCases.filter(c => {
+    const div = (c.division || '').toLowerCase();
+    const cat = (c.category || '').toLowerCase();
+    if (subdivId === 'rhd') return div.includes('rhd') || cat.includes('homicide') || cat.includes('robbery');
+    if (subdivId === 'gnd') return div.includes('gnd') || cat.includes('narcotics');
+    if (subdivId === 'csi') return div.includes('csi') || div.includes('forense');
+    if (subdivId === 'cid') return div.includes('cid') || cat.includes('fraud') || div.includes('ciber');
+    if (subdivId === 'iad') return div.includes('iad') || cat.includes('internal');
+    if (subdivId === 'ccd') return div.includes('ccd') || cat.includes('missing');
+    return false;
+  });
+
+  const allReports = typeof getActiveConfidentialReports === 'function' ? getActiveConfidentialReports() : [];
+  const myReports = hasPermission('view_reports')
+    ? allReports.filter(r => {
+        const rt = (r.title || '').toLowerCase() + (r.summary || '').toLowerCase();
+        return rt.includes(subdivId) || rt.includes((subdiv.code || '').toLowerCase()) || (r.author === currentDiscordUser.username);
+      })
+    : [];
+
+  const roster = typeof getCachedRoster === 'function' ? getCachedRoster().map(rowToAgent) : [];
+  const teammates = roster.filter(a => {
+    const d = (a.division || '').toLowerCase();
+    return d.includes((subdiv.code || '').toLowerCase()) && a.discordId !== currentDiscordUser.id;
+  });
+
+  const notesKey = `dd_div_notes_${currentDiscordUser.id}_${subdivId}`;
+  const savedNotes = localStorage.getItem(notesKey) || '';
+
+  const colorMap = { rhd:'red', gnd:'amber', csi:'blue', cid:'emerald', iad:'purple', ccd:'cyan' };
+  const bc = colorMap[subdivId] || 'amber';
+
+  authorizedView.innerHTML = `
+    <!-- Panel Header -->
+    <div class="glass-panel-gold rounded-2xl border border-${bc}-500/40 p-6 sm:p-10 shadow-2xl relative overflow-hidden mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 pb-6 border-b border-${bc}-500/20">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-${bc}-500/10 border-2 border-${bc}-500/40 flex items-center justify-center text-${bc}-400 shrink-0 shadow-lg">
+            <i data-lucide="${subdiv.icon}" class="w-8 h-8"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="px-2.5 py-0.5 rounded bg-${bc}-500/20 border border-${bc}-500/40 text-${bc}-300 font-conthrax text-[10px] font-bold">
+                ${subdiv.code} // ${subdiv.name?.toUpperCase()}
+              </span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-conthrax text-[9px] font-bold">● ACCESO VERIFICADO</span>
+            </div>
+            <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide">${subdiv.fullName}</h3>
+            <p class="text-xs font-conthrax text-${bc}-400/90 italic mt-0.5">${subdiv.motto}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <img src="${currentDiscordUser.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"
+            class="w-14 h-14 rounded-2xl object-cover border-2 border-${bc}-500/60 shadow-lg" alt="Avatar">
+          <div>
+            <p class="text-xs font-conthrax text-slate-400">AGENTE ACTIVO</p>
+            <p class="text-base font-black font-gobold text-white">${currentDiscordUser.username}</p>
+            <p class="text-xs font-mono text-${bc}-400">${currentDiscordUser.badge || '#---'} • ${(RANK_META[currentDiscordUser.rankKey]?.label || 'Detective').toUpperCase()}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-center">
+          <p class="text-2xl font-black font-gobold text-${bc}-400">${myCases.length}</p>
+          <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Expedientes</p>
+        </div>
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-center">
+          <p class="text-2xl font-black font-gobold text-red-400">${myReports.length}</p>
+          <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Informes</p>
+        </div>
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-center">
+          <p class="text-2xl font-black font-gobold text-blue-400">${teammates.length}</p>
+          <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">Compañeros</p>
+        </div>
+        <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-center">
+          <p class="text-2xl font-black font-gobold text-purple-400">${myCases.filter(c=>c.statusType==='active').length}</p>
+          <p class="text-[10px] font-conthrax text-slate-400 uppercase mt-1">En Activo</p>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Cases + Reports -->
+        <div class="lg:col-span-2 space-y-5">
+          <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+            <div class="flex items-center gap-2 mb-4 text-amber-400 font-conthrax text-xs font-bold">
+              <i data-lucide="folder-search" class="w-4 h-4"></i>
+              <span>EXPEDIENTES DE ${subdiv.code} (${myCases.length})</span>
+            </div>
+            ${myCases.length > 0 ? `
+              <div class="space-y-2 max-h-56 overflow-y-auto custom-scroll pr-1">
+                ${myCases.map(c => `
+                  <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-${bc}-500/30 transition-colors">
+                    <div class="overflow-hidden">
+                      <div class="flex items-center gap-1.5 mb-0.5">
+                        <span class="text-[9px] font-mono font-bold text-amber-400">${c.id}</span>
+                        <span class="text-[9px] px-1 py-0.5 rounded ${c.statusType==='active'?'bg-amber-500/20 text-amber-300':c.statusType==='warrant'?'bg-red-500/20 text-red-300':'bg-emerald-500/20 text-emerald-300'} font-mono">${c.status}</span>
+                      </div>
+                      <p class="text-xs font-bold text-white truncate font-conthrax">${c.title}</p>
+                    </div>
+                    <button onclick="openCaseModal('${c.id}')" class="px-2 py-1 rounded-lg bg-${bc}-500/10 hover:bg-${bc}-500 text-${bc}-400 hover:text-black font-conthrax text-[10px] font-bold transition-colors shrink-0 border border-${bc}-500/30">Ver</button>
+                  </div>`).join('')}
+              </div>` : `<p class="text-xs font-conthrax text-slate-500 text-center py-6">Sin expedientes activos en ${subdiv.code}.</p>`}
+          </div>
+          ${hasPermission('view_reports') ? `
+          <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+            <div class="flex items-center gap-2 mb-4 text-red-400 font-conthrax text-xs font-bold">
+              <i data-lucide="file-lock-2" class="w-4 h-4"></i>
+              <span>INFORMES CLASIFICADOS (${myReports.length})</span>
+            </div>
+            ${myReports.length > 0 ? `
+              <div class="space-y-2 max-h-44 overflow-y-auto custom-scroll pr-1">
+                ${myReports.map(r => `
+                  <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-red-500/30 transition-colors">
+                    <div class="overflow-hidden">
+                      <span class="text-[9px] font-mono text-red-400 font-bold">${r.code||'INF-CONF'}</span>
+                      <p class="text-xs font-bold text-white truncate font-conthrax">${r.title}</p>
+                    </div>
+                    <button onclick="viewConfidentialReport('${r.id}')" class="px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white font-conthrax text-[10px] font-bold transition-colors shrink-0 border border-red-500/30">Ver</button>
+                  </div>`).join('')}
+              </div>` : `<p class="text-xs font-conthrax text-slate-500 text-center py-4">Sin informes clasificados en ${subdiv.code}.</p>`}
+          </div>` : ''}
+        </div>
+
+        <!-- Teammates + SOP -->
+        <div class="space-y-5">
+          <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+            <div class="flex items-center gap-2 mb-4 text-blue-400 font-conthrax text-xs font-bold">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span>COMPAÑEROS EN ${subdiv.code}</span>
+            </div>
+            ${teammates.length > 0 ? `
+              <div class="space-y-2 max-h-44 overflow-y-auto custom-scroll">
+                ${teammates.map(t => `
+                  <div class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-900/50 border border-slate-800">
+                    <img src="${t.avatar||'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0">
+                    <div class="overflow-hidden">
+                      <span class="font-bold text-white text-xs block truncate font-conthrax">${t.icName}</span>
+                      <span class="text-[10px] font-mono text-${bc}-400">${t.badge||'#---'}</span>
+                    </div>
+                  </div>`).join('')}
+              </div>` : `<p class="text-xs font-conthrax text-slate-500 text-center py-4">Solo tú en esta subdivisión.</p>`}
+          </div>
+          <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+            <div class="flex items-center gap-2 mb-3 text-emerald-400 font-conthrax text-xs font-bold">
+              <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+              <span>SOP // ${subdiv.code}</span>
+            </div>
+            <ul class="space-y-1.5">
+              ${(subdiv.sopSteps||[]).map((s,i) => `
+                <li class="flex items-start gap-2 font-conthrax text-[10px] text-slate-300">
+                  <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-[9px] border border-emerald-500/30">0${i+1}</span>
+                  <span class="leading-relaxed">${s}</span>
+                </li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bitácora personal -->
+      <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2 text-purple-400 font-conthrax text-xs font-bold">
+            <i data-lucide="notebook-pen" class="w-4 h-4"></i>
+            <span>BITÁCORA PERSONAL // SOLO VISIBLE PARA TI</span>
+          </div>
+          <button onclick="saveAgentDivisionNotes('${notesKey}')"
+            class="px-3 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-600 text-purple-400 hover:text-white font-conthrax text-[10px] font-bold transition-colors border border-purple-500/30 flex items-center gap-1">
+            <i data-lucide="save" class="w-3 h-3"></i> Guardar
+          </button>
+        </div>
+        <textarea id="agent-division-notes-area" rows="3"
+          placeholder="Notas personales, observaciones de turno, pistas pendientes..."
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors custom-scroll resize-none"
+        >${savedNotes}</textarea>
+      </div>
+    </div>
+  `;
+
+  lucide.createIcons();
+}
+
+// ─── CADENA DE MANDO DINÁMICA ────────────────────────────────────────────────
+function renderMandoGrid() {
+  const grid = document.getElementById('mando-officers-grid');
+  if (!grid) return;
+
+  const roster = getJefaturaRoster();
+  // Show only active officers (not aspirante), sorted by rank level desc
+  const officers = roster
+    .filter(a => a.rank !== 'aspirante' && a.status === 'Activo')
+    .sort((a, b) => {
+      const la = RANK_META[a.rank]?.level || 0;
+      const lb = RANK_META[b.rank]?.level || 0;
+      return lb - la;
+    })
+    .slice(0, 8); // show max 8 in the grid
+
+  if (officers.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-4 glass-panel rounded-xl p-10 border border-slate-800 text-center font-conthrax text-xs text-slate-500">
+        <i data-lucide="users" class="w-10 h-10 mx-auto mb-3 opacity-20"></i>
+        <p>No hay oficiales activos registrados en el Bureau.</p>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  const rankColors = {
+    capitan: 'amber', teniente: 'blue', det3: 'purple',
+    det2: 'emerald', det1: 'slate', aspirante: 'slate'
+  };
+
+  grid.innerHTML = officers.map((agent, i) => {
+    const rankMeta = RANK_META[agent.rank] || {};
+    const color = rankColors[agent.rank] || 'slate';
+    const borderClass = i === 0 ? `border-${color}-500/50` : 'border-slate-800';
+    return `
+      <div class="glass-panel rounded-xl p-5 border ${borderClass} text-center group hover:border-${color}-500/40 transition-all">
+        <div class="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-${color}-400">
+          <img src="${agent.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}"
+            alt="${agent.icName}" class="w-full h-full object-cover">
+        </div>
+        <span class="text-${color}-400 font-conthrax font-bold block text-[11px] uppercase">
+          ${rankMeta.icon || '🔰'} ${(rankMeta.label || agent.rank).toUpperCase()} // ${agent.badge || '---'}
+        </span>
+        <h4 class="text-white text-base font-black font-gobold tracking-wide mt-1">${agent.icName}</h4>
+        <p class="text-slate-400 text-[11px] mt-1 font-conthrax">${agent.division || 'Sin División Asignada'}</p>
+        <div class="mt-3 pt-3 border-t border-slate-800 flex justify-between text-slate-500 font-conthrax text-[10px]">
+          <span>Desde: ${agent.joinDate || '—'}</span>
+          <span class="${agent.status === 'Activo' ? 'text-emerald-400' : 'text-amber-400'}">${agent.status}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  lucide.createIcons();
+}
+
 window.selectSubdivision = function(subdivId) {
   if (!SUBDIVISIONS_DATA[subdivId]) return;
   currentActiveSubdivision = subdivId;

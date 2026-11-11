@@ -1504,31 +1504,35 @@ const _FOUNDER_ROW = {
 };
 
 async function _purgeExampleAgentsAndSeedFounder() {
-  // 1. Limpiar del caché en memoria todos los agentes de ejemplo
+  // Run only ONCE per browser (flag in localStorage prevents re-running on every page load)
+  const PURGE_FLAG = 'dd_purge_v2';
+  const alreadyDone = localStorage.getItem(PURGE_FLAG);
+
+  // 1. Always clean example IDs from in-memory cache (fast, no DB hit)
   CACHE.agents = CACHE.agents.filter(r => !_EXAMPLE_AGENT_IDS.includes(r.discord_id));
 
-  // 2. Asegurarse de que el fundador está en el caché
+  // 2. Ensure founder is in cache
   const founderInCache = CACHE.agents.find(r => r.discord_id === FOUNDER_DISCORD_ID);
   if (!founderInCache) {
     CACHE.agents.unshift({ ..._FOUNDER_ROW });
   }
 
-  // 3. También limpiar del localStorage (evitar que el fallback cargue datos viejos)
-  localStorage.removeItem('dd_jefatura_roster');
-
-  if (!db) return;
+  // 3. Only hit Supabase once (don't wipe localStorage on every load)
+  if (!db || alreadyDone) return;
 
   try {
-    // 4. Borrar agentes de ejemplo en Supabase (si existen)
+    // Delete example agents from DB
     if (_EXAMPLE_AGENT_IDS.length > 0) {
       await db.from('agents').delete().in('discord_id', _EXAMPLE_AGENT_IDS);
     }
 
-    // 5. Upsert del fundador (garantiza que siempre existe con rango correcto)
+    // Upsert founder (preserves any edits Jefatura made to their own profile)
     const { error } = await db.from('agents').upsert(_FOUNDER_ROW, { onConflict: 'discord_id' });
     if (error) console.warn('[DB] founder seed error:', error);
-    else console.log('[DB] ✅ Fundador sembrado correctamente:', FOUNDER_DISCORD_ID);
-
+    else {
+      console.log('[DB] ✅ Purga completada. Fundador sembrado:', FOUNDER_DISCORD_ID);
+      localStorage.setItem(PURGE_FLAG, '1');
+    }
   } catch (e) {
     console.warn('[DB] _purgeExampleAgentsAndSeedFounder error:', e);
   }

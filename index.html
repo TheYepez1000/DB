@@ -152,12 +152,12 @@
           <span class="sidebar-tooltip">Informes Clasificados & Normativa Interna</span>
         </a>
 
-        <a class="nav-link" href="#unidades">
+        <a class="nav-link" href="#unidades" id="nav-link-unidades">
           <span class="nav-index">06</span>
-          <i data-lucide="layers" class="w-4 h-4 shrink-0"></i>
-          <span class="nav-label">Unidades Bureau</span>
-          <span class="nav-badge-pill">6 Ramas</span>
-          <span class="sidebar-tooltip">Unidades Especializadas (RHD, GND, CSI)</span>
+          <i data-lucide="shield-half" class="w-4 h-4 shrink-0 text-blue-400"></i>
+          <span class="nav-label">Mi Subdivisión</span>
+          <span class="nav-badge-pill hidden text-blue-400 border-blue-500/30" id="nav-subdiv-badge">Privado</span>
+          <span class="sidebar-tooltip">Panel Privado de Subdivisión</span>
         </a>
 
         <a class="nav-link" href="#mando">
@@ -1156,185 +1156,59 @@
       </section>
 
       <!-- SPECIALIZED UNITS / APARTADOS DE CADA SUBDIVISIÓN DE LA DB -->
+      <!-- SUBDIVISIÓN PRIVADA // PANEL PERSONAL DEL AGENTE -->
       <section id="unidades" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
+          <!-- Section Header -->
           <div class="text-center max-w-3xl mx-auto mb-12">
-            <span
-              class="text-xs font-conthrax font-bold text-amber-400 tracking-widest uppercase block mb-2">ESTRUCTURA & APARTADOS OPERATIVOS</span>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Subdivisiones de la Detective Division</h2>
-            <p class="text-slate-400 text-sm mt-3 font-light">
-              Apartados especializados por departamento operativo. Consulta el personal asignado, sumarios judiciales y protocolos de intervención de cada rama.
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 font-conthrax text-xs mb-3">
+              <i data-lucide="shield-half" class="w-3.5 h-3.5"></i>
+              <span>06 // APARTADO OPERATIVO PRIVADO</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Mi Subdivisión</h2>
+            <p class="text-slate-400 text-xs sm:text-sm mt-2 font-light">
+              Panel de acceso restringido. Solo visible para agentes asignados a una subdivisión por Jefatura.
             </p>
           </div>
 
-          <!-- Subdivision Tabs Selector -->
-          <div class="flex flex-wrap items-center justify-center gap-2 mb-10 font-conthrax text-xs">
-            <button onclick="selectSubdivision('rhd')" id="subdiv-btn-rhd"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold uppercase transition-all shadow-lg shadow-red-950/50 flex items-center gap-2 border border-red-500/50">
-              <i data-lucide="skull" class="w-4 h-4"></i>
-              <span>RHD // Robos & Homicidios</span>
-            </button>
-            <button onclick="selectSubdivision('gnd')" id="subdiv-btn-gnd"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
-              <i data-lucide="package-search" class="w-4 h-4 text-amber-400"></i>
-              <span>GND // Narcóticos & Pandillas</span>
-            </button>
-            <button onclick="selectSubdivision('csi')" id="subdiv-btn-csi"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
-              <i data-lucide="microscope" class="w-4 h-4 text-blue-400"></i>
-              <span>CSI // Forense & Balística</span>
-            </button>
-            <button onclick="selectSubdivision('cid')" id="subdiv-btn-cid"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
-              <i data-lucide="binary" class="w-4 h-4 text-emerald-400"></i>
-              <span>CID // Ciberdelincuencia</span>
-            </button>
-            <button onclick="selectSubdivision('iad')" id="subdiv-btn-iad"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
-              <i data-lucide="eye" class="w-4 h-4 text-purple-400"></i>
-              <span>IAD // Asuntos Internos</span>
-            </button>
-            <button onclick="selectSubdivision('ccd')" id="subdiv-btn-ccd"
-              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
-              <i data-lucide="archive" class="w-4 h-4 text-cyan-400"></i>
-              <span>CCD // Casos Fríos</span>
-            </button>
+          <!-- STATE A: NO SESIÓN / SIN SUBDIVISIÓN ASIGNADA -->
+          <div id="subdivision-denied-view" class="glass-panel rounded-2xl p-8 sm:p-12 border border-slate-800 text-center max-w-2xl mx-auto relative overflow-hidden shadow-2xl">
+            <div class="security-scanline"></div>
+
+            <div class="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto mb-5">
+              <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+
+            <span class="stamp-classified text-xs mb-3 inline-block">ACCESO RESTRINGIDO // SOLO PERSONAL ASIGNADO</span>
+            <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Panel Privado de Subdivisión</h3>
+
+            <p class="text-slate-300 text-xs sm:text-sm font-conthrax max-w-xl mx-auto mb-6 leading-relaxed" id="subdivision-denied-msg">
+              Este apartado es de acceso privado. Para verlo debes haber iniciado sesión con Discord y tener una subdivisión asignada por Jefatura en el censo oficial.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button onclick="loginWithDiscordOAuth2()"
+                class="guest-only w-full sm:w-auto px-6 py-3.5 bg-[#5865F2] hover:bg-[#4752c4] text-white font-conthrax font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#5865F2]/25 flex items-center justify-center gap-2.5">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z"/></svg>
+                <span>Acceder con Discord</span>
+              </button>
+              <a href="#jefatura" class="auth-only w-full sm:w-auto px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-conthrax font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-2">
+                <i data-lucide="crown" class="w-4 h-4"></i>
+                <span>Ir a Jefatura</span>
+              </a>
+            </div>
           </div>
 
-          <!-- Dynamic Active Subdivision Pane (APARTADO DETALLADO) -->
-          <div id="subdivision-active-pane"
-            class="glass-panel-gold rounded-2xl border border-amber-500/40 p-6 sm:p-10 mb-14 shadow-2xl relative overflow-hidden transition-all duration-300">
-            <!-- Injected via app.js (renderSubdivisionPane) -->
-          </div>
-
-          <!-- Fast Overview Cards Grid -->
-          <div class="mb-4">
-            <h3 class="text-xs font-conthrax text-slate-400 uppercase tracking-widest font-bold mb-4">Catálogo Completo de Subdivisiones</h3>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            <!-- Unit 1: RHD -->
-            <div onclick="selectSubdivision('rhd')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-red-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 border border-red-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="skull" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-conthrax text-red-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN RHD</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Robos y Homicidios</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Respuesta prioritaria ante homicidios calificados, ejecuciones, atracos a entidades bancarias y secuestros.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-red-400">Ver Apartado Completo →</span>
-                <span class="text-amber-400 font-bold">Código 3</span>
-              </div>
-            </div>
-
-            <!-- Unit 2: GND -->
-            <div onclick="selectSubdivision('gnd')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-400 border border-amber-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="package-search" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-conthrax text-amber-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN GND</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Narcóticos & Pandillas</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Operaciones encubiertas, interceptaciones telefónicas y seguimiento de redes de narcotráfico y tráfico de armas.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-amber-400">Ver Apartado Completo →</span>
-                <span class="text-amber-400 font-bold">Infiltración</span>
-              </div>
-            </div>
-
-            <!-- Unit 3: CSI Forensics -->
-            <div onclick="selectSubdivision('csi')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-blue-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 border border-blue-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="microscope" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-conthrax text-blue-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CSI</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Forense & Balística</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Inspección ocular técnico-policial, levantamiento de huellas dactilares, balística y reconstrucción 3D.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-blue-400">Ver Apartado Completo →</span>
-                <span class="text-blue-400 font-bold">Laboratorio</span>
-              </div>
-            </div>
-
-            <!-- Unit 4: Cyber & Financial -->
-            <div onclick="selectSubdivision('cid')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-emerald-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 border border-emerald-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="binary" class="w-6 h-6"></i>
-              </div>
-              <span
-                class="text-xs font-conthrax text-emerald-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CID</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Ciberdelincuencia & Fraude</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Rastreo de billeteras de criptoactivos ilícitos, intrusión informática, falsificación documental y estafas bancarias.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-emerald-400">Ver Apartado Completo →</span>
-                <span class="text-emerald-400 font-bold">Rastreo IP</span>
-              </div>
-            </div>
-
-            <!-- Unit 5: IAD Internal Affairs -->
-            <div onclick="selectSubdivision('iad')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-purple-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-400 border border-purple-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="eye" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-conthrax text-purple-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN IAD</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Asuntos Internos</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Auditoría de integridad policial, investigación de sobornos, abuso de autoridad y filtración de información.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-purple-400">Ver Apartado Completo →</span>
-                <span class="text-purple-400 font-bold">Alto Secreto</span>
-              </div>
-            </div>
-
-            <!-- Unit 6: Cold Cases & Missing -->
-            <div onclick="selectSubdivision('ccd')"
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-cyan-500/60 transition-all group cursor-pointer">
-              <div
-                class="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center text-cyan-400 border border-cyan-500/20 mb-5 group-hover:scale-110 transition-transform">
-                <i data-lucide="archive" class="w-6 h-6"></i>
-              </div>
-              <span class="text-xs font-conthrax text-cyan-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CCD</span>
-              <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Casos Fríos & Desapariciones</h3>
-              <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Revisión de expedientes no resueltos con cotejo de ADN, personas desaparecidas y peritaje en zonas rurales.
-              </p>
-              <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
-                <span class="text-cyan-400">Ver Apartado Completo →</span>
-                <span class="text-cyan-400 font-bold">Archivo</span>
-              </div>
-            </div>
-
+          <!-- STATE B: AUTHORIZED — MI SUBDIVISIÓN PERSONAL -->
+          <div id="subdivision-authorized-view" class="hidden">
+            <!-- Injected by renderSubdivisionPrivatePanel() in app.js -->
           </div>
 
         </div>
       </section>
 
-      <!-- RANKS & PERSONNEL (CADENA DE MANDO RP) -->
+      <!-- RANKS & PERSONNEL (CADENA DE MANDO RP - DINÁMICO DESDE BD) -->
       <section id="mando" class="py-20 relative bg-slate-950/60 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -1349,68 +1223,9 @@
             </p>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
-
-            <!-- Officer 1 -->
-            <div class="glass-panel rounded-xl p-5 border border-amber-500/30 text-center relative group">
-              <div class="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-amber-400">
-                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80"
-                  alt="Captain Vance" class="w-full h-full object-cover">
-              </div>
-              <span class="text-amber-400 font-conthrax font-bold block">CAPITÁN // #101</span>
-              <h4 class="text-white text-lg font-black font-gobold tracking-wide mt-1">David Vance</h4>
-              <p class="text-slate-400 text-[11px] mt-1 font-conthrax">Comandante de la División de Detectives</p>
-              <div class="mt-3 pt-3 border-t border-slate-800 flex justify-between text-slate-500 font-conthrax">
-                <span>Experiencia: 12 años</span>
-                <span class="text-emerald-400">En Servicio</span>
-              </div>
-            </div>
-
-            <!-- Officer 2 -->
-            <div class="glass-panel rounded-xl p-5 border border-slate-800 text-center group">
-              <div class="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-blue-400">
-                <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=300&q=80"
-                  alt="Lt Sterling" class="w-full h-full object-cover">
-              </div>
-              <span class="text-blue-400 font-conthrax font-bold block">TENIENTE // #201</span>
-              <h4 class="text-white text-lg font-black font-gobold tracking-wide mt-1">James Sterling</h4>
-              <p class="text-slate-400 text-[11px] mt-1 font-conthrax">Supervisor RHD & Incursiones</p>
-              <div class="mt-3 pt-3 border-t border-slate-800 flex justify-between text-slate-500 font-conthrax">
-                <span>Experiencia: 8 años</span>
-                <span class="text-emerald-400">En Escena</span>
-              </div>
-            </div>
-
-            <!-- Officer 3 -->
-            <div class="glass-panel rounded-xl p-5 border border-slate-800 text-center group">
-              <div class="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-slate-400">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
-                  alt="Det Rostova" class="w-full h-full object-cover">
-              </div>
-              <span class="text-amber-400 font-conthrax font-bold block">DETECTIVE II // #512</span>
-              <h4 class="text-white text-lg font-black font-gobold tracking-wide mt-1">Elena Rostova</h4>
-              <p class="text-slate-400 text-[11px] mt-1 font-conthrax">Especialista en Homicidios & Peritaje</p>
-              <div class="mt-3 pt-3 border-t border-slate-800 flex justify-between text-slate-500 font-conthrax">
-                <span>Experiencia: 5 años</span>
-                <span class="text-amber-400">En Juicio</span>
-              </div>
-            </div>
-
-            <!-- Officer 4 -->
-            <div class="glass-panel rounded-xl p-5 border border-slate-800 text-center group">
-              <div class="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-slate-400">
-                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80"
-                  alt="Det Cole" class="w-full h-full object-cover">
-              </div>
-              <span class="text-amber-400 font-conthrax font-bold block">DETECTIVE III // #404</span>
-              <h4 class="text-white text-lg font-black font-gobold tracking-wide mt-1">Marcus Cole</h4>
-              <p class="text-slate-400 text-[11px] mt-1 font-conthrax">Líder Encubierto GND & Narcóticos</p>
-              <div class="mt-3 pt-3 border-t border-slate-800 flex justify-between text-slate-500 font-conthrax">
-                <span>Experiencia: 7 años</span>
-                <span class="text-purple-400">Encubierto</span>
-              </div>
-            </div>
-
+          <!-- Dynamic officers grid (injected from app.js renderMandoGrid) -->
+          <div id="mando-officers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
+            <!-- Injected via renderMandoGrid() -->
           </div>
 
         </div>
