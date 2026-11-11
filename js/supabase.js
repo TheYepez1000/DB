@@ -881,15 +881,27 @@ async function dbDeleteRank(rankId) {
 
 /** camelCase agent → snake_case DB row */
 function agentToRow(agent) {
+  let awardsArr = [];
+  if (Array.isArray(agent.awards)) {
+    awardsArr = agent.awards;
+  } else if (typeof agent.awards === 'string') {
+    try {
+      const p = JSON.parse(agent.awards);
+      if (Array.isArray(p)) awardsArr = p;
+      else if (agent.awards) awardsArr = [agent.awards];
+    } catch(e) {
+      if (agent.awards) awardsArr = [agent.awards];
+    }
+  }
   return {
-    discord_id:  agent.discordId,
+    discord_id:  String(agent.discordId || '').trim(),
     discord_tag: agent.discordTag || '',
     ic_name:     agent.icName || '',
     badge:       agent.badge || '',
     rank:        agent.rank || 'aspirante',
-    division:    agent.division || '',
-    status:      agent.status || 'Pendiente',
-    awards:      JSON.stringify(agent.awards || []),
+    division:    agent.division || 'Sin Asignar // En Evaluación',
+    status:      ['Activo','Pendiente','Suspendido','Expulsado'].includes(agent.status) ? agent.status : 'Activo',
+    awards:      awardsArr,
     notes:       agent.notes || '',
     avatar:      agent.avatar || '',
     join_date:   agent.joinDate || ''
@@ -1497,7 +1509,7 @@ const _FOUNDER_ROW = {
   rank:        "capitan",
   division:    "Mando Supremo // Bureau Executive",
   status:      "Activo",
-  awards:      JSON.stringify(["valor", "servicio", "merito"]),
+  awards:      ["valor", "servicio", "merito"],
   notes:       "Fundador y Comandante Supremo de la Detective Division.",
   avatar:      "https://cdn.discordapp.com/embed/avatars/0.png",
   join_date:   new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()

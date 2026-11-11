@@ -336,7 +336,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupReportEditor();
   setupJefaturaSearch();
   renderDynamicRanks();
-  selectSubdivision('rhd');
+  renderMandoGrid();
+  renderSubdivisionPrivatePanel();
 });
 
 // --- DISCORD OAUTH2 AUTHENTICATION & ROLE VERIFICATION ENGINE ---
@@ -760,11 +761,12 @@ function updateDiscordAuthUI() {
   updateJefaturaUI();
   renderDynamicRanks();
 
-  // Refrescar Apartado de Subdivisión Activa
-  renderSubdivisionPane(currentActiveSubdivision);
-
   // Panel "Mi División" para el agente autenticado
   renderAgentDivisionPanel();
+
+  // Panel privado Mi Subdivisión (#unidades) + Cadena de Mando dinámica
+  renderSubdivisionPrivatePanel();
+  renderMandoGrid();
 }
 
 // --- HELPER: map division string → subdivision ID ---
@@ -3613,6 +3615,9 @@ function updateJefaturaUI() {
     }
     // Still show Mi División panel even without high-command access
     renderAgentDivisionPanel();
+    // Actualizar panel Mi Subdivisión y Mando
+    renderSubdivisionPrivatePanel();
+    renderMandoGrid();
   }
 }
 
@@ -4306,6 +4311,8 @@ window.quickKickAgent = function(discordId, icName) {
   showToast(`🚨 ${icName} ha sido expulsado/a de la Detective Division.`);
   renderJefaturaKPIs();
   renderJefaturaRoster(getJefaturaRoster());
+  renderMandoGrid();
+  renderSubdivisionPrivatePanel();
 };
 
 // --- ADD AGENT MODAL ---
@@ -4378,6 +4385,8 @@ window.saveNewAgent = function(event) {
   showToast(`✅ ${icName} (${badge}) incorporado/a al censo de la División.`);
   renderJefaturaKPIs();
   renderJefaturaRoster(getJefaturaRoster());
+  renderMandoGrid();
+  renderSubdivisionPrivatePanel();
 };
 
 // --- CLAIM HIGH COMMAND (founder/setup mode) ---
@@ -4551,4 +4560,6 @@ window.resetRosterToDefault = function() {
   showToast("🔄 Censo restablecido a los datos de ejemplo.");
   renderJefaturaKPIs();
   renderJefaturaRoster(getJefaturaRoster());
+  renderMandoGrid();
+  renderSubdivisionPrivatePanel();
 };
