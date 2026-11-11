@@ -99,6 +99,25 @@ CREATE TABLE IF NOT EXISTS public.cases (
   created_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. TABLA: WANTED (Fugitivos Más Buscados)
+CREATE TABLE IF NOT EXISTS public.wanted (
+  id           TEXT        PRIMARY KEY,
+  name         TEXT        NOT NULL,
+  alias        TEXT        DEFAULT '',
+  charges      TEXT        DEFAULT '',
+  bounty       TEXT        DEFAULT '$0',
+  level        INTEGER     NOT NULL DEFAULT 3,
+  danger_level TEXT        DEFAULT 'ALTO RIESGO',
+  danger_color TEXT        DEFAULT 'bg-amber-500/20 text-amber-400 border-amber-500',
+  last_seen    TEXT        DEFAULT '',
+  photo        TEXT        DEFAULT '',
+  notes        TEXT        DEFAULT '',
+  is_pinned    BOOLEAN     DEFAULT FALSE,
+  status       TEXT        DEFAULT 'Buscado',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
 -- TRIGGER: auto-actualizar updated_at en agents y ranks
 -- ============================================================
@@ -120,6 +139,11 @@ CREATE TRIGGER set_ranks_updated_at
   BEFORE UPDATE ON public.ranks
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_wanted_updated_at ON public.wanted;
+CREATE TRIGGER set_wanted_updated_at
+  BEFORE UPDATE ON public.wanted
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
@@ -129,6 +153,7 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tips       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cases      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wanted     ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "anon_all_ranks"      ON public.ranks      FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_all_agents"     ON public.agents     FOR ALL TO anon USING (true) WITH CHECK (true);
@@ -136,6 +161,7 @@ CREATE POLICY "anon_all_audit_logs" ON public.audit_logs FOR ALL TO anon USING (
 CREATE POLICY "anon_all_reports"    ON public.reports    FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_all_tips"       ON public.tips       FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_all_cases"      ON public.cases      FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_wanted"     ON public.wanted     FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- ÍNDICES para consultas frecuentes
@@ -148,6 +174,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON public.audit_logs (created_
 CREATE INDEX IF NOT EXISTS idx_tips_created       ON public.tips (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reports_created    ON public.reports (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cases_created      ON public.cases (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wanted_level       ON public.wanted (level DESC, is_pinned DESC);
 
 -- ============================================================
 -- DATOS SEMILLA: RANGOS INICIALES Y MATRIZ DE PERMISOS
@@ -189,6 +216,17 @@ VALUES
 ON CONFLICT (discord_id) DO NOTHING;
 
 -- ============================================================
+-- DATOS SEMILLA: Fugitivos Más Buscados Iniciales
+-- ============================================================
+INSERT INTO public.wanted (id, name, alias, charges, bounty, level, danger_level, danger_color, last_seen, photo, notes, is_pinned, status)
+VALUES
+  ('WANTED-001', 'Dante ''Ghost'' Moretti', 'El Fantasma', 'Homicidio en Primer Grado, Posesión de Armamento Pesado, Conspiración', '$75,000', 5, 'EXTREMO // DISPARAR A LA VISTA', 'bg-red-500/20 text-red-400 border-red-500', 'Centro Financiero / Vinewood Hills', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80', 'Ex-contratista militar privado. Experto en evasión y armamento supreso. Considerado armado y extremadamente letal.', true, 'Buscado'),
+  ('WANTED-002', 'Viktor Kozlov', 'El Capitán de Murmansk', 'Tráfico Internacional de Estupefacientes, Lavado de Dinero a Gran Escala', '$50,000', 4, 'ALTO RIESGO // ARMAS PESADAS', 'bg-orange-500/20 text-orange-400 border-orange-500', 'Puerto de Los Santos / Muelle 21', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80', 'Controla redes logísticas de contrabando marítimo. Suele viajar escoltado por mínimo 3 hombres con chalecos balísticos.', false, 'Buscado'),
+  ('WANTED-003', 'Elena ''Víbora'' Delgado', 'La Reina del Fraude', 'Ciberataque Bancario, Clonación Masiva de Fondos, Extorsión', '$35,000', 2, 'RIESGO DE FUGA // MODERADO', 'bg-yellow-500/20 text-yellow-300 border-yellow-500', 'Aeropuerto Internacional / Pasaporte Falso', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80', 'Especialista en falsificación de identidades federales y desvío de criptoactivos. No confrontativa pero con red de sobornos.', false, 'Buscado'),
+  ('WANTED-004', 'Jackson ''Reaper'' Stone', 'El Carnicero', 'Secuestro Agravado, Tortura, Robo con Rehenes', '$60,000', 5, 'EXTREMO // PSICOPATÍA CONFIRMADA', 'bg-red-500/20 text-red-400 border-red-500', 'Condado de Blaine / Sandy Shores', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&q=80', 'Inestable y violento. Portador de escopeta recortada y explosivos caseros. No negociar.', true, 'Buscado')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- 7. REPLICACIÓN EN TIEMPO REAL (SUPABASE REALTIME)
 -- Permite que todos los usuarios vean los cambios al instante sin recargar
 -- ============================================================
@@ -224,6 +262,11 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.audit_logs;
   EXCEPTION WHEN duplicate_object THEN NULL;
   END;
+
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.wanted;
+  EXCEPTION WHEN duplicate_object THEN NULL;
+  END;
 END $$;
 
 -- Configurar REPLICA IDENTITY FULL para que los eventos DELETE y UPDATE envíen la fila completa
@@ -233,6 +276,7 @@ ALTER TABLE public.cases      REPLICA IDENTITY FULL;
 ALTER TABLE public.reports    REPLICA IDENTITY FULL;
 ALTER TABLE public.tips       REPLICA IDENTITY FULL;
 ALTER TABLE public.audit_logs REPLICA IDENTITY FULL;
+ALTER TABLE public.wanted     REPLICA IDENTITY FULL;
 
 -- ============================================================
 -- FIN DEL SCRIPT

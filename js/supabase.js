@@ -23,10 +23,10 @@ let CACHE = {
   reports:   null,  // array of DB rows
   tips:      null,  // array of DB rows
   cases:     null,  // array of DB rows
+  wanted:    null,  // array of DB rows (Los Más Buscados)
   loaded:    false
 };
 
-// ─── DB STATUS INDICATOR ─────────────────────────────────────────────────────
 // ─── DB STATUS INDICATOR & LIVE SYNC PULSE ──────────────────────────────────
 let _syncPulseTimeout = null;
 
@@ -82,13 +82,14 @@ async function initSupabase() {
   showDBStatus('connecting');
 
   try {
-    const [ranksRes, agentsRes, logsRes, reportsRes, tipsRes, casesRes] = await Promise.all([
+    const [ranksRes, agentsRes, logsRes, reportsRes, tipsRes, casesRes, wantedRes] = await Promise.all([
       db.from('ranks').select('*').order('level', { ascending: false }),
       db.from('agents').select('*').order('created_at', { ascending: true }),
       db.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200),
       db.from('reports').select('*').order('report_date', { ascending: false }),
       db.from('tips').select('*').order('created_at', { ascending: false }),
-      db.from('cases').select('*').order('case_date', { ascending: false })
+      db.from('cases').select('*').order('case_date', { ascending: false }),
+      db.from('wanted').select('*').order('level', { ascending: false })
     ]);
 
     // Critical check on agents
@@ -100,6 +101,16 @@ async function initSupabase() {
     } else {
       CACHE.ranks = _getDefaultRanksRows();
       _seedDefaultRanksToSupabase();
+    }
+
+    // Wanted: if table empty or not created yet, seed from default
+    if (wantedRes.data && wantedRes.data.length > 0) {
+      CACHE.wanted = wantedRes.data;
+      _sortCachedWanted();
+    } else {
+      CACHE.wanted = _getDefaultWantedRows();
+      _sortCachedWanted();
+      _seedDefaultWantedToSupabase();
     }
 
     CACHE.agents    = agentsRes.data   || [];
@@ -115,7 +126,8 @@ async function initSupabase() {
       '| logs:', CACHE.auditLogs.length,
       '| reports:', CACHE.reports.length,
       '| tips:', CACHE.tips.length,
-      '| cases:', CACHE.cases.length);
+      '| cases:', CACHE.cases.length,
+      '| wanted:', CACHE.wanted.length);
 
     // Subscribe to realtime & broadcast sync
     _subscribeRealtime();
@@ -133,6 +145,12 @@ function _loadFromLocalStorage() {
     const ranksRaw = localStorage.getItem('dd_custom_ranks');
     CACHE.ranks = ranksRaw ? JSON.parse(ranksRaw).map(rankToRow) : _getDefaultRanksRows();
   } catch (e) { CACHE.ranks = _getDefaultRanksRows(); }
+
+  try {
+    const wantedRaw = localStorage.getItem('dd_custom_wanted');
+    CACHE.wanted = wantedRaw ? JSON.parse(wantedRaw).map(wantedToRow) : _getDefaultWantedRows();
+    _sortCachedWanted();
+  } catch (e) { CACHE.wanted = _getDefaultWantedRows(); _sortCachedWanted(); }
 
   try {
     const rosterRaw = localStorage.getItem('dd_jefatura_roster');
@@ -251,6 +269,9 @@ function _subscribeRealtime() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, (payload) => {
         _dispatchEntityUpdate('audit_logs', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wanted' }, (payload) => {
+        _dispatchEntityUpdate('wanted', payload.eventType, payload.eventType === 'DELETE' ? payload.old : payload.new, 'postgres');
+      })
       .subscribe((status) => {
         console.log('[DB] Canal Postgres Realtime dd-all-tables-rt:', status);
       });
@@ -283,6 +304,8 @@ function _dispatchEntityUpdate(entity, action, data, source = 'postgres', sender
     _handleTipsRealtime(action, data, sender);
   } else if (entity === 'audit_logs') {
     _handleAuditLogsRealtime(action, data, sender);
+  } else if (entity === 'wanted') {
+    _handleWantedRealtime(action, data, sender);
   }
 }
 
@@ -518,17 +541,48 @@ function _handleAuditLogsRealtime(action, row, sender) {
   showDBSyncPulse('Auditoría sincronizada');
 }
 
+// ─── 7. WANTED (MÁS BUSCADOS) REALTIME HANDLER ───────────────────────────────
+function _handleWantedRealtime(action, row, sender) {
+  const wantedId = row.id;
+  if (!wantedId) return;
+
+  const rowData = row.is_pinned !== undefined ? row : wantedToRow(row);
+
+  if (!CACHE.wanted) CACHE.wanted = [];
+
+  if (action === 'DELETE') {
+    CACHE.wanted = CACHE.wanted.filter(w => w.id !== wantedId);
+  } else {
+    const idx = CACHE.wanted.findIndex(w => w.id === wantedId);
+    if (idx >= 0) CACHE.wanted[idx] = { ...CACHE.wanted[idx], ...rowData };
+    else CACHE.wanted.unshift(rowData);
+  }
+
+  _sortCachedWanted();
+
+  try {
+    localStorage.setItem('dd_custom_wanted', JSON.stringify(CACHE.wanted.map(rowToWanted)));
+  } catch(e) {}
+
+  if (typeof renderMostWanted === 'function' && typeof getActiveWantedList === 'function') {
+    renderMostWanted(getActiveWantedList());
+  }
+
+  showDBSyncPulse('Fugitivos sincronizados');
+}
+
 // ─── BACKGROUND GENTLE SYNC (FALLBACK CADA 15S) ─────────────────────────────
 async function _backgroundSyncAll() {
   if (!db || !navigator.onLine) return;
   try {
-    const [ranksRes, agentsRes, casesRes, reportsRes, tipsRes, logsRes] = await Promise.all([
+    const [ranksRes, agentsRes, casesRes, reportsRes, tipsRes, logsRes, wantedRes] = await Promise.all([
       db.from('ranks').select('*').order('level', { ascending: false }),
       db.from('agents').select('*').order('created_at', { ascending: true }),
       db.from('cases').select('*').order('case_date', { ascending: false }),
       db.from('reports').select('*').order('report_date', { ascending: false }),
       db.from('tips').select('*').order('created_at', { ascending: false }),
-      db.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200)
+      db.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200),
+      db.from('wanted').select('*').order('level', { ascending: false })
     ]);
 
     let changed = false;
@@ -571,6 +625,15 @@ async function _backgroundSyncAll() {
     if (logsRes.data && JSON.stringify(logsRes.data) !== JSON.stringify(CACHE.auditLogs)) {
       CACHE.auditLogs = logsRes.data;
       if (typeof renderAuditLogs === 'function') renderAuditLogs();
+      changed = true;
+    }
+
+    if (wantedRes.data && JSON.stringify(wantedRes.data) !== JSON.stringify(CACHE.wanted)) {
+      CACHE.wanted = wantedRes.data;
+      _sortCachedWanted();
+      if (typeof renderMostWanted === 'function' && typeof getActiveWantedList === 'function') {
+        renderMostWanted(getActiveWantedList());
+      }
       changed = true;
     }
 
@@ -1200,5 +1263,211 @@ async function dbDeleteCase(caseId) {
     if (error) console.warn('[DB] delete case error:', error);
   } catch (e) {
     console.warn('[DB] delete case exception:', e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  WANTED (FUGITIVOS MÁS BUSCADOS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DEFAULT_WANTED_SEED = [
+  {
+    id: "WANTED-001",
+    name: "Dante 'Ghost' Moretti",
+    alias: "El Fantasma",
+    charges: "Homicidio en Primer Grado, Posesión de Armamento Pesado, Conspiración",
+    bounty: "$75,000",
+    level: 5,
+    dangerLevel: "EXTREMO // DISPARAR A LA VISTA",
+    dangerColor: "bg-red-500/20 text-red-400 border-red-500",
+    lastSeen: "Centro Financiero / Vinewood Hills",
+    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+    notes: "Ex-contratista militar privado. Experto en evasión y armamento supreso. Considerado armado y extremadamente letal.",
+    isPinned: true,
+    status: "Buscado"
+  },
+  {
+    id: "WANTED-002",
+    name: "Viktor Kozlov",
+    alias: "El Capitán de Murmansk",
+    charges: "Tráfico Internacional de Estupefacientes, Lavado de Dinero a Gran Escala",
+    bounty: "$50,000",
+    level: 4,
+    dangerLevel: "ALTO RIESGO // ARMAS PESADAS",
+    dangerColor: "bg-orange-500/20 text-orange-400 border-orange-500",
+    lastSeen: "Puerto de Los Santos / Muelle 21",
+    photo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
+    notes: "Controla redes logísticas de contrabando marítimo. Suele viajar escoltado por mínimo 3 hombres con chalecos balísticos.",
+    isPinned: false,
+    status: "Buscado"
+  },
+  {
+    id: "WANTED-003",
+    name: "Elena 'Víbora' Delgado",
+    alias: "La Reina del Fraude",
+    charges: "Ciberataque Bancario, Clonación Masiva de Fondos, Extorsión",
+    bounty: "$35,000",
+    level: 2,
+    dangerLevel: "RIESGO DE FUGA // MODERADO",
+    dangerColor: "bg-yellow-500/20 text-yellow-300 border-yellow-500",
+    lastSeen: "Aeropuerto Internacional / Pasaporte Falso",
+    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+    notes: "Especialista en falsificación de identidades federales y desvío de criptoactivos. No confrontativa pero con red de sobornos.",
+    isPinned: false,
+    status: "Buscado"
+  },
+  {
+    id: "WANTED-004",
+    name: "Jackson 'Reaper' Stone",
+    alias: "El Carnicero",
+    charges: "Secuestro Agravado, Tortura, Robo con Rehenes",
+    bounty: "$60,000",
+    level: 5,
+    dangerLevel: "EXTREMO // PSICOPATÍA CONFIRMADA",
+    dangerColor: "bg-red-500/20 text-red-400 border-red-500",
+    lastSeen: "Condado de Blaine / Sandy Shores",
+    photo: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&q=80",
+    notes: "Inestable y violento. Portador de escopeta recortada y explosivos caseros. No negociar.",
+    isPinned: true,
+    status: "Buscado"
+  }
+];
+
+function _getDefaultWantedRows() {
+  return DEFAULT_WANTED_SEED.map(wantedToRow);
+}
+
+async function _seedDefaultWantedToSupabase() {
+  if (!db) return;
+  try {
+    const rows = _getDefaultWantedRows();
+    await db.from('wanted').upsert(rows, { onConflict: 'id' });
+  } catch (e) {
+    console.warn('[DB] seed default wanted error:', e);
+  }
+}
+
+function _sortCachedWanted() {
+  if (!Array.isArray(CACHE.wanted)) return;
+  CACHE.wanted.sort((a, b) => {
+    // 1. Pinned first
+    const pinA = a.is_pinned === true || a.is_pinned === 'true';
+    const pinB = b.is_pinned === true || b.is_pinned === 'true';
+    if (pinA && !pinB) return -1;
+    if (!pinA && pinB) return 1;
+    // 2. Higher danger level first
+    const lvlA = Number(a.level) || 0;
+    const lvlB = Number(b.level) || 0;
+    if (lvlB !== lvlA) return lvlB - lvlA;
+    // 3. Name alphabetical
+    return (a.name || '').localeCompare(b.name || '');
+  });
+}
+
+function wantedToRow(w) {
+  const lvl = Number(w.level) || 3;
+  let dLevel = w.dangerLevel;
+  let dColor = w.dangerColor;
+
+  if (!dLevel || !dColor) {
+    if (lvl >= 5) {
+      dLevel = "EXTREMO // DISPARAR A LA VISTA";
+      dColor = "bg-red-500/20 text-red-400 border-red-500";
+    } else if (lvl === 4) {
+      dLevel = "ALTO RIESGO // ARMAS PESADAS";
+      dColor = "bg-orange-500/20 text-orange-400 border-orange-500";
+    } else if (lvl === 3) {
+      dLevel = "PRIORIDAD POLICIAL // VIGILANCIA";
+      dColor = "bg-amber-500/20 text-amber-400 border-amber-500";
+    } else if (lvl === 2) {
+      dLevel = "RIESGO DE FUGA // MODERADO";
+      dColor = "bg-yellow-500/20 text-yellow-300 border-yellow-500";
+    } else {
+      dLevel = "BÚSQUEDA ORDINARIA // TESTIGO";
+      dColor = "bg-slate-500/20 text-slate-300 border-slate-500";
+    }
+  }
+
+  return {
+    id:           w.id,
+    name:         w.name || '',
+    alias:        w.alias || '',
+    charges:      w.charges || '',
+    bounty:       w.bounty || '$0',
+    level:        lvl,
+    danger_level: dLevel,
+    danger_color: dColor,
+    last_seen:    w.lastSeen || w.last_seen || '',
+    photo:        w.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    notes:        w.notes || '',
+    is_pinned:    Boolean(w.isPinned ?? w.is_pinned),
+    status:       w.status || 'Buscado'
+  };
+}
+
+function rowToWanted(row) {
+  return {
+    id:          row.id,
+    name:        row.name || '',
+    alias:       row.alias || '',
+    charges:     row.charges || '',
+    bounty:      row.bounty || '$0',
+    level:       Number(row.level) || 3,
+    dangerLevel: row.danger_level || 'ALTO RIESGO',
+    dangerColor: row.danger_color || 'bg-amber-500/20 text-amber-400 border-amber-500',
+    lastSeen:    row.last_seen || '',
+    photo:       row.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    notes:       row.notes || '',
+    isPinned:    Boolean(row.is_pinned),
+    status:      row.status || 'Buscado'
+  };
+}
+
+function getCachedWanted() {
+  return CACHE.wanted || [];
+}
+
+async function dbUpsertWanted(w) {
+  const row = wantedToRow(w);
+  if (!CACHE.wanted) CACHE.wanted = [];
+  const idx = CACHE.wanted.findIndex(item => item.id === w.id);
+  if (idx >= 0) CACHE.wanted[idx] = { ...CACHE.wanted[idx], ...row };
+  else CACHE.wanted.unshift(row);
+
+  _sortCachedWanted();
+
+  _broadcastLiveSync('wanted', 'UPSERT', row);
+
+  try {
+    localStorage.setItem('dd_custom_wanted', JSON.stringify(CACHE.wanted.map(rowToWanted)));
+  } catch (e) {}
+
+  if (!db) return;
+  try {
+    const { error } = await db.from('wanted').upsert(row, { onConflict: 'id' });
+    if (error) console.warn('[DB] upsert wanted error:', error);
+  } catch (e) {
+    console.warn('[DB] upsert wanted exception:', e);
+    try {
+      localStorage.setItem('dd_custom_wanted', JSON.stringify(CACHE.wanted.map(rowToWanted)));
+    } catch(err) {}
+  }
+}
+
+async function dbDeleteWanted(wantedId) {
+  if (!CACHE.wanted) CACHE.wanted = [];
+  CACHE.wanted = CACHE.wanted.filter(w => w.id !== wantedId);
+  _broadcastLiveSync('wanted', 'DELETE', { id: wantedId });
+
+  try {
+    localStorage.setItem('dd_custom_wanted', JSON.stringify(CACHE.wanted.map(rowToWanted)));
+  } catch (e) {}
+
+  if (!db) return;
+  try {
+    const { error } = await db.from('wanted').delete().eq('id', wantedId);
+    if (error) console.warn('[DB] delete wanted error:', error);
+  } catch (e) {
+    console.warn('[DB] delete wanted exception:', e);
   }
 }

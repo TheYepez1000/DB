@@ -99,11 +99,11 @@
       <!-- Quick Alert Status Widget in Sidebar -->
       <a href="#inicio" class="sidebar-alert-indicator">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping"></span>
-          <span class="alert-full-text font-conthrax text-xs text-orange-400 font-bold">CÓDIGO 2 // ELEVADO</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="alert-full-text font-conthrax text-xs text-emerald-400 font-bold">DIVISIÓN // ACTIVA</span>
         </div>
         <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-500 alert-full-text"></i>
-        <span class="sidebar-tooltip">Nivel Operativo: Código 2 (Elevado)</span>
+        <span class="sidebar-tooltip">Central Operativa: Detective Division</span>
       </a>
 
       <!-- Navigation Links -->
@@ -401,8 +401,8 @@
                   <!-- Card Top Header -->
                   <div class="flex items-center justify-between border-b border-amber-500/20 pb-4 mb-5">
                     <div class="flex items-center gap-2 font-conthrax text-xs text-amber-400 font-bold">
-                      <i data-lucide="radio" class="w-4 h-4 text-red-500 animate-pulse"></i>
-                      <span>ESTADO: ELEVADO // CÓDIGO 2</span>
+                      <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                      <span>ESTADO: OPERATIVO // DIVISIÓN ACTIVA</span>
                     </div>
                     <span class="stamp-classified text-[10px]">OFICIAL RP</span>
                   </div>
@@ -458,88 +458,203 @@
         </div>
       </section>
 
-      <!-- CASE FILES SECTION (TABLÓN DE EXPEDIENTES) -->
+      <!-- CASE FILES SECTION (TABLÓN DE EXPEDIENTES - PRIVADO PARA RANGOS) -->
       <section id="casos" class="py-20 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-              <div class="flex items-center gap-2 mb-2">
-                <span class="stamp-active text-xs">REGISTRO DE SUMARIOS</span>
-                <span class="text-xs font-conthrax text-slate-400">ACTUALIZACIÓN EN TIEMPO REAL</span>
-              </div>
-              <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Expedientes de
-                Investigación Abiertos</h2>
-              <p class="text-slate-400 text-sm mt-1 font-light">Seleccione un caso para consultar el sumario forense,
-                pruebas recabadas y sospechosos.</p>
+          <!-- Section Header Always Visible -->
+          <div class="text-center max-w-3xl mx-auto mb-12">
+            <div
+              class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-conthrax text-xs mb-3 shadow-lg shadow-amber-950/40">
+              <i data-lucide="folder-lock" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>ARCHIVO JUDICIAL // CONFIDENCIALIDAD POLICIAL</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Expedientes de Investigación Policial</h2>
+            <p class="text-slate-400 text-xs sm:text-sm font-conthrax mt-2">
+              Sumarios forenses, actas de allanamiento e indicios procesales reservados exclusivamente a oficiales con rango activo en la Detective Division.
+            </p>
+          </div>
+
+          <!-- STATE 1: RESTRICTED ACCESS (UNAUTHENTICATED / NO DISCORD) -->
+          <div id="casos-restricted-view"
+            class="glass-panel-gold rounded-2xl border border-amber-500/40 p-8 sm:p-12 text-center max-w-3xl mx-auto relative overflow-hidden scanlines shadow-2xl">
+            <div class="security-scanline"></div>
+
+            <div
+              class="w-20 h-20 rounded-2xl bg-amber-950/60 border-2 border-amber-500/60 flex items-center justify-center text-amber-400 mx-auto mb-6 shadow-xl shadow-amber-950/70">
+              <i data-lucide="lock" class="w-10 h-10 animate-bounce"></i>
             </div>
 
-            <!-- Controls: Search & New Dossier (Authorized Detectives) -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-              <button onclick="openReportEditor()"
-                class="auth-only px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-conthrax font-bold text-xs uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 shrink-0">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                <span>Nuevo Expediente</span>
+            <span class="stamp-classified text-xs mb-3 inline-block">EXPEDIENTES PRIVADOS // SECRETO DE SUMARIO</span>
+            <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide mb-3">Acceso Restringido a Detectives</h3>
+
+            <p class="text-slate-300 text-xs sm:text-sm font-conthrax max-w-xl mx-auto mb-6 leading-relaxed">
+              Los expedientes criminales contienen testimonios protegidos, análisis balísticos y órdenes judiciales en curso. Por normativa del Departamento, el acceso está reservado exclusivamente a personal policial con rango oficial verificado.
+            </p>
+
+            <!-- OAuth2 Login CTA -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button onclick="loginWithDiscordOAuth2()"
+                class="w-full sm:w-auto px-6 py-3.5 bg-[#5865F2] hover:bg-[#4752c4] text-white font-conthrax font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-[#5865F2]/25 flex items-center justify-center gap-2.5">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+                </svg>
+                <span>Acceder con Discord</span>
               </button>
-
-              <div class="w-full sm:w-72 relative">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input type="text" id="case-search-input" placeholder="Buscar por caso, detective..."
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-xs font-conthrax text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
-              </div>
+              <button onclick="openDiscordAuthModal()"
+                class="w-full sm:w-auto px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-conthrax font-bold text-xs uppercase tracking-wider rounded-xl transition-all border border-amber-500/30 flex items-center justify-center gap-2">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+                <span>Opciones de Acceso</span>
+              </button>
             </div>
           </div>
 
-          <!-- Filter Buttons -->
-          <div class="flex flex-wrap items-center gap-2 mb-8 font-conthrax text-xs">
-            <button data-category="all"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-amber-500 text-black font-bold uppercase transition-colors">
-              Todos los Casos
-            </button>
-            <button data-category="homicide"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-              Homicidios (RHD)
-            </button>
-            <button data-category="narcotics"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-              Narcóticos & Armas
-            </button>
-            <button data-category="robbery"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-              Robos Agravados
-            </button>
-            <button data-category="missing"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-              Desapariciones
-            </button>
-            <button data-category="internal"
-              class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
-              Asuntos Internos
-            </button>
+          <!-- STATE 1B: PENDING VIEW (LOGGED IN AS ASPIRANTE / NO APPROVED RANK) -->
+          <div id="casos-pending-view"
+            class="hidden glass-panel rounded-2xl p-8 sm:p-12 border border-amber-500/40 text-center max-w-2xl mx-auto relative overflow-hidden shadow-2xl">
+            <div
+              class="w-20 h-20 mx-auto mb-4 rounded-2xl p-1 bg-gradient-to-tr from-amber-500 to-red-500 border border-amber-400 relative">
+              <img id="casos-pending-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png"
+                class="w-full h-full object-cover rounded-xl" alt="Pending User">
+              <span
+                class="w-3.5 h-3.5 rounded-full bg-amber-400 absolute -bottom-1 -right-1 border-2 border-black animate-ping"></span>
+            </div>
+
+            <span class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-conthrax text-[11px] font-bold mb-3 border border-amber-500/40">
+              CUENTA EN EVALUACIÓN // ASPIRANTE
+            </span>
+
+            <h3 class="text-2xl font-black font-gobold text-white mb-2">Expedientes Bloqueados Temporalmente</h3>
+            <p class="text-xs font-conthrax text-slate-300 max-w-md mx-auto mb-5 leading-relaxed">
+              Hola <span id="casos-pending-name" class="text-amber-400 font-bold">Oficial</span>. Tu cuenta ha sido registrada con el rango por defecto <strong>Aspirante</strong>. Para consultar los expedientes policiales debes esperar a que <strong>Jefatura</strong> verifique tu identidad y te asigne un rango oficial.
+            </p>
+
+            <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px] font-conthrax text-slate-400 max-w-md mx-auto flex items-center justify-between">
+              <span>ESTADO DE CREDENCIAL:</span>
+              <span class="text-amber-400 font-bold">PENDIENTE ASIGNACIÓN</span>
+            </div>
           </div>
 
-          <!-- Dynamic Cases Grid -->
-          <div id="cases-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Injected via app.js -->
+          <!-- STATE 2: AUTHORIZED DETECTIVE VIEW -->
+          <div id="casos-authorized-view" class="hidden">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="stamp-active text-xs">REGISTRO DE SUMARIOS</span>
+                  <span class="text-xs font-conthrax text-emerald-400 font-bold">ACCESO CONCEDIDO POR RANGO</span>
+                </div>
+                <h3 class="text-2xl sm:text-3xl font-black font-gobold tracking-wide text-white">Expedientes de Investigación Abiertos</h3>
+                <p class="text-slate-400 text-sm mt-1 font-light">Seleccione un caso para consultar el sumario forense, pruebas recabadas y sospechosos.</p>
+              </div>
+
+              <!-- Controls: Search & New Dossier -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <button onclick="openReportEditor()"
+                  class="auth-only px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black font-conthrax font-bold text-xs uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 shrink-0">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>Nuevo Expediente</span>
+                </button>
+
+                <div class="w-full sm:w-72 relative">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                  <input type="text" id="case-search-input" placeholder="Buscar por caso, detective..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-xs font-conthrax text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap items-center gap-2 mb-8 font-conthrax text-xs">
+              <button data-category="all"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-amber-500 text-black font-bold uppercase transition-colors">
+                Todos los Casos
+              </button>
+              <button data-category="homicide"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+                Homicidios (RHD)
+              </button>
+              <button data-category="narcotics"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+                Narcóticos & Armas
+              </button>
+              <button data-category="robbery"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+                Robos Agravados
+              </button>
+              <button data-category="missing"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+                Desapariciones
+              </button>
+              <button data-category="internal"
+                class="case-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+                Asuntos Internos
+              </button>
+            </div>
+
+            <!-- Dynamic Cases Grid -->
+            <div id="cases-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <!-- Injected via app.js -->
+            </div>
           </div>
 
         </div>
       </section>
 
-      <!-- MOST WANTED SECTION -->
+      <!-- MOST WANTED SECTION (GESTIONABLE, EDITABLE, BORRABLE Y FILTRABLE POR NIVELES) -->
       <section id="buscados" class="py-20 bg-slate-950/80 border-t border-b border-slate-800 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div class="text-center max-w-2xl mx-auto mb-14">
-            <span class="stamp-warrant text-xs mb-3 inline-block">ÓRDENES DE CAPTURA JUDICIALES</span>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Los Más Buscados de la
-              Ciudad</h2>
-            <p class="text-slate-400 text-xs sm:text-sm mt-2 font-conthrax">
-              Individuos de extrema peligrosidad. Si posee información certera sobre su paradero, presente una denuncia
-              anónima. No intente detenerlos por sus propios medios.
-            </p>
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="stamp-warrant text-xs">ÓRDENES DE CAPTURA JUDICIALES</span>
+                <span class="text-xs font-conthrax text-red-400 font-bold">ALERTA METROPOLITANA</span>
+              </div>
+              <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Los Más Buscados de la Ciudad</h2>
+              <p class="text-slate-400 text-xs sm:text-sm mt-1 font-conthrax">
+                Individuos de extrema peligrosidad clasificados por niveles de amenaza. Si posee información certera, presente una denuncia anónima.
+              </p>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex flex-wrap items-center gap-3">
+              <button onclick="openWantedEditor()" id="wanted-add-btn"
+                class="auth-only px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-conthrax font-bold text-xs uppercase rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/30 shrink-0">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                <span>+ Nuevo Fugitivo</span>
+              </button>
+            </div>
           </div>
 
+          <!-- Level & Pinned Filters -->
+          <div class="flex flex-wrap items-center gap-2 mb-8 font-conthrax text-xs">
+            <button onclick="filterWantedByLevel('all')" id="wanted-filter-all"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-amber-500 text-black font-bold uppercase transition-colors">
+              Todos los Fugitivos (<span id="wanted-count-all">0</span>)
+            </button>
+            <button onclick="filterWantedByLevel('pinned')" id="wanted-filter-pinned"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-amber-300 hover:bg-slate-700 uppercase transition-colors border border-amber-500/30 flex items-center gap-1.5">
+              <span>📌 Destacados / Fijados</span>
+            </button>
+            <button onclick="filterWantedByLevel(5)" id="wanted-filter-5"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-red-400 hover:bg-slate-700 uppercase transition-colors border border-red-500/30">
+              Nivel 5 // Máxima Prioridad
+            </button>
+            <button onclick="filterWantedByLevel(4)" id="wanted-filter-4"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-orange-400 hover:bg-slate-700 uppercase transition-colors border border-orange-500/30">
+              Nivel 4 // Extremo Peligro
+            </button>
+            <button onclick="filterWantedByLevel(3)" id="wanted-filter-3"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-yellow-300 hover:bg-slate-700 uppercase transition-colors border border-yellow-500/30">
+              Nivel 3 // Alto Riesgo
+            </button>
+            <button onclick="filterWantedByLevel(2)" id="wanted-filter-2"
+              class="wanted-filter-btn px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 uppercase transition-colors">
+              Nivel 2-1 // Riesgo Moderado
+            </button>
+          </div>
+
+          <!-- Most Wanted Grid -->
           <div id="most-wanted-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Injected via app.js -->
           </div>
@@ -1040,148 +1155,177 @@
         </div>
       </section>
 
-      <!-- SPECIALIZED UNITS / ESTRUCTURA -->
+      <!-- SPECIALIZED UNITS / APARTADOS DE CADA SUBDIVISIÓN DE LA DB -->
       <section id="unidades" class="py-20 bg-slate-950 border-t border-b border-slate-800 relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div class="text-center max-w-3xl mx-auto mb-16">
+          <div class="text-center max-w-3xl mx-auto mb-12">
             <span
-              class="text-xs font-conthrax font-bold text-amber-400 tracking-widest uppercase block mb-2">ORGANIZACIÓN
-              INTERNA</span>
-            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Unidades Especializadas de
-              Investigación</h2>
+              class="text-xs font-conthrax font-bold text-amber-400 tracking-widest uppercase block mb-2">ESTRUCTURA & APARTADOS OPERATIVOS</span>
+            <h2 class="text-3xl sm:text-4xl font-black font-gobold tracking-wide text-white">Subdivisiones de la Detective Division</h2>
             <p class="text-slate-400 text-sm mt-3 font-light">
-              Cada departamento operativo cuenta con detectives de carrera, peritos forenses y equipamiento balístico de
-              última generación para casos complejos.
+              Apartados especializados por departamento operativo. Consulta el personal asignado, sumarios judiciales y protocolos de intervención de cada rama.
             </p>
           </div>
 
+          <!-- Subdivision Tabs Selector -->
+          <div class="flex flex-wrap items-center justify-center gap-2 mb-10 font-conthrax text-xs">
+            <button onclick="selectSubdivision('rhd')" id="subdiv-btn-rhd"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold uppercase transition-all shadow-lg shadow-red-950/50 flex items-center gap-2 border border-red-500/50">
+              <i data-lucide="skull" class="w-4 h-4"></i>
+              <span>RHD // Robos & Homicidios</span>
+            </button>
+            <button onclick="selectSubdivision('gnd')" id="subdiv-btn-gnd"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
+              <i data-lucide="package-search" class="w-4 h-4 text-amber-400"></i>
+              <span>GND // Narcóticos & Pandillas</span>
+            </button>
+            <button onclick="selectSubdivision('csi')" id="subdiv-btn-csi"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
+              <i data-lucide="microscope" class="w-4 h-4 text-blue-400"></i>
+              <span>CSI // Forense & Balística</span>
+            </button>
+            <button onclick="selectSubdivision('cid')" id="subdiv-btn-cid"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
+              <i data-lucide="binary" class="w-4 h-4 text-emerald-400"></i>
+              <span>CID // Ciberdelincuencia</span>
+            </button>
+            <button onclick="selectSubdivision('iad')" id="subdiv-btn-iad"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
+              <i data-lucide="eye" class="w-4 h-4 text-purple-400"></i>
+              <span>IAD // Asuntos Internos</span>
+            </button>
+            <button onclick="selectSubdivision('ccd')" id="subdiv-btn-ccd"
+              class="subdiv-nav-btn px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase transition-all flex items-center gap-2 border border-slate-800">
+              <i data-lucide="archive" class="w-4 h-4 text-cyan-400"></i>
+              <span>CCD // Casos Fríos</span>
+            </button>
+          </div>
+
+          <!-- Dynamic Active Subdivision Pane (APARTADO DETALLADO) -->
+          <div id="subdivision-active-pane"
+            class="glass-panel-gold rounded-2xl border border-amber-500/40 p-6 sm:p-10 mb-14 shadow-2xl relative overflow-hidden transition-all duration-300">
+            <!-- Injected via app.js (renderSubdivisionPane) -->
+          </div>
+
+          <!-- Fast Overview Cards Grid -->
+          <div class="mb-4">
+            <h3 class="text-xs font-conthrax text-slate-400 uppercase tracking-widest font-bold mb-4">Catálogo Completo de Subdivisiones</h3>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- Unit 1: RHD -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('rhd')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-red-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 border border-red-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="skull" class="w-6 h-6"></i>
               </div>
-              <span class="text-xs font-conthrax text-red-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                RHD</span>
+              <span class="text-xs font-conthrax text-red-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN RHD</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Robos y Homicidios</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Respuesta prioritaria ante homicidios calificados, ejecuciones por encargo, atracos bancarios a gran
-                escala y secuestros extorsivos.
+                Respuesta prioritaria ante homicidios calificados, ejecuciones, atracos a entidades bancarias y secuestros.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Detectives Asignados: 8</span>
-                <span class="text-amber-400">Prioridad Código 3</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-red-400">Ver Apartado Completo →</span>
+                <span class="text-amber-400 font-bold">Código 3</span>
               </div>
             </div>
 
             <!-- Unit 2: GND -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('gnd')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-400 border border-amber-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="package-search" class="w-6 h-6"></i>
               </div>
-              <span class="text-xs font-conthrax text-amber-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                GND</span>
+              <span class="text-xs font-conthrax text-amber-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN GND</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Narcóticos & Pandillas</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Operaciones encubiertas, interceptaciones telefónicas y seguimiento de redes de contrabando de
-                sustancias controladas y tráfico de armas de guerra.
+                Operaciones encubiertas, interceptaciones telefónicas y seguimiento de redes de narcotráfico y tráfico de armas.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Detectives Asignados: 6</span>
-                <span class="text-amber-400">Infiltración Activa</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-amber-400">Ver Apartado Completo →</span>
+                <span class="text-amber-400 font-bold">Infiltración</span>
               </div>
             </div>
 
             <!-- Unit 3: CSI Forensics -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('csi')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-blue-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 border border-blue-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="microscope" class="w-6 h-6"></i>
               </div>
-              <span class="text-xs font-conthrax text-blue-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                CSI</span>
+              <span class="text-xs font-conthrax text-blue-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CSI</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Forense & Balística</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Inspección ocular técnico-policial, levantamiento de huellas dactilares, trayectoria de proyectiles
-                balísticos y reconstrucción digital 3D.
+                Inspección ocular técnico-policial, levantamiento de huellas dactilares, balística y reconstrucción 3D.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Peritos Forenses: 4</span>
-                <span class="text-blue-400">Laboratorio Central</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-blue-400">Ver Apartado Completo →</span>
+                <span class="text-blue-400 font-bold">Laboratorio</span>
               </div>
             </div>
 
             <!-- Unit 4: Cyber & Financial -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('cid')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-emerald-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 border border-emerald-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="binary" class="w-6 h-6"></i>
               </div>
               <span
-                class="text-xs font-conthrax text-emerald-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                CID</span>
+                class="text-xs font-conthrax text-emerald-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CID</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Ciberdelincuencia & Fraude</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Rastreo de billeteras de criptoactivos ilícitos, intrusión en servidores corporativos, falsificación
-                documental y estafas bancarias de alto perfil.
+                Rastreo de billeteras de criptoactivos ilícitos, intrusión informática, falsificación documental y estafas bancarias.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Analistas Forenses: 3</span>
-                <span class="text-emerald-400">Rastreo IP / Satelital</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-emerald-400">Ver Apartado Completo →</span>
+                <span class="text-emerald-400 font-bold">Rastreo IP</span>
               </div>
             </div>
 
             <!-- Unit 5: IAD Internal Affairs -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('iad')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-purple-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-400 border border-purple-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="eye" class="w-6 h-6"></i>
               </div>
-              <span class="text-xs font-conthrax text-purple-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                IAD</span>
+              <span class="text-xs font-conthrax text-purple-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN IAD</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Asuntos Internos</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Auditoría de integridad policial, investigación confidencial de sobornos, abuso de poder, fuga de
-                información confidencial y perjurio en juicio.
+                Auditoría de integridad policial, investigación de sobornos, abuso de autoridad y filtración de información.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Oficiales Auditores: 2</span>
-                <span class="text-purple-400">Alto Secreto</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-purple-400">Ver Apartado Completo →</span>
+                <span class="text-purple-400 font-bold">Alto Secreto</span>
               </div>
             </div>
 
             <!-- Unit 6: Cold Cases & Missing -->
-            <div
-              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-amber-500/40 transition-all group">
+            <div onclick="selectSubdivision('ccd')"
+              class="glass-panel rounded-xl p-6 border border-slate-800 hover:border-cyan-500/60 transition-all group cursor-pointer">
               <div
                 class="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center text-cyan-400 border border-cyan-500/20 mb-5 group-hover:scale-110 transition-transform">
                 <i data-lucide="archive" class="w-6 h-6"></i>
               </div>
-              <span class="text-xs font-conthrax text-cyan-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN
-                CCD</span>
+              <span class="text-xs font-conthrax text-cyan-400 font-bold tracking-wider uppercase block mb-1">DIVISIÓN CCD</span>
               <h3 class="text-xl font-bold text-white mb-2 font-gobold tracking-wide">Casos Fríos & Desapariciones</h3>
               <p class="text-slate-400 text-xs leading-relaxed mb-4">
-                Revisión de expedientes no resueltos con nuevas tecnologías de ADN, localización de personas
-                secuestradas y búsqueda forense en zonas rurales.
+                Revisión de expedientes no resueltos con cotejo de ADN, personas desaparecidas y peritaje en zonas rurales.
               </p>
               <div
-                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between">
-                <span>Investigadores: 3</span>
-                <span class="text-cyan-400">Expedientes Históricos</span>
+                class="text-[11px] font-conthrax text-slate-500 pt-3 border-t border-slate-800/80 flex justify-between items-center">
+                <span class="text-cyan-400">Ver Apartado Completo →</span>
+                <span class="text-cyan-400 font-bold">Archivo</span>
               </div>
             </div>
 
@@ -2708,6 +2852,150 @@
               class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-black text-xs uppercase font-bold transition-all shadow-lg flex items-center gap-1.5">
               <i data-lucide="save" class="w-4 h-4"></i>
               <span>Guardar Rango y Permisos</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTIÓN DE FUGITIVOS MÁS BUSCADOS (CREAR / EDITAR / FIJAR / NIVELES) -->
+  <div id="wanted-editor-modal"
+    class="rp-modal fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div
+      class="relative w-full max-w-2xl bg-slate-900 border border-red-500/50 rounded-2xl shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-red-500/30 flex items-center justify-between bg-red-950/40">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/40 flex items-center justify-center text-red-400">
+            <i data-lucide="crosshair" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="wanted-editor-title" class="font-gobold text-lg text-white font-bold tracking-wide">
+                FICHA DE FUGITIVO JUDICIAL
+              </h3>
+              <span id="wanted-editor-badge" class="px-2 py-0.5 rounded text-[9px] font-conthrax font-bold bg-red-500/20 text-red-400 border border-red-500/40">
+                ORDEN DE CAPTURA
+              </span>
+            </div>
+            <p class="text-[10px] font-conthrax text-slate-400">Registro público de personas buscadas por la Detective Division</p>
+          </div>
+        </div>
+        <button onclick="closeModal('wanted-editor-modal')" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body / Form -->
+      <form onsubmit="saveWantedTarget(event)"
+        class="p-5 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scroll font-conthrax text-xs">
+        <input type="hidden" id="wanted-edit-id" value="">
+
+        <!-- Basic Attributes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-950/70 p-4 rounded-xl border border-slate-800">
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nombre Completo *</label>
+            <input type="text" id="wanted-edit-name" required placeholder="Ej: Dante 'Ghost' Moretti"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Alias / Sobrenombre *</label>
+            <input type="text" id="wanted-edit-alias" required placeholder="Ej: El Fantasma"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-400 text-xs focus:outline-none focus:border-red-500">
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Nivel de Búsqueda / Amenaza *</label>
+            <select id="wanted-edit-level" onchange="updateWantedLevelPreview()"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
+              <option value="5">Nivel 5 // Máxima Prioridad (Disparar a la vista)</option>
+              <option value="4">Nivel 4 // Extremo Peligro (Armas pesadas)</option>
+              <option value="3" selected>Nivel 3 // Alto Riesgo (Prioridad)</option>
+              <option value="2">Nivel 2 // Riesgo de Fuga Inminente</option>
+              <option value="1">Nivel 1 // Búsqueda Ordinaria / Comparecencia</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Recompensa Judicial</label>
+            <input type="text" id="wanted-edit-bounty" placeholder="Ej: $75,000"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-400 font-bold text-xs focus:outline-none focus:border-amber-500 font-mono">
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Estado del Fugitivo</label>
+            <select id="wanted-edit-status"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500">
+              <option value="Buscado">Buscado (Activo en fuga)</option>
+              <option value="Capturado">Capturado (Bajo custodia judicial)</option>
+              <option value="Abatido">Abatido / Neutralizado</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Última Ubicación Conocida</label>
+            <input type="text" id="wanted-edit-lastseen" placeholder="Ej: Centro Financiero / Vinewood"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-red-500">
+          </div>
+        </div>
+
+        <!-- Pin Switch -->
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="pin" class="w-4 h-4 text-amber-400"></i>
+            <div>
+              <span class="text-white font-bold block text-xs">Fijar al Inicio del Tablón</span>
+              <span class="text-[10px] text-slate-400 block font-mono">Aparecerá en los primeros puestos destacados con insignia dorada</span>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="wanted-edit-pinned" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+        </div>
+
+        <!-- Photo URL -->
+        <div>
+          <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Fotografía / Retrato Robot (URL)</label>
+          <input type="url" id="wanted-edit-photo" placeholder="https://..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500 font-mono">
+        </div>
+
+        <!-- Charges -->
+        <div>
+          <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Cargos Judiciales Imputados *</label>
+          <textarea id="wanted-edit-charges" required rows="2" placeholder="Homicidio, Posesión Ilícita de Armamento..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-red-500 custom-scroll font-mono"></textarea>
+        </div>
+
+        <!-- Intelligence Notes -->
+        <div>
+          <label class="block text-slate-300 text-[10px] uppercase mb-1 font-bold">Notas de Inteligencia & Modus Operandi</label>
+          <textarea id="wanted-edit-notes" rows="2" placeholder="Información sobre posibles escoltas, peligrosidad, armamento habitual..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 text-xs focus:outline-none focus:border-red-500 custom-scroll"></textarea>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+          <button type="button" id="wanted-delete-btn" onclick="deleteWantedTargetFromModal()"
+            class="hidden px-4 py-2.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-700/50 text-xs uppercase font-bold transition-colors flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Eliminar Fugitivo</span>
+          </button>
+
+          <div class="flex items-center gap-2.5 ml-auto">
+            <button type="button" onclick="closeModal('wanted-editor-modal')"
+              class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs uppercase transition-colors">
+              Cancelar
+            </button>
+            <button type="submit"
+              class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-xs uppercase font-bold transition-all shadow-lg flex items-center gap-1.5">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Guardar Fugitivo</span>
             </button>
           </div>
         </div>

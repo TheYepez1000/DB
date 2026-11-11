@@ -325,7 +325,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initDiscordAuth();
   initClock();
   renderCases(getActiveCasesList());
-  renderMostWanted(MOST_WANTED);
+  renderMostWanted(getActiveWantedList());
   setupCaseFilters();
   setupTipForm();
   setupInformesHub();
@@ -336,6 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupReportEditor();
   setupJefaturaSearch();
   renderDynamicRanks();
+  selectSubdivision('rhd');
 });
 
 // --- DISCORD OAUTH2 AUTHENTICATION & ROLE VERIFICATION ENGINE ---
@@ -572,7 +573,38 @@ function updateDiscordAuthUI() {
   const civilDeniedText = document.getElementById("informes-civil-denied-text");
   const topbarJefaturaBtn = document.getElementById("topbar-jefatura-btn");
 
-  if (isDetectiveAuth && currentDiscordUser) {
+  // Casos (Expedientes) Views (Privados para oficiales con rango)
+  const casosRestricted = document.getElementById("casos-restricted-view");
+  const casosPending = document.getElementById("casos-pending-view");
+  const casosAuthorized = document.getElementById("casos-authorized-view");
+
+  const hasReportsAccess = Boolean(currentDiscordUser && hasPermission('view_reports') && currentDiscordUser.rankKey !== "aspirante");
+  const hasCasesAccess = Boolean(currentDiscordUser && hasPermission('view_cases') && currentDiscordUser.rankKey !== "aspirante");
+
+  // 1. GESTIÓN DE EXPEDIENTES (CASOS)
+  if (hasCasesAccess) {
+    if (casosRestricted) casosRestricted.classList.add("hidden");
+    if (casosPending) casosPending.classList.add("hidden");
+    if (casosAuthorized) casosAuthorized.classList.remove("hidden");
+    renderCases(getActiveCasesList());
+  } else if (currentDiscordUser && currentDiscordUser.rankKey === "aspirante") {
+    if (casosRestricted) casosRestricted.classList.add("hidden");
+    if (casosAuthorized) casosAuthorized.classList.add("hidden");
+    if (casosPending) {
+      casosPending.classList.remove("hidden");
+      const cPendingName = document.getElementById("casos-pending-name");
+      const cPendingAvatar = document.getElementById("casos-pending-avatar");
+      if (cPendingName) cPendingName.textContent = currentDiscordUser.username || "Oficial";
+      if (cPendingAvatar) cPendingAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+    }
+  } else {
+    if (casosAuthorized) casosAuthorized.classList.add("hidden");
+    if (casosPending) casosPending.classList.add("hidden");
+    if (casosRestricted) casosRestricted.classList.remove("hidden");
+  }
+
+  // 2. GESTIÓN DE INFORMES CLASIFICADOS
+  if (hasReportsAccess) {
     document.body.classList.add("is-detective-auth");
     if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
     if (topbarName) topbarName.textContent = currentDiscordUser.username || "Detective Autorizado";
@@ -609,7 +641,7 @@ function updateDiscordAuthUI() {
 
     renderConfidentialReports(getActiveConfidentialReports());
     renderAuthorizedTipsInbox();
-  } else if (currentDiscordUser && !isDetectiveAuth && currentDiscordUser.rankKey === "aspirante") {
+  } else if (currentDiscordUser && currentDiscordUser.rankKey === "aspirante") {
     // Aspirante: logged in but no access yet — show pending view
     document.body.classList.remove("is-detective-auth");
     if (topbarAvatar) topbarAvatar.src = currentDiscordUser.avatar || "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -665,9 +697,22 @@ function updateDiscordAuthUI() {
   const clearAuditBtn = document.querySelector('button[onclick="clearAuditLogs()"]');
   if (clearAuditBtn) clearAuditBtn.style.display = hasPermission('manage_audit') ? 'inline-flex' : 'none';
 
+  // Botón "+ Nuevo Fugitivo" en Más Buscados
+  const addWantedBtn = document.getElementById('wanted-add-btn');
+  if (addWantedBtn) {
+    const canAddWanted = Boolean(currentDiscordUser && (hasPermission('create_cases') || hasPermission('edit_cases') || currentDiscordUser.isHighCommand));
+    addWantedBtn.style.display = canAddWanted ? 'inline-flex' : 'none';
+  }
+
+  // Re-renderizar Más Buscados con controles adecuados de rango
+  renderMostWanted(getActiveWantedList());
+
   // Update Jefatura section UI
   updateJefaturaUI();
   renderDynamicRanks();
+
+  // Refrescar Apartado de Subdivisión Activa
+  renderSubdivisionPane(currentActiveSubdivision);
 }
 
 window.openDiscordAuthModal = function() {
@@ -1160,6 +1205,12 @@ function setupCaseFilters() {
 
 // --- CASE DETAIL MODAL ---
 function openCaseModal(caseId) {
+  if (!hasPermission('view_cases') || !currentDiscordUser || currentDiscordUser.rankKey === 'aspirante') {
+    showToast("⛔ Acceso denegado: los expedientes judiciales son reservados para oficiales con rango.");
+    audioEngine.playRadioBeep();
+    return;
+  }
+
   const cases = getActiveCasesList();
   const c = cases.find(item => item.id === caseId);
   if (!c) return;
@@ -1297,68 +1348,670 @@ function openCaseModal(caseId) {
   lucide.createIcons();
 }
 
-// --- RENDER MOST WANTED ---
+// ─────────────────────────────────────────────────────────────────────────────
+//  DYNAMIC MOST WANTED ENGINE (CRUD, NIVELES 1-5, PIN / DESTACAR)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getActiveWantedList() {
+  const cached = (typeof getCachedWanted === 'function') ? getCachedWanted() : [];
+  if (cached.length > 0) return cached.map(rowToWanted);
+  const custom = localStorage.getItem("dd_custom_wanted");
+  if (custom) {
+    try {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch(e) {}
+  }
+  return typeof DEFAULT_WANTED_SEED !== 'undefined' ? DEFAULT_WANTED_SEED : [];
+}
+
+let currentWantedFilter = 'all';
+
+window.filterWantedByLevel = function(filterVal) {
+  currentWantedFilter = filterVal;
+  audioEngine.playKeyClick();
+
+  // Actualizar estilos de los botones de filtro
+  document.querySelectorAll(".wanted-filter-btn").forEach(btn => {
+    btn.classList.remove("bg-amber-500", "text-black");
+    btn.classList.add("bg-slate-800");
+  });
+
+  const activeBtn = document.getElementById(`wanted-filter-${filterVal}`);
+  if (activeBtn) {
+    activeBtn.classList.remove("bg-slate-800");
+    activeBtn.classList.add("bg-amber-500", "text-black");
+  }
+
+  renderMostWanted(getActiveWantedList());
+};
+
 function renderMostWanted(list) {
   const container = document.getElementById("most-wanted-grid");
   if (!container) return;
 
+  const countSpan = document.getElementById("wanted-count-all");
+  if (countSpan) countSpan.textContent = list.length;
+
+  // Filtrado según nivel o pin
+  let filtered = [...list];
+  if (currentWantedFilter === 'pinned') {
+    filtered = filtered.filter(w => w.isPinned);
+  } else if (currentWantedFilter !== 'all') {
+    const lvlNum = Number(currentWantedFilter);
+    if (lvlNum === 2) {
+      filtered = filtered.filter(w => Number(w.level) <= 2);
+    } else {
+      filtered = filtered.filter(w => Number(w.level) === lvlNum);
+    }
+  }
+
+  // Ordenar: Pinned siempre primero, luego nivel descendente
+  filtered.sort((a, b) => {
+    const pinA = Boolean(a.isPinned);
+    const pinB = Boolean(b.isPinned);
+    if (pinA && !pinB) return -1;
+    if (!pinA && pinB) return 1;
+    const lvlA = Number(a.level) || 0;
+    const lvlB = Number(b.level) || 0;
+    return lvlB - lvlA;
+  });
+
   container.innerHTML = "";
 
-  list.forEach(w => {
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full text-center py-12 glass-panel rounded-xl border border-slate-800">
+        <i data-lucide="shield-check" class="w-12 h-12 text-slate-500 mx-auto mb-3"></i>
+        <p class="text-sm font-conthrax text-slate-400 uppercase">No hay fugitivos registrados con este filtro de búsqueda</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  const canManageWanted = Boolean(currentDiscordUser && (hasPermission('create_cases') || hasPermission('edit_cases') || currentDiscordUser.isHighCommand));
+
+  filtered.forEach(w => {
     const card = document.createElement("div");
-    card.className = "glass-panel-gold rounded-xl overflow-hidden border border-amber-500/30 flex flex-col justify-between group";
+    card.className = `glass-panel-gold rounded-xl overflow-hidden border ${w.isPinned ? 'border-amber-500 shadow-xl shadow-amber-500/10' : 'border-slate-800'} flex flex-col justify-between group transition-all`;
+
+    // Danger level meta
+    const lvl = Number(w.level) || 3;
+    let lvlBadgeColor = "bg-amber-500/20 text-amber-300 border-amber-500/50";
+    if (lvl >= 5) lvlBadgeColor = "bg-red-500/20 text-red-400 border-red-500/60";
+    else if (lvl === 4) lvlBadgeColor = "bg-orange-500/20 text-orange-400 border-orange-500/60";
+    else if (lvl <= 2) lvlBadgeColor = "bg-yellow-500/20 text-yellow-300 border-yellow-500/50";
 
     card.innerHTML = `
       <div>
-        <div class="relative h-60 w-full overflow-hidden bg-slate-950">
+        <!-- Photo Container -->
+        <div class="relative h-64 w-full overflow-hidden bg-slate-950">
           <img src="${w.photo}" alt="${w.name}" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500">
           <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
           
-          <div class="absolute top-3 left-3">
-            <span class="stamp-classified text-xs">BUSCADO // SE BUSCA</span>
+          <!-- Top Badges & Quick Action Controls -->
+          <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="stamp-classified text-[10px]">SE BUSCA</span>
+              ${w.isPinned ? `
+                <span class="px-2 py-0.5 rounded bg-amber-500 text-black font-conthrax font-extrabold text-[9px] tracking-wider shadow-md flex items-center gap-1">
+                  <i data-lucide="pin" class="w-2.5 h-2.5"></i> FIJADO
+                </span>
+              ` : ''}
+            </div>
+
+            ${canManageWanted ? `
+              <div class="flex items-center gap-1 bg-black/75 p-1 rounded-lg backdrop-blur-sm border border-slate-700/80">
+                <button onclick="toggleWantedPin('${w.id}')" title="${w.isPinned ? 'Desfijar de la cabecera' : 'Fijar en cabecera'}"
+                  class="p-1 rounded hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition-colors">
+                  <i data-lucide="${w.isPinned ? 'pin-off' : 'pin'}" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="openWantedEditor('${w.id}')" title="Editar ficha de fugitivo"
+                  class="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
+                  <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="deleteWantedTarget('${w.id}')" title="Eliminar del registro judicial"
+                  class="p-1 rounded hover:bg-red-950 text-red-400 hover:text-red-300 transition-colors">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            ` : ''}
           </div>
 
-          <div class="absolute top-3 right-3 font-mono text-xs font-extrabold px-2.5 py-1 rounded border ${w.dangerColor}">
-            ${w.dangerLevel}
+          <!-- Danger Level Badge -->
+          <div class="absolute top-11 right-2.5 font-conthrax text-[10px] font-extrabold px-2 py-0.5 rounded border ${lvlBadgeColor} backdrop-blur-sm">
+            NVL ${lvl} // ${w.dangerLevel || 'BUSCADO'}
           </div>
 
+          <!-- Name & Alias -->
           <div class="absolute bottom-3 left-4 right-4">
             <p class="text-xs font-conthrax text-amber-400 tracking-wider">ALIAS: "${w.alias}"</p>
-            <h3 class="text-2xl font-black text-white font-gobold tracking-wide">${w.name}</h3>
+            <h3 class="text-xl font-black text-white font-gobold tracking-wide leading-tight">${w.name}</h3>
           </div>
         </div>
 
-        <div class="p-5 space-y-3">
+        <!-- Details Body -->
+        <div class="p-4 space-y-3 font-conthrax text-xs">
           <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-center justify-between">
-            <span class="text-xs font-conthrax text-slate-300">RECOMPENSA OFRECIDA:</span>
-            <span class="text-lg font-conthrax font-black text-amber-400">${w.bounty}</span>
+            <span class="text-[11px] text-slate-300">RECOMPENSA:</span>
+            <span class="text-base font-black text-amber-400 font-mono">${w.bounty}</span>
           </div>
 
           <div>
-            <span class="text-xs font-mono text-slate-400 uppercase block mb-1">Cargos Imputados:</span>
-            <p class="text-xs text-slate-200 font-mono bg-slate-950/60 p-2.5 rounded border border-slate-800 leading-relaxed">${w.charges}</p>
+            <span class="text-[10px] text-slate-400 uppercase block mb-1 font-bold">Cargos Imputados:</span>
+            <p class="text-[11px] text-slate-200 font-mono bg-slate-950/70 p-2 rounded border border-slate-800 leading-relaxed">${w.charges}</p>
           </div>
 
           <div>
-            <span class="text-xs font-mono text-slate-400 uppercase block mb-1">Última Ubicación Conocida:</span>
-            <p class="text-xs text-red-300 font-mono flex items-center gap-1.5">
-              <i data-lucide="crosshair" class="w-3.5 h-3.5 text-red-400"></i> ${w.lastSeen}
+            <span class="text-[10px] text-slate-400 uppercase block mb-1 font-bold">Último Avistamiento:</span>
+            <p class="text-[11px] text-red-300 font-mono flex items-center gap-1.5">
+              <i data-lucide="crosshair" class="w-3.5 h-3.5 text-red-400 shrink-0"></i> ${w.lastSeen || 'Desconocido'}
             </p>
           </div>
 
-          <p class="text-slate-400 text-xs italic border-l-2 border-amber-500/40 pl-2 mt-2">${w.notes}</p>
+          ${w.notes ? `<p class="text-slate-400 text-[11px] italic border-l-2 border-amber-500/40 pl-2 mt-2 leading-relaxed">${w.notes}</p>` : ''}
         </div>
       </div>
 
-      <div class="p-5 pt-0">
-        <button onclick="reportWantedTarget('${w.name}', '${w.alias}')" class="w-full py-2.5 bg-red-600/90 hover:bg-red-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-950/50">
-          <i data-lucide="send" class="w-4 h-4"></i> Aportar Información Anónima
+      <!-- Action Button -->
+      <div class="p-4 pt-0">
+        <button onclick="reportWantedTarget('${w.name}', '${w.alias}')" class="w-full py-2.5 bg-red-600/90 hover:bg-red-500 text-white font-conthrax font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-950/50">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i> Aportar Datos Anónimos
         </button>
       </div>
     `;
 
     container.appendChild(card);
   });
+
+  lucide.createIcons();
+}
+
+window.openWantedEditor = function(wantedId = null) {
+  if (!currentDiscordUser || (!hasPermission('create_cases') && !hasPermission('edit_cases') && !currentDiscordUser.isHighCommand)) {
+    showToast("⛔ Solo oficiales con rango autorizado pueden gestionar el tablón de Más Buscados.");
+    audioEngine.playRadioBeep();
+    return;
+  }
+
+  audioEngine.playKeyClick();
+  const modal = document.getElementById("wanted-editor-modal");
+  if (!modal) return;
+
+  const titleElem = document.getElementById("wanted-editor-title");
+  const deleteBtn = document.getElementById("wanted-delete-btn");
+
+  if (wantedId) {
+    const list = getActiveWantedList();
+    const w = list.find(item => item.id === wantedId);
+    if (!w) return;
+
+    if (titleElem) titleElem.textContent = `EDITAR FUGITIVO: ${w.alias || w.name}`;
+    if (deleteBtn) deleteBtn.classList.remove("hidden");
+
+    document.getElementById("wanted-edit-id").value = w.id;
+    document.getElementById("wanted-edit-name").value = w.name || "";
+    document.getElementById("wanted-edit-alias").value = w.alias || "";
+    document.getElementById("wanted-edit-level").value = String(w.level || 3);
+    document.getElementById("wanted-edit-bounty").value = w.bounty || "";
+    document.getElementById("wanted-edit-status").value = w.status || "Buscado";
+    document.getElementById("wanted-edit-lastseen").value = w.lastSeen || "";
+    document.getElementById("wanted-edit-photo").value = w.photo || "";
+    document.getElementById("wanted-edit-charges").value = w.charges || "";
+    document.getElementById("wanted-edit-notes").value = w.notes || "";
+    document.getElementById("wanted-edit-pinned").checked = Boolean(w.isPinned);
+  } else {
+    if (titleElem) titleElem.textContent = "NUEVA ORDEN DE CAPTURA // FUGITIVO";
+    if (deleteBtn) deleteBtn.classList.add("hidden");
+
+    document.getElementById("wanted-edit-id").value = "";
+    document.getElementById("wanted-edit-name").value = "";
+    document.getElementById("wanted-edit-alias").value = "";
+    document.getElementById("wanted-edit-level").value = "3";
+    document.getElementById("wanted-edit-bounty").value = "$25,000";
+    document.getElementById("wanted-edit-status").value = "Buscado";
+    document.getElementById("wanted-edit-lastseen").value = "";
+    document.getElementById("wanted-edit-photo").value = "";
+    document.getElementById("wanted-edit-charges").value = "";
+    document.getElementById("wanted-edit-notes").value = "";
+    document.getElementById("wanted-edit-pinned").checked = false;
+  }
+
+  modal.classList.remove("hidden");
+  lucide.createIcons();
+};
+
+window.saveWantedTarget = function(event) {
+  if (event) event.preventDefault();
+
+  const id = document.getElementById("wanted-edit-id").value.trim() || `WANTED-${Date.now()}`;
+  const name = document.getElementById("wanted-edit-name").value.trim();
+  const alias = document.getElementById("wanted-edit-alias").value.trim();
+  const level = parseInt(document.getElementById("wanted-edit-level").value) || 3;
+  const bounty = document.getElementById("wanted-edit-bounty").value.trim() || "$0";
+  const status = document.getElementById("wanted-edit-status").value;
+  const lastSeen = document.getElementById("wanted-edit-lastseen").value.trim();
+  const photo = document.getElementById("wanted-edit-photo").value.trim() || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80";
+  const charges = document.getElementById("wanted-edit-charges").value.trim();
+  const notes = document.getElementById("wanted-edit-notes").value.trim();
+  const isPinned = document.getElementById("wanted-edit-pinned").checked;
+
+  let dangerLevel = "ALTO RIESGO";
+  let dangerColor = "bg-amber-500/20 text-amber-400 border-amber-500";
+  if (level >= 5) {
+    dangerLevel = "EXTREMO // DISPARAR A LA VISTA";
+    dangerColor = "bg-red-500/20 text-red-400 border-red-500";
+  } else if (level === 4) {
+    dangerLevel = "ALTO RIESGO // ARMAS PESADAS";
+    dangerColor = "bg-orange-500/20 text-orange-400 border-orange-500";
+  } else if (level === 3) {
+    dangerLevel = "PRIORIDAD POLICIAL // VIGILANCIA";
+    dangerColor = "bg-amber-500/20 text-amber-400 border-amber-500";
+  } else if (level === 2) {
+    dangerLevel = "RIESGO DE FUGA // MODERADO";
+    dangerColor = "bg-yellow-500/20 text-yellow-300 border-yellow-500";
+  } else {
+    dangerLevel = "BÚSQUEDA ORDINARIA // COMPARECENCIA";
+    dangerColor = "bg-slate-500/20 text-slate-300 border-slate-500";
+  }
+
+  const wantedData = {
+    id,
+    name,
+    alias,
+    level,
+    dangerLevel,
+    dangerColor,
+    bounty,
+    status,
+    lastSeen,
+    photo,
+    charges,
+    notes,
+    isPinned
+  };
+
+  dbUpsertWanted(wantedData);
+
+  audioEngine.playAlertSound();
+  closeModal("wanted-editor-modal");
+  showToast(`✅ Ficha de fugitivo "${name}" (${alias}) guardada con éxito.`);
+
+  addAuditLog(
+    "FUGITIVO ACTUALIZADO",
+    name,
+    `NVL ${level}`,
+    `Ficha de fugitivo judicial ${name} (${alias}) actualizada en el tablón`,
+    currentDiscordUser ? currentDiscordUser.username : "Sistema"
+  );
+
+  renderMostWanted(getActiveWantedList());
+};
+
+window.toggleWantedPin = function(wantedId) {
+  const list = getActiveWantedList();
+  const w = list.find(item => item.id === wantedId);
+  if (!w) return;
+
+  w.isPinned = !w.isPinned;
+  dbUpsertWanted(w);
+  audioEngine.playKeyClick();
+  showToast(w.isPinned ? `📌 Fugitivo ${w.alias} fijado en cabecera.` : `Fugitivo ${w.alias} desfijado de cabecera.`);
+  renderMostWanted(getActiveWantedList());
+};
+
+window.deleteWantedTarget = function(wantedId) {
+  if (!confirm(`¿Está seguro de eliminar definitivamente al fugitivo ${wantedId} del tablón judicial?`)) return;
+
+  dbDeleteWanted(wantedId);
+  audioEngine.playRadioBeep();
+  showToast(`🗑️ Fugitivo eliminado del archivo judicial.`);
+
+  addAuditLog(
+    "FUGITIVO ELIMINADO",
+    wantedId,
+    "",
+    `Fugitivo purgado del tablón judicial por ${currentDiscordUser ? currentDiscordUser.username : 'Oficial'}`,
+    currentDiscordUser ? currentDiscordUser.username : "Sistema"
+  );
+
+  renderMostWanted(getActiveWantedList());
+};
+
+window.deleteWantedTargetFromModal = function() {
+  const id = document.getElementById("wanted-edit-id").value;
+  if (!id) return;
+  closeModal("wanted-editor-modal");
+  deleteWantedTarget(id);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  APARTADOS DE CADA SUBDIVISIÓN DE LA DB
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SUBDIVISIONS_DATA = {
+  rhd: {
+    id: "rhd",
+    code: "RHD",
+    name: "Robos y Homicidios",
+    fullName: "Robbery-Homicide Division (RHD)",
+    badgeColor: "red",
+    icon: "skull",
+    channel: "RADIO TAC-1 (142.100 MHz)",
+    clearance: "NIVEL 2 // CONFIDENCIAL",
+    motto: "«Facta Non Verba — Justicia en la Escena»",
+    description: "División de élite encargada de esclarecer homicidios calificados, muertes violentas, robos agravados a entidades bancarias y secuestros extorsivos.",
+    sopSteps: [
+      "Aseguramiento del perímetro y acordonamiento en doble anillo táctico.",
+      "Inspección ocular sin alterar indicios biológicos en conjunto con CSI.",
+      "Toma de declaraciones inmediatas a testigos y revisión de cámaras de seguridad.",
+      "Redacción de auto de diligencias y elevación a la Fiscalía de Distrito."
+    ],
+    equipment: ["Glock 19 Gen5 con Linterna TLR-1", "Chaleco Balístico Pesado Nivel IIIA", "Kit de Precintado Forense", "Vehículo Encubierto Vapid Stanier / Buffalo"]
+  },
+  gnd: {
+    id: "gnd",
+    code: "GND",
+    name: "Narcóticos & Pandillas",
+    fullName: "Gang and Narcotics Division (GND)",
+    badgeColor: "amber",
+    icon: "package-search",
+    channel: "RADIO TAC-2 (142.250 MHz CIFRADA)",
+    clearance: "NIVEL 3 // ALTO SECRETO",
+    motto: "«In Umbra Vigilamus — En las sombras desmantelamos»",
+    description: "Unidad táctico-investigativa especializada en infiltración de redes de narcotráfico, contrabando de armas de asalto y bandas criminales organizadas.",
+    sopSteps: [
+      "Vigilancia estática y dinámica encubierta con registro fotográfico.",
+      "Interceptación de comunicaciones telefónicas autorizada judicialmente.",
+      "Coordinación de incursiones tácticas (breaching) con unidades SWAT.",
+      "Pesaje, prueba de reactivo químico y custodia estricta de estupefacientes."
+    ],
+    equipment: ["Carabina Colt M4A1 Semi / Supresor", "Rastreadores GPS Magnetizados", "Cámara de Vigilancia Larga Distancia", "Flota de Vehículos Civiles Sin Distintivos"]
+  },
+  csi: {
+    id: "csi",
+    code: "CSI",
+    name: "Forense & Balística",
+    fullName: "Crime Scene Investigation & Forensics (CSI)",
+    badgeColor: "blue",
+    icon: "microscope",
+    channel: "RADIO LAB-1 (142.350 MHz)",
+    clearance: "NIVEL 2 // TÉCNICO PERICIAL",
+    motto: "«Ibi Testis Silet, Materia Loquitur — Donde calla el testigo, habla la materia»",
+    description: "Departamento pericial científico de recolección de indicios, cotejo balístico, dactiloscopia forense y reconstrucción informática tridimensional.",
+    sopSteps: [
+      "Fijación fotográfica métrica de la escena del crimen antes de cualquier intervención.",
+      "Levantamiento de vainas, casquillos e indicios biológicos con cadena de custodia.",
+      "Revelado de huellas dactilares latentes mediante polvos magnéticos y cianoacrilato.",
+      "Emisión de informe pericial técnico vinculante para el juicio penal."
+    ],
+    equipment: ["Maletín Forense Sirchie Completo", "Luz Forense UV Multiespectral", "Microscopio Balístico Comparador", "Furgón Taller Móvil de Análisis In Situ"]
+  },
+  cid: {
+    id: "cid",
+    code: "CID",
+    name: "Ciberdelincuencia & Fraude",
+    fullName: "Cyber & Financial Crime Division (CID)",
+    badgeColor: "emerald",
+    icon: "binary",
+    channel: "RADIO CYBER-SEC (CANAL DIGITAL SEGURO)",
+    clearance: "NIVEL 3 // INTELIGENCIA INFORMÁTICA",
+    motto: "«Nullum Vestigium Invisibile — Ningún rastro es invisible en la red»",
+    description: "Unidad tecnológica dedicada al rastreo de billeteras de criptoactivos, lavado de capitales corporativo, extorsión digital y ciberdelincuencia organizada.",
+    sopSteps: [
+      "Preservación de evidencia digital volátil en memoria RAM mediante volcados forenses.",
+      "Trazabilidad de transacciones en la blockchain y geolocalización de nodos IP.",
+      "Incautación de soportes informáticos con bolsas Faraday anti-inhibición.",
+      "Descifrado forense y análisis de metadatos de archivos incriminatorios."
+    ],
+    equipment: ["Estación Forense Tableau con Bloqueador de Escritura", "Bolsas Faraday para Terminales Móviles", "Software de Trazabilidad Blockchain", "Servidor Cifrado Local"]
+  },
+  iad: {
+    id: "iad",
+    code: "IAD",
+    name: "Asuntos Internos",
+    fullName: "Internal Affairs Division (IAD)",
+    badgeColor: "purple",
+    icon: "eye",
+    channel: "RADIO INTERNA (RESTRINGIDA AL MANDO)",
+    clearance: "NIVEL 4 // MANDO SUPREMO",
+    motto: "«Quis Custodiet Ipsos Custodes — ¿Quién vigila a los guardianes?»",
+    description: "Departamento independiente de auditoría deontológica, investigación confidencial de corrupción, sobornos, negligencia grave y abuso de poder.",
+    sopSteps: [
+      "Recepción y clasificación confidencial de denuncias contra miembros policiales.",
+      "Auditoría cruzada de bitácoras de servicio, armeros y registro de llamadas.",
+      "Entrevistas formales de investigación interna bajo apercibimiento.",
+      "Elevación de dictamen disciplinario vinculante al Capitán de División."
+    ],
+    equipment: ["Acreditaciones Especiales de Acceso Irrestricto", "Grabadoras de Audio Digital Homologadas", "Acceso al Registro Central de Armamento", "Despacho Aislado Acústicamente"]
+  },
+  ccd: {
+    id: "ccd",
+    code: "CCD",
+    name: "Casos Fríos & Desapariciones",
+    fullName: "Cold Case & Missing Persons Division (CCD)",
+    badgeColor: "cyan",
+    icon: "archive",
+    channel: "RADIO SEARCH-1 (142.450 MHz)",
+    clearance: "NIVEL 2 // RESTRINGIDO",
+    motto: "«Memoria Nunquam Perit — La memoria nunca se extingue»",
+    description: "Especialistas en reapertura de investigaciones archivadas mediante nuevas técnicas periciales de ADN, búsqueda de personas desaparecidas y fosas clandestinas.",
+    sopSteps: [
+      "Revisión integral de sumarios judiciales antiguos y cotejo con bases de datos modernas.",
+      "Búsqueda georreferenciada sobre el terreno con unidades caninas de rastreo.",
+      "Re-entrevista a allegados y testigos tras prescripción de presiones delictivas.",
+      "Confirmación genética de restos óseos o biológicos mediante ADN mitocondrial."
+    ],
+    equipment: ["Kits de Extracción de ADN en Huesos y Tejidos Secos", "Drones Térmicos de Búsqueda Rural", "Acceso a Microfilms y Archivos Históricos", "Vehículo Todo Terreno 4x4"]
+  }
+};
+
+let currentActiveSubdivision = 'rhd';
+
+window.selectSubdivision = function(subdivId) {
+  if (!SUBDIVISIONS_DATA[subdivId]) return;
+  currentActiveSubdivision = subdivId;
+  audioEngine.playKeyClick();
+
+  // Actualizar estilos de los botones de pestañas
+  document.querySelectorAll(".subdiv-nav-btn").forEach(btn => {
+    btn.classList.remove("bg-red-600", "bg-amber-600", "bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-cyan-600", "text-white", "border-red-500", "border-amber-500");
+    btn.classList.add("bg-slate-900", "text-slate-300", "border-slate-800");
+  });
+
+  const activeBtn = document.getElementById(`subdiv-btn-${subdivId}`);
+  if (activeBtn) {
+    activeBtn.classList.remove("bg-slate-900", "text-slate-300", "border-slate-800");
+    activeBtn.classList.add("bg-amber-500", "text-black", "font-bold", "border-amber-400");
+  }
+
+  renderSubdivisionPane(subdivId);
+};
+
+function renderCurrentSubdivision() {
+  renderSubdivisionPane(currentActiveSubdivision);
+}
+
+function renderSubdivisionPane(subdivId) {
+  const container = document.getElementById("subdivision-active-pane");
+  if (!container) return;
+
+  const subdiv = SUBDIVISIONS_DATA[subdivId] || SUBDIVISIONS_DATA.rhd;
+
+  // Filtrar agentes de la BD asignados a esta subdivisión
+  const roster = (typeof getCachedRoster === 'function') ? getCachedRoster().map(rowToAgent) : [];
+  const assignedAgents = roster.filter(a => {
+    const div = (a.division || '').toLowerCase();
+    const rank = (a.rank || '').toLowerCase();
+    return div.includes(subdiv.code.toLowerCase()) || div.includes(subdiv.name.toLowerCase()) || (subdivId === 'rhd' && div.includes('homicidios')) || (subdivId === 'gnd' && div.includes('narc'));
+  });
+
+  // Filtrar casos de la BD asignados a esta subdivisión
+  const allCases = typeof getActiveCasesList === 'function' ? getActiveCasesList() : [];
+  const relatedCases = allCases.filter(c => {
+    const div = (c.division || '').toLowerCase();
+    const cat = (c.category || '').toLowerCase();
+    if (subdivId === 'rhd') return div.includes('rhd') || cat.includes('homicide') || cat.includes('robbery');
+    if (subdivId === 'gnd') return div.includes('gnd') || cat.includes('narcotics');
+    if (subdivId === 'csi') return div.includes('csi') || div.includes('forense');
+    if (subdivId === 'cid') return div.includes('cid') || cat.includes('fraud') || div.includes('ciber');
+    if (subdivId === 'iad') return div.includes('iad') || cat.includes('internal');
+    if (subdivId === 'ccd') return div.includes('ccd') || cat.includes('missing');
+    return false;
+  });
+
+  container.innerHTML = `
+    <!-- Top Header of the Subdivision Dossier -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-amber-500/20 mb-8">
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-lg">
+          <i data-lucide="${subdiv.icon}" class="w-8 h-8"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <span class="px-2.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-conthrax text-[10px] font-bold">
+              SUBDIVISIÓN OFICIAL // ${subdiv.code}
+            </span>
+            <span class="text-xs font-mono text-slate-400">ENLACE TÁCTICO: <strong class="text-white">${subdiv.channel}</strong></span>
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-black font-gobold text-white tracking-wide">${subdiv.fullName}</h3>
+          <p class="text-xs font-conthrax text-amber-400/90 italic mt-0.5">${subdiv.motto}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-right">
+          <span class="text-[9px] font-conthrax text-slate-400 block">NIVEL AUTORIZACIÓN:</span>
+          <span class="text-xs font-conthrax text-emerald-400 font-bold">${subdiv.clearance}</span>
+        </div>
+        <div class="px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-right">
+          <span class="text-[9px] font-conthrax text-slate-400 block">DETECTIVES ACTIVOS:</span>
+          <span class="text-xs font-conthrax text-amber-400 font-bold">${assignedAgents.length} Asignados</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description & Mission -->
+    <div class="mb-8 p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-slate-300 text-xs font-conthrax leading-relaxed">
+      ${subdiv.description}
+    </div>
+
+    <!-- Grid: SOP & Equipment -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      
+      <!-- SOP Protocols -->
+      <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+        <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-800 text-amber-400 font-conthrax text-xs font-bold">
+          <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+          <span>PROTOCOLO OPERATIVO ESTÁNDAR (SOP)</span>
+        </div>
+        <ul class="space-y-2.5 font-conthrax text-xs text-slate-300">
+          ${subdiv.sopSteps.map((step, idx) => `
+            <li class="flex items-start gap-2.5 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/60">
+              <span class="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center shrink-0 text-[10px] border border-amber-500/30">0${idx+1}</span>
+              <span class="leading-relaxed">${step}</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+
+      <!-- Equipment & Resources -->
+      <div class="bg-slate-950/80 rounded-xl p-5 border border-slate-800">
+        <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-800 text-emerald-400 font-conthrax text-xs font-bold">
+          <i data-lucide="shield" class="w-4 h-4"></i>
+          <span>EQUIPAMIENTO & RECURSOS ASIGNADOS</span>
+        </div>
+        <ul class="space-y-2.5 font-conthrax text-xs text-slate-300">
+          ${subdiv.equipment.map(eq => `
+            <li class="flex items-center gap-2.5 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/60">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+              <span class="font-mono text-white">${eq}</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Personnel & Linked Cases Sections -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-slate-800">
+      
+      <!-- Assigned Personnel from DB -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2 text-white font-conthrax text-xs font-bold">
+            <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+            <span>PERSONAL ASIGNADO EN CENSO (${assignedAgents.length})</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500">Actualizado en tiempo real</span>
+        </div>
+
+        ${assignedAgents.length > 0 ? `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            ${assignedAgents.map(a => `
+              <div class="glass-panel p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                <img src="${a.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="${a.icName}"
+                  class="w-10 h-10 rounded-lg object-cover border border-slate-700">
+                <div class="overflow-hidden">
+                  <span class="font-bold text-white text-xs block truncate font-conthrax">${a.icName}</span>
+                  <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
+                    <span class="text-amber-400">${a.badge || '#DIV'}</span>
+                    <span>•</span>
+                    <span class="capitalize text-slate-300">${a.rank}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="p-6 rounded-xl bg-slate-950/60 border border-slate-800 text-center font-conthrax text-xs text-slate-400">
+            <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 text-slate-600"></i>
+            <span>Sin detectives específicamente catalogados en esta rama. Jefatura puede asignarlos desde el panel de Personal.</span>
+          </div>
+        `}
+      </div>
+
+      <!-- Linked Cases from DB -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2 text-white font-conthrax text-xs font-bold">
+            <i data-lucide="folder-search" class="w-4 h-4 text-amber-400"></i>
+            <span>EXPEDIENTES VINCULADOS (${relatedCases.length})</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-500">Archivo policial</span>
+        </div>
+
+        ${relatedCases.length > 0 ? `
+          <div class="space-y-2.5 max-h-72 overflow-y-auto custom-scroll pr-1">
+            ${relatedCases.map(c => `
+              <div class="glass-panel p-3 rounded-xl border border-slate-800 flex items-center justify-between gap-3 hover:border-amber-500/40 transition-colors">
+                <div class="overflow-hidden">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-[9px] font-mono font-bold text-amber-400">${c.id}</span>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">${c.status}</span>
+                  </div>
+                  <h4 class="font-bold text-white text-xs truncate font-conthrax">${c.title}</h4>
+                  <p class="text-[10px] text-slate-400 font-mono truncate">Det: ${c.leadDetective}</p>
+                </div>
+                <button onclick="openCaseModal('${c.id}')"
+                  class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black font-conthrax text-[10px] font-bold uppercase transition-colors shrink-0 flex items-center gap-1 border border-amber-500/30">
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                  <span>Ver Caso</span>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="p-6 rounded-xl bg-slate-950/60 border border-slate-800 text-center font-conthrax text-xs text-slate-400">
+            <i data-lucide="folder" class="w-8 h-8 mx-auto mb-2 text-slate-600"></i>
+            <span>No constan expedientes abiertos vinculados a esta subdivisión en el registro actual.</span>
+          </div>
+        `}
+      </div>
+
+    </div>
+  `;
 
   lucide.createIcons();
 }
@@ -1702,6 +2355,11 @@ function renderConfidentialReports(reports) {
 let currentViewingConfidentialReportId = null;
 
 window.openConfidentialReport = function(reportId) {
+  if (!hasPermission('view_reports') || !currentDiscordUser || currentDiscordUser.rankKey === 'aspirante') {
+    showToast("⛔ Acceso denegado: este informe requiere credencial de Detective con rango activo.");
+    audioEngine.playRadioBeep();
+    return;
+  }
   audioEngine.playKeyClick();
   const all = getActiveConfidentialReports();
   const report = all.find(r => r.id === reportId);
